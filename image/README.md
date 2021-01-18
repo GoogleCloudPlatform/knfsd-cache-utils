@@ -74,6 +74,11 @@ reboot
 gcloud beta compute ssh knfsd-build-machine --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
 ```
 
+### Validate Newer Kernel
+```
+uname -r
+```
+
 ### Shutdown Instance
 ```
 sudo shutdown -h now
@@ -81,5 +86,5 @@ sudo shutdown -h now
 
 ### Create Image
 ```
-gcloud compute images create knfsd-image-5-11-rc3 --source-disk=knfsd-build-machine --source-disk-zone=$BUILD_MACHINE_ZONE
+gcloud compute images create knfsd-image --source-disk=knfsd-build-machine --source-disk-zone=$BUILD_MACHINE_ZONE
 ```
