@@ -88,3 +88,8 @@ sudo shutdown -h now
 ```
 gcloud compute images create knfsd-image --source-disk=knfsd-build-machine --source-disk-zone=$BUILD_MACHINE_ZONE
 ```
+
+### Delete Build Machine
+```
+gcloud compute instances delete knfsd-build-machine --zone=$BUILD_MACHINE_ZONE
+```
