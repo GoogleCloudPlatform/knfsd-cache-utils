@@ -1,0 +1,209 @@
+# 
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+displayName: Knfsd Monitoring (v2) Import
+gridLayout:
+  columns: '3'
+  widgets:
+  - title: NFS inode Cache Active Objects
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - legendTemplate: ${metadata.system_labels\.name}
+        minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/knfsd/nfs_inode_cache_active_objects"
+              resource.type="gce_instance" metadata.user_labels."vm-type"="nfs-proxy"
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: FS-Cache SSD - Free Space
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - legendTemplate: ${metadata.system_labels\.name}
+        minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="agent.googleapis.com/disk/percent_used" resource.type="gce_instance"
+              metadata.user_labels."vm-type"="nfs-proxy" metric.label."device"="md127"
+              metric.label."state"="free"
+      thresholds:
+      - value: 5.0
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: Proxy NFS Client Connections
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - legendTemplate: ${metadata.system_labels\.name}
+        minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/knfsd/nfs_connections" resource.type="gce_instance"
+              metadata.user_labels."vm-type"="nfs-proxy"
+      thresholds:
+      - value: 400.0
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: dentry Cache Active Objects
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - legendTemplate: ${metadata.system_labels\.name}
+        minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/knfsd/dentry_cache_active_objects"
+              resource.type="gce_instance" metadata.user_labels."vm-type"="nfs-proxy"
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: Memory Utilisation
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="agent.googleapis.com/memory/percent_used" resource.type="gce_instance"
+              metadata.user_labels."vm-type"="nfs-proxy" metric.label."state"="used"
+      thresholds:
+      - value: 80.0
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: CPU Utilisation
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metric.label."instance_name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="compute.googleapis.com/instance/cpu/utilization"
+              resource.type="gce_instance" metadata.user_labels."vm-type"="nfs-proxy"
+      thresholds:
+      - value: 0.8
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: NFS inode Cache Object Size (Bytes)
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="custom.googleapis.com/knfsd/nfs_inode_cache_objsize"
+              resource.type="gce_instance" metadata.user_labels."vm-type"="nfs-proxy"
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: Memory Utilisation (Cache)
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - legendTemplate: ${metadata.system_labels\.name}
+        minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              crossSeriesReducer: REDUCE_SUM
+              groupByFields:
+              - metadata.system_labels."name"
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="agent.googleapis.com/memory/percent_used" resource.type="gce_instance"
+              metadata.user_labels."vm-type"="nfs-proxy" metric.label."state"="cached"
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR
+  - title: VM Instance - Memory utilization [MEAN]
+    xyChart:
+      chartOptions:
+        mode: COLOR
+      dataSets:
+      - minAlignmentPeriod: 60s
+        plotType: LINE
+        timeSeriesQuery:
+          timeSeriesFilter:
+            aggregation:
+              perSeriesAligner: ALIGN_MEAN
+            filter: metric.type="agent.googleapis.com/memory/percent_used" resource.type="gce_instance"
+      timeshiftDuration: 0s
+      yAxis:
+        label: y1Axis
+        scale: LINEAR

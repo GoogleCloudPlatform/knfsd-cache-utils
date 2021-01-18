@@ -1,0 +1,18 @@
+# Mac .DS_Store
+.DS_Store
+
+# JSON for IAM Service Accounts
+*.json
+
+# Terraform Binaries
+.terraform
+
+# Terraform State
+*.tfstate
+*.tfstate.backup
+
+# Terraform local .tfvars
+*.tfvars
+
+# Service Account
+service-account-key.json
