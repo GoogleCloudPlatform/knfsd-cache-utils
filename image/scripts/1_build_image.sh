@@ -28,7 +28,7 @@ install_nfs_packages() {
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y cachefilesd rpcbind nfs-kernel-server
+    apt-get install -y cachefilesd rpcbind nfs-kernel-server tree
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
     systemctl disable nfs-kernel-server
