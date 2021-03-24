@@ -75,6 +75,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
   metadata = {
     EXPORT_MAP                  = var.EXPORT_MAP
+    DISCO_MOUNT                 = var.DISCO_MOUNT
     EXPORT_CIDR                 = var.EXPORT_CIDR
     NCONNECT_VALUE              = var.NCONNECT_VALUE
     VFS_CACHE_PRESSURE          = var.VFS_CACHE_PRESSURE
@@ -112,7 +113,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
 # Healthcheck on port 2049, used for monitoring the NFS Health Status
 resource "google_compute_health_check" "autohealing" {
-  
+
   name                = "${var.PROXY_BASENAME}-autohealing-health-check"
   check_interval_sec  = 5
   timeout_sec         = 2

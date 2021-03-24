@@ -28,6 +28,7 @@ function get_attribute() {
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
+DISCO_MOUNT=$(get_attribute DISCO_MOUNT)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
 VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
@@ -36,7 +37,7 @@ ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
-NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
+NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)DISCO_MOUNT=$(get_attribute DISCO_MOUNT)
 echo "Done reading metadata."
 
 # List attatched NVME local SSDs
@@ -110,10 +111,27 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   done
   set -e
 
-  # Create /etc/exports entry for filesystem
-  echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
-  echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
-  echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+  # Create NFS Export if DISCO_MOUNT is enabled
+  if [ "$DISCO_MOUNT" = "true" ]; then
+  
+    echo "Discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
+    tree -d $LOCAL_EXPORT > /dev/null
+    echo "Finished discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
+
+    echo "Creating NFS share exports for $REMOTE_IP:$REMOTE_EXPORT..."
+    for mountpoint in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT | awk '{print $6}'); do
+      echo "$mountpoint   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash,crossmnt)" >>/etc/exports
+      FSID=$((FSID + 10))
+    done
+
+  else
+
+    # Create /etc/exports entry for filesystem
+    echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
+    echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
+    echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+
+  fi
 
   # Increment FSID
   FSID=$((FSID + 10))

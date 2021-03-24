@@ -18,6 +18,12 @@ variable "EXPORT_MAP" {
   type = string
 }
 
+variable "DISCO_MOUNT" {
+  type = bool
+  default = false
+  
+}
+
 variable "EXPORT_CIDR" {
   type = string
   default = "10.0.0.0/8"
