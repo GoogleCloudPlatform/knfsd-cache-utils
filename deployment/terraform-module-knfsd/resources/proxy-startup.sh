@@ -100,7 +100,7 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   set +e
   while true; do
     echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync,$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
+    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
     if [ $? = 0 ]; then
       echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
       break
