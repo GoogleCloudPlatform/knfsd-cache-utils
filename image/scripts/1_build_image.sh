@@ -51,7 +51,7 @@ install_build_dependencies() {
 
 }
 
-# download_nfs-utils() downloads version 2.5.2 of nfs-utils
+# download_nfs-utils() downloads version 2.5.3 of nfs-utils
 download_nfs-utils() {
 
     # Make directory for nfs-utils
@@ -63,8 +63,8 @@ download_nfs-utils() {
     echo "Downloading nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
     cd ~/nfs-utils
-    curl -o ~/nfs-utils/nfs-utils-2.5.2.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.2/nfs-utils-2.5.2.tar.gz
-    tar xvf ~/nfs-utils/nfs-utils-2.5.2.tar.gz
+    curl -o ~/nfs-utils/nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
+    tar xvf ~/nfs-utils/nfs-utils-2.5.3.tar.gz
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -81,7 +81,7 @@ build_install_nfs-utils() {
     echo -e "${SHELL_YELLOW}"
     echo "Downloading nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
-    cd ~/nfs-utils/nfs-utils-2.5.2
+    cd ~/nfs-utils/nfs-utils-2.5.3
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
     make -j20
     make install -j20
