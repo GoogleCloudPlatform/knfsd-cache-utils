@@ -15,7 +15,8 @@
  */
 
 variable "EXPORT_MAP" {
-  type = ""
+  type = string
+  default = ""
 }
 
 variable "DISCO_MOUNT_EXPORT_MAP" {
