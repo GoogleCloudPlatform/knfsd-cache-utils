@@ -15,12 +15,12 @@
  */
 
 variable "EXPORT_MAP" {
-  type = string
+  type = ""
 }
 
 variable "DISCO_MOUNT_EXPORT_MAP" {
   type    = string
-  default = false
+  default = ""
 }
 
 variable "EXPORT_CIDR" {
