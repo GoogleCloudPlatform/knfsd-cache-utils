@@ -32,6 +32,7 @@ install_nfs_packages() {
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
     systemctl disable nfs-kernel-server
+    systemctl disable nfs-idmapd.service
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -92,6 +93,22 @@ build_install_nfs-utils() {
 
 }
 
+# install_stackdriver_agent() installs the Stackdriver Agent for metrics
+install_stackdriver_agent() {
+
+    echo -e "${SHELL_YELLOW}"
+    echo "Installing Stackdriver Agent dependencies..."
+    echo -e "------${SHELL_DEFAULT}"
+    curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
+    bash add-monitoring-agent-repo.sh
+    apt-get update
+    sudo apt-get install -y stackdriver-agent
+    systemctl disable stackdriver-agent
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+
+}
+
 # download_kernel() downloads the 5.11.8 Kernel
 download_kernel() {
 
@@ -129,6 +146,7 @@ install_nfs_packages
 install_build_dependencies
 download_nfs-utils
 build_install_nfs-utils
+install_stackdriver_agent
 download_kernel
 install_kernel
 
