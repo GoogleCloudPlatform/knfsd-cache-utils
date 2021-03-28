@@ -148,7 +148,7 @@ resource "google_compute_instance_group_manager" "proxy-group" {
     for_each = var.ENABLE_AUTOHEALING_HEALTHCHECKS ? [1] : []
     content {
       health_check      = google_compute_health_check.autohealing.self_link
-      initial_delay_sec = 165
+      initial_delay_sec = 600
     }
   }
 
