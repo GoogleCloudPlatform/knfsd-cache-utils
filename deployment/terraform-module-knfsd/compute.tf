@@ -75,6 +75,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
   metadata = {
     EXPORT_MAP                  = var.EXPORT_MAP
+    DISCO_MOUNT_EXPORT_MAP      = var.DISCO_MOUNT_EXPORT_MAP
     EXPORT_CIDR                 = var.EXPORT_CIDR
     NCONNECT_VALUE              = var.NCONNECT_VALUE
     VFS_CACHE_PRESSURE          = var.VFS_CACHE_PRESSURE
@@ -112,7 +113,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
 # Healthcheck on port 2049, used for monitoring the NFS Health Status
 resource "google_compute_health_check" "autohealing" {
-  
+
   name                = "${var.PROXY_BASENAME}-autohealing-health-check"
   check_interval_sec  = 5
   timeout_sec         = 2
@@ -147,7 +148,7 @@ resource "google_compute_instance_group_manager" "proxy-group" {
     for_each = var.ENABLE_AUTOHEALING_HEALTHCHECKS ? [1] : []
     content {
       health_check      = google_compute_health_check.autohealing.self_link
-      initial_delay_sec = 165
+      initial_delay_sec = 600
     }
   }
 
@@ -196,7 +197,7 @@ resource "google_compute_forwarding_rule" "default" {
   load_balancing_scheme = "INTERNAL"
   backend_service       = google_compute_region_backend_service.nfsproxy.self_link
   ip_address            = google_compute_address.nfsproxy_static.address
-  ports                 = [111, 2049]
+  all_ports             = true
   network               = var.NETWORK
   subnetwork            = var.SUBNETWORK
   service_label         = var.SERVICE_LABEL

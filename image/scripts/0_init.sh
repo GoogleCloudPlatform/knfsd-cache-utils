@@ -23,10 +23,3 @@ function get_script() {
 # Fetch scripts and make executable
 get_script BUILD_IMAGE_SCRIPT 1_build_image.sh
 chmod +x /root/1_build_image.sh
-
-# Install Stackdriver Agent
-curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
-bash add-monitoring-agent-repo.sh
-apt-get update
-sudo apt-get install -y stackdriver-agent
-systemctl disable stackdriver-agent

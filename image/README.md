@@ -30,7 +30,7 @@ gcloud compute instances create knfsd-build-machine \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=c2-standard-30 \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image=ubuntu-2010-groovy-v20201022a \
+    --image=ubuntu-2010-groovy-v20210323 \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \

@@ -16,10 +16,16 @@
 
 variable "EXPORT_MAP" {
   type = string
+  default = ""
+}
+
+variable "DISCO_MOUNT_EXPORT_MAP" {
+  type    = string
+  default = ""
 }
 
 variable "EXPORT_CIDR" {
-  type = string
+  type    = string
   default = "10.0.0.0/8"
 }
 
