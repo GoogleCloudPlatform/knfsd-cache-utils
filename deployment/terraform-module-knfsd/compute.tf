@@ -197,7 +197,7 @@ resource "google_compute_forwarding_rule" "default" {
   load_balancing_scheme = "INTERNAL"
   backend_service       = google_compute_region_backend_service.nfsproxy.self_link
   ip_address            = google_compute_address.nfsproxy_static.address
-  ports                 = [111, 2049]
+  all_ports             = true
   network               = var.NETWORK
   subnetwork            = var.SUBNETWORK
   service_label         = var.SERVICE_LABEL
