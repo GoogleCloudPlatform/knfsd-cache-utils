@@ -24,11 +24,3 @@ function get_script() {
 get_script BUILD_IMAGE_SCRIPT 1_build_image.sh
 chmod +x /root/1_build_image.sh
 
-# To allow for installing the software and running the 1_build_image.sh startup script only once, create a file after first run,
-# skip execution step if file exists and remove /root/1_build_image.sh from build VM
-
-if [[ -f /etc/startup_was_launched ]]; then echo "not running software install, removing 1_build_image.sh"; rm /root/1_build_image.sh; exit 0; fi
-echo "running software install"
-touch /etc/startup_was_launched
-/root/1_build_image.sh
-

@@ -16,7 +16,7 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 cd image/scripts
 ```
 
-### Set Variables
+### Update settings in brackets <> below and set variables 
 ```
 export BUILD_MACHINE_NAME=knfsd-build-machine
 export BUILD_MACHINE_ZONE=<europe-west2-a>
@@ -25,8 +25,7 @@ export BUILD_MACHINE_NETWORK=<knfsd-test>
 export BUILD_MACHINE_SUBNET=<europe-west2-subnet>
 ```
 
-### Create a Build Machine and run startup scripts to install necessary OS updates and software installation
-### Note: This command will take several minutes to run but it will complete
+### Create a Build Machine
 ```
 gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
@@ -57,12 +56,37 @@ gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-
 sudo su
 ```
 
+### Run the script 1_build_image.sh 
+#### This script clones the Ubuntu Kernel Code repository, updates the kernel and installs additional software. 
+#### As there is a repo clone, it takes a long time but will complete.
+
+```
+cd
+./1_build_image.sh
+```
+
+### After the installation is complete, reboot your Build Machine to run the updated code.
+```
+reboot
+```
+
+#### When your Build Machine reboots, your Cloud Console will revert to your Cloud Shell host machine.
+### SSH to your Build Machine to run subsequent commands.
+```
+gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
+```
+
+### Switch to Root
+```
+sudo su
+```
+
 ### Validate Newer Kernel version is installed
 ```
 uname -r
 ```
 
-### Output from above command should indicate kernel version 5.11.8-051108-generic.
+#### Output from above command should indicate kernel version 5.11.8-051108-generic.
 
 
 ### Shutdown Instance
@@ -70,7 +94,7 @@ uname -r
 sudo shutdown -h now
 ```
 
-### On your cloudshell host machine, create the Custom Disk Image
+### On your Cloud Shell host machine, create the Custom Disk Image
 ```
 gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE
 ```

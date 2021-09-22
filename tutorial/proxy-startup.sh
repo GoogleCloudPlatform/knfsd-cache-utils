@@ -62,7 +62,7 @@ then
   echo "Found attached SSD device(s), initializing FS-Cache..."
   if [ ! -e /dev/md127 ]
   then
-    # Make raid array of attatched local ssds
+    # Make raid array of attached local ssds
     sudo mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
   fi
 
