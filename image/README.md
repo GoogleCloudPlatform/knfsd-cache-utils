@@ -11,22 +11,23 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 
 ## Usage
 
-### Naviate to Scripts Directory
+### Navigate to Scripts Directory
 ```
 cd image/scripts
 ```
 
-### Set Variables
+### Update settings in brackets <> below and set variables 
 ```
-export BUILD_MACHINE_ZONE=europe-west2-a
-export GOOGLE_CLOUD_PROJECT=knfsd-deployment-test
-export BUILD_MACHINE_NETWORK=knfsd-test
-export BUILD_MACHINE_SUBNET=europe-west2-subnet
+export BUILD_MACHINE_NAME=knfsd-build-machine
+export BUILD_MACHINE_ZONE=<europe-west2-a>
+export GOOGLE_CLOUD_PROJECT=<knfsd-deployment-test>
+export BUILD_MACHINE_NETWORK=<knfsd-test>
+export BUILD_MACHINE_SUBNET=<europe-west2-subnet>
 ```
 
 ### Create a Build Machine
 ```
-gcloud compute instances create knfsd-build-machine \
+gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=c2-standard-30 \
     --project=$GOOGLE_CLOUD_PROJECT \
@@ -47,7 +48,7 @@ gcloud compute firewall-rules create allow-ssh-ingress-from-iap --direction=INGR
 
 ### SSH to Build Machine
 ```
-gcloud beta compute ssh knfsd-build-machine --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
+gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
 ```
 
 ### Switch to Root
@@ -55,41 +56,50 @@ gcloud beta compute ssh knfsd-build-machine --zone=$BUILD_MACHINE_ZONE --tunnel-
 sudo su
 ```
 
-### Run Build Modified Kernel Script
-
-**This takes a very long time due to the Ubuntu Kernel clone. However it does complete.**
+### Run the script 1_build_image.sh 
+#### This script clones the Ubuntu Kernel Code repository, updates the kernel and installs additional software. 
+#### As there is a repo clone, it takes a long time but will complete.
 
 ```
 cd
 ./1_build_image.sh
 ```
 
-### Reboot
+### After the installation is complete, reboot your Build Machine to run the updated code.
 ```
 reboot
 ```
 
-### SSH to Instance
+#### When your Build Machine reboots, your Cloud Console will revert to your Cloud Shell host machine.
+### SSH to your Build Machine to run subsequent commands.
 ```
-gcloud beta compute ssh knfsd-build-machine --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
+gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
 ```
 
-### Validate Newer Kernel
+### Switch to Root
+```
+sudo su
+```
+
+### Validate Newer Kernel version is installed
 ```
 uname -r
 ```
+
+#### Output from above command should indicate kernel version 5.11.8-051108-generic.
+
 
 ### Shutdown Instance
 ```
 sudo shutdown -h now
 ```
 
-### Create Image
+### On your Cloud Shell host machine, create the Custom Disk Image
 ```
-gcloud compute images create knfsd-image --source-disk=knfsd-build-machine --source-disk-zone=$BUILD_MACHINE_ZONE
+gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE
 ```
 
 ### Delete Build Machine
 ```
-gcloud compute instances delete knfsd-build-machine --zone=$BUILD_MACHINE_ZONE
+gcloud compute instances delete $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE
 ```

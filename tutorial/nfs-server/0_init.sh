@@ -1,6 +1,6 @@
 #!/bin/bash
-# 
-# Copyright 2020 Google LLC
+#
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ function get_script() {
     curl -Ss -o "/root/$2" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
-# Fetch scripts and make executable
-get_script BUILD_IMAGE_SCRIPT 1_build_image.sh
-chmod +x /root/1_build_image.sh
-
+# Fetch scripts, make executable and run
+get_script BUILD_NFS_SERVER_SCRIPT 1_build_nfs-server.sh
+chmod +x /root/1_build_nfs-server.sh
+/root/1_build_nfs-server.sh
+# Done
