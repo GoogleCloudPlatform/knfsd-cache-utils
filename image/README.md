@@ -57,8 +57,6 @@ sudo su
 ```
 
 ### Run the script 1_build_image.sh 
-#### This script clones the Ubuntu Kernel Code repository, updates the kernel and installs additional software. 
-#### As there is a repo clone, it takes a long time but will complete.
 
 ```
 cd
@@ -69,8 +67,8 @@ cd
 ```
 reboot
 ```
+**NB: When your Build Machine reboots, your Cloud Console will revert to your host machine.**
 
-#### When your Build Machine reboots, your Cloud Console will revert to your Cloud Shell host machine.
 ### SSH to your Build Machine to run subsequent commands.
 ```
 gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
@@ -85,9 +83,7 @@ sudo su
 ```
 uname -r
 ```
-
-#### Output from above command should indicate kernel version 5.11.8-051108-generic.
-
+**Output from above command should indicate kernel version `5.11.8-051108-generic`.**
 
 ### Shutdown Instance
 ```
