@@ -6,6 +6,8 @@
 
 # Terraform Binaries
 .terraform
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
 
 # Terraform State
 *.tfstate

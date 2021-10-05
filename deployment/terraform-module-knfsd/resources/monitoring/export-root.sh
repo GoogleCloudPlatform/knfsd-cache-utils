@@ -1,4 +1,4 @@
-# !/bin/bash 
+# !/bin/bash
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,17 @@ touch /statsexport/dentry_cache_objsize
 chown "nobody" /statsexport/dentry_cache_objsize
 dentry_cache_objsize=$(cat /proc/slabinfo | grep dentry | awk '{print $4}')
 echo "$dentry_cache_objsize" > /statsexport/dentry_cache_objsize
+
+# Setup nfsiostat exports to file for all client mounts
+mkdir -p /statsexport/nfsiostat
+ITERATION=0
+cat /proc/mounts | grep nfs | grep -v /proc/fs/nfsd | while read LINE
+do
+    LOCAL_MOUNT=$(echo "$LINE"| awk '{print $2}')
+    stdbuf -o0 nfsiostat 60 ${LOCAL_MOUNTPOINT} > /statsexport/nfsiostat/${ITERATION} &
+    ITERATION=$((ITERATION + 10))
+done
+chown -R "nobody" /statsexport/nfsiostat
 
 # Loop that runs and updates the files with updated values every 60 seconds
 while sleep 60

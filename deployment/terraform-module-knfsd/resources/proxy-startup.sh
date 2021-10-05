@@ -82,11 +82,6 @@ else
   FSC=
 fi
 
-# Disable NFS Mountpoint Timeout
-echo "Disabling NFS Mountpoint Timeout..."
-echo "-1" > /proc/sys/fs/nfs/nfs_mountpoint_timeout 
-echo "Finished Disabling NFS Mountpoint Timeout..."
-
 # Set the FSID
 FSID=10
 
