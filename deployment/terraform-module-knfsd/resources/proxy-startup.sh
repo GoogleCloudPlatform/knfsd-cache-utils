@@ -85,6 +85,9 @@ fi
 # Set the FSID
 FSID=10
 
+# Set a variable to track if we have set the mountpoint timeout
+NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="false"
+
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
 for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
@@ -121,6 +124,15 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   # Increment FSID
   FSID=$((FSID + 10))
 
+  # If NFS Client Timeout has not yet been disabled, disable it
+  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
+    echo "Disabling NFS Mountpoint Timeout..."
+    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
+    sysctl --system
+    echo "Finished Disabling NFS Mountpoint Timeout..."
+    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
+  fi
+
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
 
@@ -149,6 +161,16 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
       sleep 15
     fi
   done
+
+  # If NFS Client Timeout has not yet been disabled, disable it
+  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
+    echo "Disabling NFS Mountpoint Timeout..."
+    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
+    sysctl --system
+    echo "Finished Disabling NFS Mountpoint Timeout..."
+    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
+  fi
+
   set -e
 
 
