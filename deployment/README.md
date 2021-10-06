@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 **Note:** The master branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
 
 ```
-source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.1"
+source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.2.0"
 ```
 
 ## Prerequisites
@@ -80,7 +80,7 @@ If you have an existing Terraform Environment - you can simply add a configurati
 ```hcl
 module "terraform-module-knfsd" {
 
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.1"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.2.0"
 
     # Google Cloud Project Configuration
     PROJECT                                     = "my-gcp-project"
@@ -123,7 +123,7 @@ Create a file called `deploy.tf` and add the following contents:
 ```
 module "terraform-module-knfsd" {
 
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.1"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.2.0"
 
     # Google Cloud Project Configuration
     PROJECT                                     = "my-gcp-project"

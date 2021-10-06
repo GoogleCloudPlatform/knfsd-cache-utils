@@ -152,11 +152,11 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   set -e
 
 
-# Disable NFS Mountpoint Timeout
-echo "Disabling NFS Mountpoint Timeout..."
-sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-sysctl --system
-echo "Finished Disabling NFS Mountpoint Timeout..."
+  # Disable NFS Mountpoint Timeout
+  echo "Disabling NFS Mountpoint Timeout..."
+  sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
+  sysctl --system
+  echo "Finished Disabling NFS Mountpoint Timeout..."
 
 
 
