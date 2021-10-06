@@ -193,6 +193,14 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
 done
 echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
 
+
+# Set Readahead Value to 8mb
+for LOCAL_MOUNT in $(cat /proc/mounts | grep nfs | grep -v /proc/fs/nfsd | awk '{print $2}'); do
+   echo "Setting readahead value to 8mb for $LOCAL_MOUNT..."
+   echo 8192 > /sys/class/bdi/0:`stat -c "%d" $LOCAL_MOUNT`/read_ahead_kb
+   echo "Finished readahead value to 8mb for $LOCAL_MOUNT."
+done
+
 # Set VFS Cache Pressure
 echo "Setting VFS Cache Pressure to $VFS_CACHE_PRESSURE..."
 sysctl vm.vfs_cache_pressure=$VFS_CACHE_PRESSURE
