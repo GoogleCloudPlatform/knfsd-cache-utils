@@ -15,7 +15,7 @@
  */
 
 variable "EXPORT_MAP" {
-  type = string
+  type    = string
   default = ""
 }
 
