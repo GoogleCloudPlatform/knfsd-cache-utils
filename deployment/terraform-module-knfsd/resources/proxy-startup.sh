@@ -190,9 +190,6 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   # Mount the NFS Server export
   mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
-  set -e
-
-
   # Discover NFS crossmounts via tree command
   echo "Discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
   tree -d $LOCAL_EXPORT >/dev/null
