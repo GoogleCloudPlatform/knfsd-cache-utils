@@ -18,7 +18,7 @@
 resource "google_compute_instance_template" "nfsproxy-template" {
 
   name_prefix      = var.PROXY_BASENAME
-  machine_type     = "n1-highmem-16"
+  machine_type     = var.MACHINE_TYPE
   min_cpu_platform = "Intel Skylake"
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
@@ -34,37 +34,16 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     disk_size_gb = "100"
   }
 
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-1"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-2"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-3"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-4"
-    disk_size_gb = 375
+  dynamic "disk" {
+    for_each = toset(var.LOCAL_SSDS)
+    content {
+      interface    = "NVME"
+      disk_type    = "local-ssd"
+      type         = "SCRATCH"
+      mode         = "READ_WRITE"
+      device_name  = disk.value
+      disk_size_gb = 375
+    }
   }
 
 

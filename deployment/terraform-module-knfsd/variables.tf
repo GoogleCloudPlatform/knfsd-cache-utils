@@ -133,11 +133,21 @@ variable "KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD" {
 }
 
 variable "CUSTOM_PRE_STARTUP_SCRIPT" {
-  default = "echo \"Running default pre startup script. No action taken.\""
+  default = "echo 'Running default pre startup script. No action taken.'"
   type    = string
 }
 
 variable "CUSTOM_POST_STARTUP_SCRIPT" {
-  default = "echo \"Running default post startup script. No action taken.\""
+  default = "echo 'Running default post startup script. No action taken.'"
+  type    = string
+}
+
+variable "LOCAL_SSDS" {
+  default = ["local-ssd-1", "local-ssd-2", "local-ssd-3", "local-ssd-4"]
+  type    = list(string)
+}
+
+variable "MACHINE_TYPE" {
+  default = "n1-highmem-16"
   type    = string
 }
