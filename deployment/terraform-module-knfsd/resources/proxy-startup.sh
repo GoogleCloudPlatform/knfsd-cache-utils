@@ -73,9 +73,9 @@ function mount_nfs_server() {
 FSID=10 # Set Initial FSID
 function add_nfs_export() {
 
-  echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
-  echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
-  echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+  echo "Creating NFS share export for $1..."
+  echo "$1   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
+  echo "Finished creating NFS share export for $1."
 
   FSID=$((FSID + 10))
 
