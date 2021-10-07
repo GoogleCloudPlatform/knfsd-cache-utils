@@ -88,6 +88,8 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     COLLECTD_ROOT_EXPORT_SCRIPT = file("${path.module}/resources/monitoring/export-root.sh")
     startup-script              = file("${path.module}/resources/proxy-startup.sh")
     NFS_KERNEL_SERVER_CONF      = file("${path.module}/resources/nfs-kernel-server-conf")
+    CUSTOM_PRE_STARTUP_SCRIPT   = var.CUSTOM_PRE_STARTUP_SCRIPT
+    CUSTOM_POST_STARTUP_SCRIPT  = var.CUSTOM_POST_STARTUP_SCRIPT
     serial-port-enable          = "TRUE"
   }
 

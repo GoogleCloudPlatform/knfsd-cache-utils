@@ -131,3 +131,13 @@ variable "KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD" {
   default = 250
   type    = number
 }
+
+variable "CUSTOM_PRE_STARTUP_SCRIPT" {
+  default = "echo \"Running default pre startup script. No action taken.\""
+  type    = string
+}
+
+variable "CUSTOM_POST_STARTUP_SCRIPT" {
+  default = "echo \"Running default post startup script. No action taken.\""
+  type    = string
+}

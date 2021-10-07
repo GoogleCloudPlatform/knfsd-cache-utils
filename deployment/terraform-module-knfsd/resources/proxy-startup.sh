@@ -96,7 +96,16 @@ COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
 NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
+CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
+CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
 echo "Done reading metadata."
+
+# Run the CUSTOM_PRE_STARTUP_SCRIPT
+echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
+echo "$CUSTOM_PRE_STARTUP_SCRIPT" > /custom-pre-startup-script.sh
+chmod +x /custom-pre-startup-script.sh
+bash /custom-pre-startup-script.sh
+echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
 
 # List attatched NVME local SSDs
 echo "Detecting local NVMe drives..."
@@ -247,9 +256,17 @@ else
   echo "Metrics are disabled. Skipping..."
 fi
 
+# Start NFS Server
 echo "Starting nfs-kernel-server..."
 systemctl start portmap
 systemctl start nfs-kernel-server
 echo "Finished starting nfs-kernel-server..."
+
+# Run the CUSTOM_POST_STARTUP_SCRIPT
+echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
+echo "$CUSTOM_POST_STARTUP_SCRIPT" > /custom-post-startup-script.sh
+chmod +x /custom-post-startup-script.sh
+bash /custom-post-startup-script.sh
+echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
 
 echo "Reached Proxy Startup Exit. Happy caching!"
