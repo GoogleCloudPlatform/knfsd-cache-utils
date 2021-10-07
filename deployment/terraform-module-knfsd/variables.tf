@@ -24,6 +24,11 @@ variable "DISCO_MOUNT_EXPORT_MAP" {
   default = ""
 }
 
+variable "EXPORT_HOST_AUTO_DETECT" {
+  type    = string
+  default = ""
+}
+
 variable "EXPORT_CIDR" {
   type    = string
   default = "10.0.0.0/8"

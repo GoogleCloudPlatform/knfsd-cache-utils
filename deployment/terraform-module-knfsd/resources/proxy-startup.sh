@@ -28,6 +28,7 @@ function get_attribute() {
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
+EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
@@ -135,6 +136,53 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
 
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
+
+# Loop through $EXPORT_HOST_AUTO_DETECT and detect re-export mount NFS Exports
+echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
+for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
+
+  # Detect the mounts on the NFS Server
+  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}'); do
+
+    # Make export directory
+    mkdir -p $REMOTE_EXPORT
+
+    # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
+    set +e
+    while true; do
+      echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
+      mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $REMOTE_EXPORT
+      if [ $? = 0 ]; then
+        echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
+        break
+      else
+        echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
+        sleep 15
+      fi
+    done
+    set -e
+
+
+    # Create /etc/exports entry for filesystem
+    echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
+    echo "$REMOTE_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
+    FSID=$((FSID + 10))
+    echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+
+    # If NFS Client Timeout has not yet been disabled, disable it
+    if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
+      echo "Disabling NFS Mountpoint Timeout..."
+      sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
+      sysctl --system
+      echo "Finished Disabling NFS Mountpoint Timeout..."
+      NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
+    fi
+
+  done
+
+
+done
+echo "Finished processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)."
 
 # Loop through $DISCO_MOUNT_EXPORT_MAP and mount each share defined in the DISCO_MOUNT_EXPORT_MAP
 echo "Beginning processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)..."

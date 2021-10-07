@@ -75,6 +75,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
   metadata = {
     EXPORT_MAP                  = var.EXPORT_MAP
+    EXPORT_HOST_AUTO_DETECT     = var.EXPORT_HOST_AUTO_DETECT
     DISCO_MOUNT_EXPORT_MAP      = var.DISCO_MOUNT_EXPORT_MAP
     EXPORT_CIDR                 = var.EXPORT_CIDR
     NCONNECT_VALUE              = var.NCONNECT_VALUE
