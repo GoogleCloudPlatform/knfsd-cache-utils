@@ -18,12 +18,45 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Retrieves an attribute from VM Metadata Server
+# get_attribute() retrieves an attribute from VM Metadata Server (https://cloud.google.com/compute/docs/metadata/overview)
 # @param (str) attribute name
 function get_attribute() {
   sleep 1
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
+
+# mount_nfs_server() mounts an NFS Server from the cache
+# @param (str) NFS Sever IP
+# @param (str) NFS Server Export Path
+# @param (str) Local Mount Path
+function mount_nfs_server() {
+
+  # Make the local export directory
+  mkdir -p $3
+
+  # Disable exit on non-zero code and try to mount the NFS Share 3 times 60 seconds apart.
+  set +e
+  ITER=1
+  until [ "$ITER" -ge 4 ]
+  do
+    echo "(Attempt $ITER/3) Mouting NFS Share: $1:$2..."
+    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $1:$2 $3
+    if [ $? = 0 ]; then
+      echo "NFS mount succeeded for $1:$2."
+      break
+    else
+      if [ $ITER = 3 ]; then
+        echo "NFS mount failed for $1:$2. Maximum attempts reached, exiting with status 1..."
+        exit 1
+      fi
+      echo "NFS mount failed for $1:$2. Retrying after 60 seconds..."
+      sleep 60
+    fi
+  done
+  set -e
+
+}
+
 
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
@@ -98,23 +131,8 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
-  # Make the local export directory
-  mkdir -p $LOCAL_EXPORT
-
-  # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
-  set +e
-  while true; do
-    echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
-    if [ $? = 0 ]; then
-      echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
-      break
-    else
-      echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
-      sleep 15
-    fi
-  done
-  set -e
+  # Mount the NFS Server export
+  mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
 
   # Create /etc/exports entry for filesystem
   echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
@@ -144,24 +162,8 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
   # Detect the mounts on the NFS Server
   for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}'); do
 
-    # Make export directory
-    mkdir -p $REMOTE_EXPORT
-
-    # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
-    set +e
-    while true; do
-      echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-      mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $REMOTE_EXPORT
-      if [ $? = 0 ]; then
-        echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
-        break
-      else
-        echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
-        sleep 15
-      fi
-    done
-    set -e
-
+    # Mount the NFS Server export
+    mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
     # Create /etc/exports entry for filesystem
     echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
@@ -193,22 +195,8 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
-  # Make the local export directory
-  mkdir -p $LOCAL_EXPORT
-
-  # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
-  set +e
-  while true; do
-    echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
-    if [ $? = 0 ]; then
-      echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
-      break
-    else
-      echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
-      sleep 15
-    fi
-  done
+  # Mount the NFS Server export
+  mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
   # If NFS Client Timeout has not yet been disabled, disable it
   if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
