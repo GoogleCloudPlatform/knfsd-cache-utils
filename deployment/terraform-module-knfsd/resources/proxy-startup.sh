@@ -57,6 +57,20 @@ function mount_nfs_server() {
 
 }
 
+# add_nfs_export() adds an entry to /etc/exports
+# @param (str) Local Directory
+# @param (str) Special Options
+FSID=10 # Set Initial FSID
+function add_nfs_export() {
+
+  echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
+  echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
+  echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+
+  FSID=$((FSID + 10))
+
+}
+
 
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
@@ -116,9 +130,6 @@ else
   FSC=
 fi
 
-# Set the FSID
-FSID=10
-
 # Set a variable to track if we have set the mountpoint timeout
 NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="false"
 
@@ -135,13 +146,7 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
 
   # Create /etc/exports entry for filesystem
-  echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
-  echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
-  echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
-
-
-  # Increment FSID
-  FSID=$((FSID + 10))
+  add_nfs_export "$LOCAL_EXPORT" ""
 
   # If NFS Client Timeout has not yet been disabled, disable it
   if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
@@ -166,10 +171,7 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
     mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
     # Create /etc/exports entry for filesystem
-    echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
-    echo "$REMOTE_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
-    FSID=$((FSID + 10))
-    echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
+    add_nfs_export "$REMOTE_EXPORT" ""
 
     # If NFS Client Timeout has not yet been disabled, disable it
     if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
@@ -216,15 +218,9 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   echo "Finished discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
 
   # Create an individual export for each crossmount
-  echo "Creating NFS share exports for $REMOTE_IP:$REMOTE_EXPORT..."
   for mountpoint in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT | awk '{print $6}'); do
-    echo "$mountpoint   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash,crossmnt)" >>/etc/exports
-    FSID=$((FSID + 10))
+    add_nfs_export "$mountpoint" ",crossmnt"
   done
-
-
-  # Increment FSID
-  FSID=$((FSID + 10))
 
 done
 echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
