@@ -29,6 +29,7 @@ function get_attribute() {
 # @param (str) NFS Sever IP
 # @param (str) NFS Server Export Path
 # @param (str) Local Mount Path
+NFS_CLIENT_MOUNT_TIMEOUT_DISABLED=false # Set Initial value
 function mount_nfs_server() {
 
   # Make the local export directory
@@ -54,6 +55,15 @@ function mount_nfs_server() {
     fi
   done
   set -e
+
+  # If NFS Client Timeout has not yet been disabled, disable it
+  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
+    echo "Disabling NFS Mountpoint Timeout..."
+    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
+    sysctl --system
+    echo "Finished Disabling NFS Mountpoint Timeout."
+    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
+  fi
 
 }
 
@@ -130,8 +140,6 @@ else
   FSC=
 fi
 
-# Set a variable to track if we have set the mountpoint timeout
-NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="false"
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
@@ -148,15 +156,6 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   # Create /etc/exports entry for filesystem
   add_nfs_export "$LOCAL_EXPORT" ""
 
-  # If NFS Client Timeout has not yet been disabled, disable it
-  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
-    echo "Disabling NFS Mountpoint Timeout..."
-    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-    sysctl --system
-    echo "Finished Disabling NFS Mountpoint Timeout..."
-    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
-  fi
-
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
 
@@ -172,15 +171,6 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
 
     # Create /etc/exports entry for filesystem
     add_nfs_export "$REMOTE_EXPORT" ""
-
-    # If NFS Client Timeout has not yet been disabled, disable it
-    if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
-      echo "Disabling NFS Mountpoint Timeout..."
-      sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-      sysctl --system
-      echo "Finished Disabling NFS Mountpoint Timeout..."
-      NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
-    fi
 
   done
 
@@ -199,15 +189,6 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
 
   # Mount the NFS Server export
   mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
-
-  # If NFS Client Timeout has not yet been disabled, disable it
-  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
-    echo "Disabling NFS Mountpoint Timeout..."
-    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-    sysctl --system
-    echo "Finished Disabling NFS Mountpoint Timeout..."
-    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
-  fi
 
   set -e
 
