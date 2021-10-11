@@ -29,7 +29,6 @@ function get_attribute() {
 # @param (str) NFS Sever IP
 # @param (str) NFS Server Export Path
 # @param (str) Local Mount Path
-NFS_CLIENT_MOUNT_TIMEOUT_DISABLED=false # Set Initial value
 function mount_nfs_server() {
 
   # Make the local export directory
@@ -55,15 +54,6 @@ function mount_nfs_server() {
     fi
   done
   set -e
-
-  # If NFS Client Timeout has not yet been disabled, disable it
-  if [[ $NFS_CLIENT_MOUNT_TIMEOUT_DISABLED == "false" ]]; then
-    echo "Disabling NFS Mountpoint Timeout..."
-    sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-    sysctl --system
-    echo "Finished Disabling NFS Mountpoint Timeout."
-    NFS_CLIENT_MOUNT_TIMEOUT_DISABLED="true"
-  fi
 
 }
 
@@ -106,6 +96,12 @@ echo "$CUSTOM_PRE_STARTUP_SCRIPT" > /custom-pre-startup-script.sh
 chmod +x /custom-pre-startup-script.sh
 bash /custom-pre-startup-script.sh
 echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
+
+# Set NFS Client Timeout
+# Load NFS if it isn't already loaded
+modprobe nfs nfs_mountpoint_expiry_timeout=-1
+# In case NFS was already loaded set the option directly
+sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
 
 # List attatched NVME local SSDs
 echo "Detecting local NVMe drives..."
