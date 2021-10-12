@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 # Retrieves an attribute from VM Metadata Server
 # @param (str) attribute name
 function get_attribute() {
-  curl -Ss "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
+    curl -Ss "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
 # Get the Hostname, Set a 60 seocnd Interval and get the Load Balancer IP address
@@ -29,24 +29,45 @@ LOADBALANCER_IP_ADDRESS=$(get_attribute LOADBALANCER_IP)
 while sleep "$INTERVAL"
 do
 
-# Get the number of NFS Clients from Netstat
-num_clients=$(netstat -an | grep $LOADBALANCER_IP_ADDRESS:2049 | grep ESTABLISHED | wc -l)
-echo "PUTVAL $HOSTNAME/exec-nfs_connections/gauge-usage interval=$INTERVAL N:$num_clients"
+    # Get the number of NFS Clients from Netstat
+    num_clients=$(netstat -an | grep $LOADBALANCER_IP_ADDRESS:2049 | grep ESTABLISHED | wc -l)
+    echo "PUTVAL $HOSTNAME/exec-nfs_connections/gauge-usage interval=$INTERVAL N:$num_clients"
 
-# Get the nfs_inode_cache_active_objects from the cached file
-nfs_inode_cache_active_objects=$(cat /statsexport/nfs_inode_cache_active_objects)
-echo "PUTVAL $HOSTNAME/exec-nfs_inode_cache_active_objects/gauge-usage interval=$INTERVAL N:$nfs_inode_cache_active_objects"
+    # Get the nfs_inode_cache_active_objects from the cached file
+    nfs_inode_cache_active_objects=$(cat /statsexport/nfs_inode_cache_active_objects)
+    echo "PUTVAL $HOSTNAME/exec-nfs_inode_cache_active_objects/gauge-usage interval=$INTERVAL N:$nfs_inode_cache_active_objects"
 
-# Get the nfs_inode_cache_objsize from the cached file
-nfs_inode_cache_objsize=$(cat /statsexport/nfs_inode_cache_objsize)
-echo "PUTVAL $HOSTNAME/exec-nfs_inode_cache_objsize/gauge-usage interval=$INTERVAL N:$nfs_inode_cache_objsize"
+    # Get the nfs_inode_cache_objsize from the cached file
+    nfs_inode_cache_objsize=$(cat /statsexport/nfs_inode_cache_objsize)
+    echo "PUTVAL $HOSTNAME/exec-nfs_inode_cache_objsize/gauge-usage interval=$INTERVAL N:$nfs_inode_cache_objsize"
 
-# Get the dentry_cache_active_objects from the cached file
-dentry_cache_active_objects=$(cat /statsexport/dentry_cache_active_objects)
-echo "PUTVAL $HOSTNAME/exec-dentry_cache_active_objects/gauge-usage interval=$INTERVAL N:$dentry_cache_active_objects"
+    # Get the dentry_cache_active_objects from the cached file
+    dentry_cache_active_objects=$(cat /statsexport/dentry_cache_active_objects)
+    echo "PUTVAL $HOSTNAME/exec-dentry_cache_active_objects/gauge-usage interval=$INTERVAL N:$dentry_cache_active_objects"
 
-# Get the dentry_cache_objsize from the cached file
-dentry_cache_objsize=$(cat /statsexport/dentry_cache_objsize)
-echo "PUTVAL $HOSTNAME/exec-dentry_cache_objsize/gauge-usage interval=$INTERVAL N:$dentry_cache_objsize"
+    # Get the dentry_cache_objsize from the cached file
+    dentry_cache_objsize=$(cat /statsexport/dentry_cache_objsize)
+    echo "PUTVAL $HOSTNAME/exec-dentry_cache_objsize/gauge-usage interval=$INTERVAL N:$dentry_cache_objsize"
+
+    for FILE in /statsexport/nfsiostat/*
+    do
+        SNAPSHOT=$(tail -n 9 ${FILE})
+        MOUNT=$(echo "${SNAPSHOT}" | head -1 | awk '{print $1}')
+        MOUNT_FRIENDLY=$(echo "${MOUNT}" | sed 's/\//$/g')
+        READ_RTT=$(echo "${SNAPSHOT}" | grep -A 1 read | grep -v read | awk '{print $6}')
+        READ_EXE=$(echo "${SNAPSHOT}" | grep -A 1 read | grep -v read | awk '{print $7}')
+        WRITE_RTT=$(echo "${SNAPSHOT}" | grep -A 1 write | grep -v write | awk '{print $6}')
+        WRITE_EXE=$(echo "${SNAPSHOT}" | grep -A 1 write | grep -v write | awk '{print $7}')
+        OPS_PER_SECOND=$(echo "${SNAPSHOT}" | grep -A 1 "rpc bklog" | grep -v "rpc bklog" | awk '{print $1}')
+        RPC_BACKLOG=$(echo "${SNAPSHOT}" | grep -A 1 "rpc bklog" | grep -v "rpc bklog" | awk '{print $2}')
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_mount_read_rtt/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$READ_RTT"
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_mount_read_exe/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$READ_EXE"
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_mount_write_rtt/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$WRITE_RTT"
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_mount_write_exe/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$WRITE_EXE"
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_ops_per_second/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$OPS_PER_SECOND"
+        echo "PUTVAL $HOSTNAME/exec-nfsiostat_rpc_backlog/gauge-\"$MOUNT_FRIENDLY\" interval=$INTERVAL N:$RPC_BACKLOG"
+        >$FILE
+    done
+
 
 done

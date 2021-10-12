@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
- # Autoscaler that scales up the Knfsd cluster depending on the number of NFS Connections
+# Autoscaler that scales up the Knfsd cluster depending on the number of NFS Connections
 resource "google_compute_autoscaler" "knfsd-autoscaler" {
 
   // Count is used here to determine if the autoscaler policy should be created

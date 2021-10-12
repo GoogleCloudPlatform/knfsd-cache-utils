@@ -18,16 +18,64 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Retrieves an attribute from VM Metadata Server
+# get_attribute() retrieves an attribute from VM Metadata Server (https://cloud.google.com/compute/docs/metadata/overview)
 # @param (str) attribute name
 function get_attribute() {
   sleep 1
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
+# mount_nfs_server() mounts an NFS Server from the cache
+# @param (str) NFS Sever IP
+# @param (str) NFS Server Export Path
+# @param (str) Local Mount Path
+function mount_nfs_server() {
+
+  # Make the local export directory
+  mkdir -p $3
+
+  # Disable exit on non-zero code and try to mount the NFS Share 3 times 60 seconds apart.
+  set +e
+  ITER=1
+  until [ "$ITER" -ge 4 ]
+  do
+    echo "(Attempt $ITER/3) Mouting NFS Share: $1:$2..."
+    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $1:$2 $3
+    if [ $? = 0 ]; then
+      echo "NFS mount succeeded for $1:$2."
+      break
+    else
+      if [ $ITER = 3 ]; then
+        echo "NFS mount failed for $1:$2. Maximum attempts reached, exiting with status 1..."
+        exit 1
+      fi
+      echo "NFS mount failed for $1:$2. Retrying after 60 seconds..."
+      sleep 60
+    fi
+  done
+  set -e
+
+}
+
+# add_nfs_export() adds an entry to /etc/exports
+# @param (str) Local Directory
+# @param (str) Special Options
+FSID=10 # Set Initial FSID
+function add_nfs_export() {
+
+  echo "Creating NFS share export for $1..."
+  echo "$1   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
+  echo "Finished creating NFS share export for $1."
+
+  FSID=$((FSID + 10))
+
+}
+
+
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
+EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
@@ -38,7 +86,22 @@ COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
 NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
+CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
+CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
 echo "Done reading metadata."
+
+# Run the CUSTOM_PRE_STARTUP_SCRIPT
+echo "Running CUSTOM_PRE_STARTUP_SCRIPT..."
+echo "$CUSTOM_PRE_STARTUP_SCRIPT" > /custom-pre-startup-script.sh
+chmod +x /custom-pre-startup-script.sh
+bash /custom-pre-startup-script.sh
+echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
+
+# Set NFS Client Timeout
+# Load NFS if it isn't already loaded
+modprobe nfs nfs_mountpoint_expiry_timeout=-1
+# In case NFS was already loaded set the option directly
+sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
 
 # List attatched NVME local SSDs
 echo "Detecting local NVMe drives..."
@@ -82,13 +145,6 @@ else
   FSC=
 fi
 
-# Disable NFS Mountpoint Timeout
-echo "Disabling NFS Mountpoint Timeout..."
-echo "-1" > /proc/sys/fs/nfs/nfs_mountpoint_timeout 
-echo "Finished Disabling NFS Mountpoint Timeout..."
-
-# Set the FSID
-FSID=10
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
@@ -99,35 +155,33 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
-  # Make the local export directory
-  mkdir -p $LOCAL_EXPORT
-
-  # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
-  set +e
-  while true; do
-    echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
-    if [ $? = 0 ]; then
-      echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
-      break
-    else
-      echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
-      sleep 15
-    fi
-  done
-  set -e
+  # Mount the NFS Server export
+  mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
 
   # Create /etc/exports entry for filesystem
-  echo "Creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT..."
-  echo "$LOCAL_EXPORT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash)" >>/etc/exports
-  echo "Finished creating NFS share export for $REMOTE_IP:$REMOTE_EXPORT."
-
-
-  # Increment FSID
-  FSID=$((FSID + 10))
+  add_nfs_export "$LOCAL_EXPORT" ""
 
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
+
+# Loop through $EXPORT_HOST_AUTO_DETECT and detect re-export mount NFS Exports
+echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
+for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
+
+  # Detect the mounts on the NFS Server
+  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}'); do
+
+    # Mount the NFS Server export
+    mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
+
+    # Create /etc/exports entry for filesystem
+    add_nfs_export "$REMOTE_EXPORT" ""
+
+  done
+
+
+done
+echo "Finished processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)."
 
 # Loop through $DISCO_MOUNT_EXPORT_MAP and mount each share defined in the DISCO_MOUNT_EXPORT_MAP
 echo "Beginning processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)..."
@@ -138,24 +192,8 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
-  # Make the local export directory
-  mkdir -p $LOCAL_EXPORT
-
-  # Disable exit on non-zero code and continuously try to mount the NFS Share. If this takes too long we will be replaced by the mig.
-  set +e
-  while true; do
-    echo "Attempting to mount NFS Share: $REMOTE_IP:$REMOTE_EXPORT..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$REMOTE_EXPORT $LOCAL_EXPORT
-    if [ $? = 0 ]; then
-      echo "NFS mount succeeded for $REMOTE_IP:$REMOTE_EXPORT."
-      break
-    else
-      echo "NFS mount failed for $REMOTE_IP:$REMOTE_EXPORT. Retrying after 15 seconds..."
-      sleep 15
-    fi
-  done
-  set -e
-
+  # Mount the NFS Server export
+  mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
   # Discover NFS crossmounts via tree command
   echo "Discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
@@ -163,18 +201,20 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   echo "Finished discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
 
   # Create an individual export for each crossmount
-  echo "Creating NFS share exports for $REMOTE_IP:$REMOTE_EXPORT..."
   for mountpoint in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT | awk '{print $6}'); do
-    echo "$mountpoint   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash,crossmnt)" >>/etc/exports
-    FSID=$((FSID + 10))
+    add_nfs_export "$mountpoint" ",crossmnt"
   done
-
-
-  # Increment FSID
-  FSID=$((FSID + 10))
 
 done
 echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
+
+
+# Set Readahead Value to 8mb
+for LOCAL_MOUNT in $(cat /proc/mounts | grep nfs | grep -v /proc/fs/nfsd | awk '{print $2}'); do
+   echo "Setting readahead value to 8mb for $LOCAL_MOUNT..."
+   echo 8192 > /sys/class/bdi/0:`stat -c "%d" $LOCAL_MOUNT`/read_ahead_kb
+   echo "Finished readahead value to 8mb for $LOCAL_MOUNT."
+done
 
 # Set VFS Cache Pressure
 echo "Setting VFS Cache Pressure to $VFS_CACHE_PRESSURE..."
@@ -212,9 +252,17 @@ else
   echo "Metrics are disabled. Skipping..."
 fi
 
+# Start NFS Server
 echo "Starting nfs-kernel-server..."
 systemctl start portmap
 systemctl start nfs-kernel-server
 echo "Finished starting nfs-kernel-server..."
+
+# Run the CUSTOM_POST_STARTUP_SCRIPT
+echo "Running CUSTOM_POST_STARTUP_SCRIPT..."
+echo "$CUSTOM_POST_STARTUP_SCRIPT" > /custom-post-startup-script.sh
+chmod +x /custom-post-startup-script.sh
+bash /custom-post-startup-script.sh
+echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
 
 echo "Reached Proxy Startup Exit. Happy caching!"

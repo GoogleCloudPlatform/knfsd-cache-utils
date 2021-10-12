@@ -18,7 +18,7 @@
 resource "google_compute_instance_template" "nfsproxy-template" {
 
   name_prefix      = var.PROXY_BASENAME
-  machine_type     = "n1-highmem-16"
+  machine_type     = var.MACHINE_TYPE
   min_cpu_platform = "Intel Skylake"
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
@@ -34,37 +34,16 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     disk_size_gb = "100"
   }
 
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-1"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-2"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-3"
-    disk_size_gb = 375
-  }
-  disk {
-    interface    = "NVME"
-    disk_type    = "local-ssd"
-    type         = "SCRATCH"
-    mode         = "READ_WRITE"
-    device_name  = "local-ssd-4"
-    disk_size_gb = 375
+  dynamic "disk" {
+    for_each = toset(var.LOCAL_SSDS)
+    content {
+      interface    = "NVME"
+      disk_type    = "local-ssd"
+      type         = "SCRATCH"
+      mode         = "READ_WRITE"
+      device_name  = disk.value
+      disk_size_gb = 375
+    }
   }
 
 
@@ -75,6 +54,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
   metadata = {
     EXPORT_MAP                  = var.EXPORT_MAP
+    EXPORT_HOST_AUTO_DETECT     = var.EXPORT_HOST_AUTO_DETECT
     DISCO_MOUNT_EXPORT_MAP      = var.DISCO_MOUNT_EXPORT_MAP
     EXPORT_CIDR                 = var.EXPORT_CIDR
     NCONNECT_VALUE              = var.NCONNECT_VALUE
@@ -87,6 +67,8 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     COLLECTD_ROOT_EXPORT_SCRIPT = file("${path.module}/resources/monitoring/export-root.sh")
     startup-script              = file("${path.module}/resources/proxy-startup.sh")
     NFS_KERNEL_SERVER_CONF      = file("${path.module}/resources/nfs-kernel-server-conf")
+    CUSTOM_PRE_STARTUP_SCRIPT   = var.CUSTOM_PRE_STARTUP_SCRIPT
+    CUSTOM_POST_STARTUP_SCRIPT  = var.CUSTOM_POST_STARTUP_SCRIPT
     serial-port-enable          = "TRUE"
   }
 
