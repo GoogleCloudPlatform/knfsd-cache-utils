@@ -1,9 +1,6 @@
 # Mac .DS_Store
 .DS_Store
 
-# JSON for IAM Service Accounts
-*.json
-
 # Terraform Binaries
 .terraform
 .terraform.lock.hcl
