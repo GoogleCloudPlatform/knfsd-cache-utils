@@ -1,0 +1,840 @@
+{
+    "displayName": "Knfsd Monitoring Dashboard (v33)",
+    "mosaicLayout": {
+      "columns": 12,
+      "tiles": [
+        {
+          "height": 4,
+          "widget": {
+            "title": "dentry Cache Active Objects",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metadata.system_labels\\.name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/dentry_cache_active_objects\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 11
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "FS-Cache (var/cache/fscache) Free Space",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metadata.system_labels\\.name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"agent.googleapis.com/disk/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"device\"=\"md127\" metric.label.\"state\"=\"free\""
+                    }
+                  }
+                }
+              ],
+              "thresholds": [
+                {
+                  "targetAxis": "Y1",
+                  "value": 5.0
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 3
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Proxy NFS Client Connections",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metadata.system_labels\\.name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfs_connections\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "thresholds": [
+                {
+                  "targetAxis": "Y1",
+                  "value": 400.0
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 8,
+          "yPos": 17
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "NFS inode Cache Object Size",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfs_inode_cache_objsize\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 7
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Memory Utilisation",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"agent.googleapis.com/memory/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"state\"=\"used\""
+                    }
+                  }
+                }
+              ],
+              "thresholds": [
+                {
+                  "targetAxis": "Y1",
+                  "value": 80.0
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 37
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "CPU Utilisation",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metric.label.\"instance_name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "thresholds": [
+                {
+                  "targetAxis": "Y1",
+                  "value": 0.800000011920929
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 37
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "NFS inode Cache Active Objects",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metadata.system_labels\\.name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfs_inode_cache_active_objects\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 7
+        },
+        {
+          "height": 3,
+          "widget": {
+            "text": {
+              "content": "The following graphs show information on the Knfsd caching layers. Knfsd implements two primary caching layers:\n\n**1) L1 Cache:** The standard Linux filesystem cache.  \n**1) L2 Cache:** A filesystem caching layer implemented by FS-Cache.\n\nThe FS-Cache layer handles the majority of the file caching, and the L1 layer handles most of the metadata caching.",
+              "format": "MARKDOWN"
+            },
+            "title": "Cache Overview"
+          },
+          "width": 12
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "FS-Cache (var/cache/fscache) Read Throughput",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metric.labels.instance_name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "perSeriesAligner": "ALIGN_RATE"
+                      },
+                      "filter": "metric.type=\"compute.googleapis.com/instance/disk/read_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                      "secondaryAggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"instance_name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      }
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 3
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "FS-Cache (/var/cache/fscache) Write Throughput",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metric.labels.instance_name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "perSeriesAligner": "ALIGN_RATE"
+                      },
+                      "filter": "metric.type=\"compute.googleapis.com/instance/disk/write_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                      "secondaryAggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"instance_name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      }
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 8,
+          "yPos": 3
+        },
+        {
+          "height": 2,
+          "widget": {
+            "text": {
+              "content": "The following graphs show information on the Knfsd node network activity.  \n\n\nIngress is. good indicator of how much data is being pulled from on-premise, and egress is a good indicator of how much data is being served to cloud render clients.",
+              "format": "RAW"
+            },
+            "title": "Networking Activity"
+          },
+          "width": 12,
+          "yPos": 15
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache Ingress Traffic",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metric.labels.instance_name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "perSeriesAligner": "ALIGN_RATE"
+                      },
+                      "filter": "metric.type=\"compute.googleapis.com/instance/network/received_bytes_count\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                      "secondaryAggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"instance_name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      }
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 17
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache Egress Traffic",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metric.labels.instance_name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "perSeriesAligner": "ALIGN_RATE"
+                      },
+                      "filter": "metric.type=\"compute.googleapis.com/instance/network/sent_bytes_count\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                      "secondaryAggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"instance_name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      }
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 17
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Client to Knfsd Latency (via Internal Load Balancer)",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${resource.labels.backend_target_name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "perSeriesAligner": "ALIGN_PERCENTILE_50"
+                      },
+                      "filter": "metric.type=\"loadbalancing.googleapis.com/l3/internal/rtt_latencies\" resource.type=\"internal_tcp_lb_rule\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 23
+        },
+        {
+          "height": 2,
+          "widget": {
+            "text": {
+              "content": "The following graphs show information on the NFS latency  and operations between both:\n\n**A)** KNSFD --> On-Premise (Measured through `nfsiostat`).  \n**B)** Clients --> Knfsd (Measured through the Internal Load Balancer metrics in GCP and reported at an Instance Group level)",
+              "format": "MARKDOWN"
+            },
+            "title": "NFS Latency & Stats"
+          },
+          "width": 12,
+          "yPos": 21
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem Mount Read EXE",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_mount_read_exe\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 27
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem Mount Read RTT",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_mount_read_rtt\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 8,
+          "yPos": 23
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem Mount Write RTT",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_mount_write_rtt\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 27
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem Mount Write EXE",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_mount_write_exe\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 8,
+          "yPos": 27
+        },
+        {
+          "height": 2,
+          "widget": {
+            "text": {
+              "content": "The following graphs show general Knfsd node performance stats",
+              "format": "RAW"
+            },
+            "title": "Knfsd Node Performance"
+          },
+          "width": 12,
+          "yPos": 35
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Dentry Cache Object Size",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "legendTemplate": "${metadata.system_labels\\.name}",
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_SUM",
+                        "groupByFields": [
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/dentry_cache_objsize\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 8,
+          "yPos": 7
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem Operations Per Second",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_ops_per_second\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "xPos": 4,
+          "yPos": 23
+        },
+        {
+          "height": 4,
+          "widget": {
+            "title": "Cache to On-Prem RPC Backlog Size",
+            "xyChart": {
+              "chartOptions": {
+                "mode": "COLOR"
+              },
+              "dataSets": [
+                {
+                  "minAlignmentPeriod": "60s",
+                  "plotType": "LINE",
+                  "targetAxis": "Y1",
+                  "timeSeriesQuery": {
+                    "timeSeriesFilter": {
+                      "aggregation": {
+                        "alignmentPeriod": "60s",
+                        "crossSeriesReducer": "REDUCE_MEAN",
+                        "groupByFields": [
+                          "metric.label.\"mount_name\"",
+                          "metadata.system_labels.\"name\""
+                        ],
+                        "perSeriesAligner": "ALIGN_MEAN"
+                      },
+                      "filter": "metric.type=\"custom.googleapis.com/knfsd/nfsiostat_rpc_backlog\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\""
+                    }
+                  }
+                }
+              ],
+              "timeshiftDuration": "0s",
+              "yAxis": {
+                "label": "y1Axis",
+                "scale": "LINEAR"
+              }
+            }
+          },
+          "width": 4,
+          "yPos": 31
+        }
+      ]
+    }
+  }
