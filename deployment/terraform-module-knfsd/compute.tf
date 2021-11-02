@@ -35,13 +35,13 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   }
 
   dynamic "disk" {
-    for_each = toset(var.LOCAL_SSDS)
+    for_each = range(1, var.LOCAL_SSDS+1)
     content {
       interface    = "NVME"
       disk_type    = "local-ssd"
       type         = "SCRATCH"
       mode         = "READ_WRITE"
-      device_name  = disk.value
+      device_name  = "local-ssd-${disk.value}"
       disk_size_gb = 375
     }
   }
@@ -90,7 +90,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
       scopes = ["logging-write", "monitoring-write"]
     }
   }
-
 }
 
 # Healthcheck on port 2049, used for monitoring the NFS Health Status

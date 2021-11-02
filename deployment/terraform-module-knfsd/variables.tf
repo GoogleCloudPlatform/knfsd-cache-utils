@@ -143,8 +143,8 @@ variable "CUSTOM_POST_STARTUP_SCRIPT" {
 }
 
 variable "LOCAL_SSDS" {
-  default = ["local-ssd-1", "local-ssd-2", "local-ssd-3", "local-ssd-4"]
-  type    = list(string)
+  default = 4
+  type    = number
 }
 
 variable "MACHINE_TYPE" {
