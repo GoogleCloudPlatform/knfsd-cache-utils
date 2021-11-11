@@ -33,4 +33,4 @@ You should start with the [Build of Knfsd Image](image/). Once built, you can us
 
 ## Testing the Image
 
-There is a basic [suite of smoke tests](smoke-tests/) that can be run after building a new image. These tests check for common configuration issues such as the correct kernel version, cachefilesd is enabled and active, etc.
+There is a basic [suite of smoke tests](image/smoke-tests/) that can be run after building a new image. These tests check for common configuration issues such as the correct kernel version, cachefilesd is enabled and active, etc.
