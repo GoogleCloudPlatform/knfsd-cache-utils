@@ -16,7 +16,8 @@
 
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
-
+  project          = var.PROJECT
+  region           = var.REGION
   name_prefix      = var.PROXY_BASENAME
   machine_type     = var.MACHINE_TYPE
   min_cpu_platform = "Intel Skylake"
@@ -48,8 +49,9 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
 
   network_interface {
-    network    = var.NETWORK
-    subnetwork = var.SUBNETWORK
+    network            = var.NETWORK
+    subnetwork         = var.SUBNETWORK
+    subnetwork_project = var.PROJECT
   }
 
   metadata = {
@@ -95,7 +97,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
 # Healthcheck on port 2049, used for monitoring the NFS Health Status
 resource "google_compute_health_check" "autohealing" {
-
+  project             = var.PROJECT
   name                = "${var.PROXY_BASENAME}-autohealing-health-check"
   check_interval_sec  = 5
   timeout_sec         = 2
@@ -110,9 +112,8 @@ resource "google_compute_health_check" "autohealing" {
 
 # Instance Group Manager for the Knfsd Nodes
 resource "google_compute_instance_group_manager" "proxy-group" {
-
+  project            = var.PROJECT
   name               = "${var.PROXY_BASENAME}-group"
-  depends_on         = [google_compute_instance_template.nfsproxy-template]
   base_instance_name = var.PROXY_BASENAME
   zone               = var.ZONE
   // Set the Target Size to null if autoscaling is enabled
@@ -122,7 +123,6 @@ resource "google_compute_instance_group_manager" "proxy-group" {
   version {
     name              = "v1"
     instance_template = google_compute_instance_template.nfsproxy-template.self_link
-
   }
 
   # We use a dynamic block for auto_healing_policies here as we only want to assign a healthcheck if the ENABLE_AUTOHEALING_HEALTHCHECKS is set
@@ -143,6 +143,7 @@ resource "google_compute_firewall" "allow-tcp-healthcheck" {
   // If var.AUTO_CREATE_FIREWALL_RULES is true then we want 1 firewall rule, else 0
   count = var.AUTO_CREATE_FIREWALL_RULES ? 1 : 0
 
+  project  = var.PROJECT
   name     = "allow-nfs-tcp-healthcheck"
   network  = var.NETWORK
   priority = 1000
@@ -158,7 +159,8 @@ resource "google_compute_firewall" "allow-tcp-healthcheck" {
 
 # Load Balancer backend service for the Knfsd Cluster
 resource "google_compute_region_backend_service" "nfsproxy" {
-
+  project               = var.PROJECT
+  region                = var.REGION
   name                  = "${var.PROXY_BASENAME}-backend-service"
   health_checks         = [google_compute_health_check.autohealing.self_link]
   load_balancing_scheme = "INTERNAL"
@@ -169,13 +171,13 @@ resource "google_compute_region_backend_service" "nfsproxy" {
     description = "Load Balancer backend for nfsProxy managed instance group."
     group       = google_compute_instance_group_manager.proxy-group.instance_group
   }
-
 }
 
 # Load Balancer forwarding rule service for the Knfsd Cluster
 resource "google_compute_forwarding_rule" "default" {
-  name                  = var.PROXY_BASENAME
+  project               = var.PROJECT
   region                = var.REGION
+  name                  = var.PROXY_BASENAME
   load_balancing_scheme = "INTERNAL"
   backend_service       = google_compute_region_backend_service.nfsproxy.self_link
   ip_address            = google_compute_address.nfsproxy_static.address
