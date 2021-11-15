@@ -115,6 +115,34 @@ output "load_balancer_dns_address" {
 
 Edit the above [configuration variables](#Configuration-Variables) to match your desired configuration.
 
+### Provider Default Values
+
+The Terraform module also supports supplying the project, region and zone using provider default values. Set the project, region, and/or zone properties on the Google Terraform provider. Omit these properties from the module.
+
+```terraform
+provider "google" {
+  project     = "my-gcp-project
+  region      = "us-west1"
+  zone        = "us-west1-a
+}
+
+module "nfs_proxy" {
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.3.0"
+
+    # Network Configuration
+    NETWORK                        = "my-vpc"
+    SUBNETWORK                     = "my-subnet"
+    AUTO_CREATE_FIREWALL_RULES     = false
+    LOADBALANCER_IP                = "10.67.4.5"
+
+    # Knfsd Proxy Configuration
+    PROXY_IMAGENAME                = "knfsd-base-image"
+    EXPORT_MAP                     = "10.0.5.5;/remoteexport;/remoteexport"
+    PROXY_BASENAME                 = "rendercluster1"
+    KNFSD_NODES                    = 3
+}
+```
+
 ### Generate Service Account
 
 **If you are using [Google Cloud Shell](https://cloud.google.com/shell), or a local workstation with [gcloud](https://cloud.google.com/sdk/gcloud) installed and authenticated then you can skip this step and instead comment out the `credentials` field in the Terraform Google Provider to make Terraform use your credentials. Your account will need a minimum of the permissions described below**
@@ -162,11 +190,11 @@ terraform apply
 
 ### Google Cloud Project Configuration
 
-| Variable | Description                                                                                                                 | Required | Default      |
-| -------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
-| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to.                                                       | True     | N/A          |
-| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources. | True     | `us-west1`   |
-| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources.      | True     | `us-west1-a` |
+| Variable | Description                                                                                                                                                                     | Required | Default |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to. If it is not provided, the provider project is used.                                                      | False    | N/A     |
+| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources. If it is not provided, the provider region is used. | False    | N/A     |
+| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources. If it is not provided, the provider zone is used.        | False    | N/A     |
 
 ### Network Configuration
 

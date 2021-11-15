@@ -1,8 +1,17 @@
 # Next
 
+* (GCP) Fixed specifying project/region/zone
 * (GCP) Changed `LOCAL_SSDS` to a simple count of the number of drives.
 * (GCP) Prevent mounting over system directories
 * (GCP) Added `EXCLUDED_EXPORTS` option to exclude exports from auto-discovery
+
+## (GCP) Fixed specifying project/region/zone
+
+Project, region and zone no longer need to be configured on the Google provider and provided parameters to the module.
+
+If project, region and/or zone are set on the module, these values will be used instead of the values on the provider.
+
+Project, region and zone will default to the provider's value if not set on the module.
 
 ## (GCP) LOCAL_SSDS changed to count
 
