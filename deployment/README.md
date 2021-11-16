@@ -250,3 +250,13 @@ terraform apply
 | KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD | The number of Client Connections to Knfsd that should be targeted for each instance (exceeding will trigger a scale-up).               | False    | `250`   |
 | KNFSD_AUTOSCALING_MIN_INSTANCES             | The minimum number of Knfsd instances to set regardless of the traffic volumes.                                                        | False    | `1`     |
 | KNFSD_AUTOSCALING_MAX_INSTANCES             | The maximum number of Knfsd instances to set regardless of the traffic volumes.                                                        | False    | `10`    |
+
+## Caveats
+
+### Limitations on export names
+
+The proxy cannot re-export paths that match standard Linux system directories such as `/bin`, `/dev`, `/usr/local/lib`, etc.
+
+While some NFS servers may support creating an export with at path such as `/bin`, attempting to re-export the path via the cache would result in the cache overlaying its local `/bin` directory with the mount.
+
+Also included in the list of protected directories is the `/home` directory. This is because some commands such as `gcloud compute ssh` will look for ssh keys in the home directory, and may create user home directories and ssh keys within the home directories. To prevent this undesired, and unexpected behaviour the `/home` directory is not supported.
