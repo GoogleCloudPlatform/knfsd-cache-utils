@@ -30,3 +30,7 @@ This repository is broken down into two key areas:
 
 
 You should start with the [Build of Knfsd Image](image/). Once built, you can use this image and the [deployment scripts](deployment/) to deploy and operate a Knfsd Cluster on GCP.
+
+## Testing the Image
+
+There is a basic [suite of smoke tests](image/smoke-tests/) that can be run after building a new image. These tests check for common configuration issues such as the correct kernel version, cachefilesd is enabled and active, etc.
