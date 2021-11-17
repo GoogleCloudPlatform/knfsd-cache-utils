@@ -260,3 +260,7 @@ The proxy cannot re-export paths that match standard Linux system directories su
 While some NFS servers may support creating an export with at path such as `/bin`, attempting to re-export the path via the cache would result in the cache overlaying its local `/bin` directory with the mount.
 
 Also included in the list of protected directories is the `/home` directory. This is because some commands such as `gcloud compute ssh` will look for ssh keys in the home directory, and may create user home directories and ssh keys within the home directories. To prevent this undesired, and unexpected behaviour the `/home` directory is not supported.
+
+To check if any exports were skipped, check the logs entries such as:
+
+> startup-script: WARN: skipping export /home because it is a system path

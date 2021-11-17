@@ -84,6 +84,7 @@ PROTECTED_PATHS=(
   # cause issues with the GCP infrastructure such as the "gcloud compute ssh"
   # command. GCP would create user directories and create ssh keys in the home
   # directory.
+  # The root / is also included but this is handled by is_protected_path
   /bin          /boot         /dev          /etc          /home
   /lib          /lib32        /lib64        /libx32       /lost+found
   /opt          /proc         /root         /run          /sbin
