@@ -35,7 +35,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   }
 
   dynamic "disk" {
-    for_each = range(1, var.LOCAL_SSDS+1)
+    for_each = range(1, var.LOCAL_SSDS + 1)
     content {
       interface    = "NVME"
       disk_type    = "local-ssd"
@@ -56,6 +56,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     EXPORT_MAP                  = var.EXPORT_MAP
     EXPORT_HOST_AUTO_DETECT     = var.EXPORT_HOST_AUTO_DETECT
     DISCO_MOUNT_EXPORT_MAP      = var.DISCO_MOUNT_EXPORT_MAP
+    EXCLUDED_EXPORTS            = var.EXCLUDED_EXPORTS
     EXPORT_CIDR                 = var.EXPORT_CIDR
     NCONNECT_VALUE              = var.NCONNECT_VALUE
     VFS_CACHE_PRESSURE          = var.VFS_CACHE_PRESSURE

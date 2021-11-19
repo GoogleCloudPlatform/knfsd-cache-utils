@@ -2,6 +2,7 @@
 
 * (GCP) Changed `LOCAL_SSDS` to a simple count of the number of drives.
 * (GCP) Prevent mounting over system directories
+* (GCP) Added `EXCLUDED_EXPORTS` option to exclude exports from auto-discovery
 
 ## (GCP) LOCAL_SSDS changed to count
 
@@ -25,8 +26,14 @@ The `proxy-startup.sh` script now contains a list of protected directories such 
 
 When the proxy starts up, check the logs entries such as:
 
-> startup-script: WARN: skipping export /home because it is a system path
+> startup-script: ERROR: Cannot mount 10.0.0.2:/home because /home is a system path
 
 The `/home` directory is included in the list of protected directories to avoid unintended interactions, or issues with the GCP infrastructure such as SSH keys. These can be provisioned automatically on compute instances via OS Login or metadata. Commands such as `gcloud compute ssh` can also create SSH keys. These keys will be created in user home folders in the `/home` directory.
 
 For a full list of the paths, see `PROTECTED_PATHS` in [proxy-startup.sh](../../deployment/terraform-module-knfsd/resources/proxy-startup.sh).
+
+## (GCP) Added `EXCLUDED_EXPORTS` option to exclude exports from auto-discovery
+
+This can be used to exclude specific exports when using auto-discovery such as
+`EXPORT_HOST_AUTO_DETECT`. The main use is to exclude any exports that would
+try to mount over a a protected directory such as `/home`.

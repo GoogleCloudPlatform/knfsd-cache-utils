@@ -30,10 +30,10 @@ function get_attribute() {
 # @param (str) NFS Server Export Path
 # @param (str) Local Mount Path
 function mount_nfs_server() {
-
   if is_protected_path "$3"; then
-    echo "WARN: skipping export $3 because it is a system path"
-    return 1
+    # immediatley terminate so that the proxy does not start with a bad configuration
+    echo "ERROR: Cannot mount $1:$2 because $3 a system path"
+    exit 1
   fi
 
   # Make the local export directory
@@ -59,8 +59,6 @@ function mount_nfs_server() {
     fi
   done
   set -e
-
-  return 0
 }
 
 # add_nfs_export() adds an entry to /etc/exports
@@ -85,11 +83,11 @@ PROTECTED_PATHS=(
   # command. GCP would create user directories and create ssh keys in the home
   # directory.
   # The root / is also included but this is handled by is_protected_path
-  /bin          /boot         /dev          /etc          /home
-  /lib          /lib32        /lib64        /libx32       /lost+found
-  /opt          /proc         /root         /run          /sbin
-  /snap         /srv          /sys          /tmp          /usr
-  /var
+  /             /bin          /boot         /dev          /etc
+  /home         /lib          /lib32        /lib64        /libx32
+  /lost+found   /opt          /proc         /root         /run
+  /sbin         /snap         /srv          /sys          /tmp
+  /usr          /var
 
   /usr/bin      /usr/config   /usr/games    /usr/include  /usr/lib
   /usr/lib32    /usr/lib64    /usr/libexec  /usr/libx32   /usr/local
@@ -120,19 +118,38 @@ PROTECTED_PATHS=(
 # @param (str) The path to check
 # @return 0 if the path is protected, non-zero if it is not protected.
 function is_protected_path() {
-  # Ignore root mount in case of an NFS server exporting an NFS 4 style
-  # directory layout.
-  if [[ "$1" == "/" ]]; then
-    return 0
-  fi
-
   for p in "${PROTECTED_PATHS[@]}"; do
     if [[ "$1" == "$p" ]] || [[ "$1" == "$p/" ]]; then
       return 0
     fi
   done
-
   return 1
+}
+
+# is_protected_path() checks if a path is in the excluded export list
+# @param (str) The path to check
+# @return 0 if the path is protected, non-zero if it is not protected.
+function is_excluded_export() {
+  for p in "${EXCLUDED_EXPORTS[@]}"; do
+    if [[ "$1" == "$p" ]] || [[ "$1" == "$p/" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# split() splits a list of comma delimited values
+# Leading and trailing whitespace is trimmed, empty values are ignored.
+# The results are output one item per line.
+function split() {
+	tr ',' '\n' | sed 's/^\s*//; s/\s*$//' | sed '/^$/d'
+}
+
+# trim_slash() removes any trailing slashes from paths
+# For example /local/bin/ will be changed to /local/bin.
+# A special case is made for / which will be left unchanged.
+function trim_slash() {
+  sed '\|^/$| !s|/+$||'
 }
 
 # Get Variables from VM Metadata Server
@@ -140,6 +157,7 @@ echo "Reading metadata from metadata server..."
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
 EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
+readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
 VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
@@ -219,10 +237,10 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
   # Mount the NFS Server export
-  if mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"; then
-    # Create /etc/exports entry for filesystem
-    add_nfs_export "$LOCAL_EXPORT" ""
-  fi
+  mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
+
+  # Create /etc/exports entry for filesystem
+  add_nfs_export "$LOCAL_EXPORT" ""
 
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
@@ -235,7 +253,10 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
   for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}'); do
 
     # Mount the NFS Server export
-    if mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"; then
+    if is_excluded_export "$REMOTE_EXPORT"; then
+      echo "Skipped "$REMOTE_EXPORT", exported was excluded"
+    else
+      mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
       # Create /etc/exports entry for filesystem
       add_nfs_export "$REMOTE_EXPORT" ""
     fi
@@ -256,7 +277,10 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
 
   # Mount the NFS Server export
-  if mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"; then
+  if is_excluded_export "$REMOTE_EXPORT"; then
+    echo "Skipped "$REMOTE_EXPORT", exported was excluded"
+  else
+    mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 
     # Discover NFS crossmounts via tree command
     echo "Discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
