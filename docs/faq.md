@@ -65,3 +65,16 @@ There a few reasons why the entire proxy might be unavailable, such as:
 Because the client mounts the NFS volume using the `hard` option, if the client loses the connection in case of a network issue, the client will wait indefinitely for it to recover.
 
 Once the issue is resolved the client will automatically resume function without any manual intervention.
+
+## Behaviour of ls changes when using the proxy
+
+When going directly to the source server `ls` will show changes immediately,
+but when connecting through the proxy `ls` will continue to show cached changes. This isn't `ls` specific, as the behaviour is built into the kernel's `readdir` function. As any application that performs a directory listing should have the same behaviour.
+
+This happens because `ls` initially bypasses the local cache on the client and always sends `GETATTR` to check the remote directory's `mtime`. If the `mtime` has changed then the client knows its cache is stale and performs a `READDIR`, otherwise the client can use its cache.
+
+When using the proxy, the proxy cannot distinguish between a standard `GETATTR` that should be served from the metadata cache, and a `GETATTR` that is being used for cache invalidation.
+
+`acdirmin` and `acdirmax` can be used to adjust directory metadata's expiry time on the proxy. Lowering this will force the proxy to re-validate the metadata with the source more often. This will result in the proxy detecting changes to the source more quickly but increase the number of metadata requests sent by the proxy to the source.
+
+The proxy will still cache the `READDIR` results even after the directory metadata has expired. If the directory metadata (`mtime`) still matches the proxy will continue to use the cached `READDIR` results.
