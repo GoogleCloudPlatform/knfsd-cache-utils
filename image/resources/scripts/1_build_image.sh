@@ -28,7 +28,7 @@ install_nfs_packages() {
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y cachefilesd rpcbind nfs-kernel-server tree
+    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4 tree
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
     systemctl disable nfs-kernel-server
@@ -46,7 +46,7 @@ install_build_dependencies() {
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
     apt-get upgrade -y
-    apt-get install libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves build-essential libevent-dev libsqlite3-dev libblkid-dev libkeyutils-dev libdevmapper-dev -y
+    apt-get install libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves build-essential libevent-dev libsqlite3-dev libblkid-dev libkeyutils-dev libdevmapper-dev -y
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
@@ -91,7 +91,7 @@ install_stackdriver_agent() {
     curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
     bash add-monitoring-agent-repo.sh
     apt-get update
-    sudo apt-get install -y stackdriver-agent
+    sudo apt-get install -y stackdriver-agent=6.1.4-1.focal
     systemctl disable stackdriver-agent
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
