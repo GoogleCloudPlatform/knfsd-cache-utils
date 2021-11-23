@@ -7,6 +7,7 @@
 * (GCP) Remove --manage-gids from RPCMOUNTDOPTS
 * (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
 * (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
+* (GCP) Packer build script
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -49,3 +50,7 @@ With this change, by default, NFS versions `4.0`, `4.1`, and `4.2` are now disab
 ## (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
 
 Removes the legacy 1 second sleep that is performed before each call to the GCP Metadata server. This speeds up proxy startup by ~20 seconds.
+
+## (GCP) Packer build script
+
+Packer script to automate building the knfsd image on GCP.
