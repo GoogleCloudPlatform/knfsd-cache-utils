@@ -13,5 +13,11 @@
 # Terraform local .tfvars
 *.tfvars
 
+# Packer variables
+*.pkrvars.hcl
+*.auto.pkrvars.hcl
+*.pkrvars.json
+*.auto.pkrvars.json
+
 # Service Account
 service-account-key.json

@@ -20,7 +20,52 @@ For the image we are using a specific version for this packages:
 * nfs-utils=2.5.3
 * kernel=5.11.8-051108
 
-## Usage
+## Build Using Packer
+
+Download Packer 1.7.8 or higher from <https://packer.io/downloads>.
+
+### Create Packer Variables File
+
+Create a packer variables file (e.g. `image.pkrvars.hcl`).
+
+#### Required
+
+* project (string) - GCP Project where the image will be built and stored.
+* zone (string) -  The zone in which to launch the instance used to create the image. Example: `"us-west1-a"`.
+
+#### Optional
+
+* machine_type (string) - The machine type used to build the image. This can be increased to improve build speeds. Defaults to `"e2-standard-8"`.
+* network_project (string) - Project hosting the network when using shared VPC. Defaults to `project`.
+* subnetwork (string) - The subnetwork the compute instance will use. Defaults to `"default"`.
+* omit_external_ip (bool) - Use a private (internal) IP only. Defaults to `true`.
+  * The subnetwork will require a NAT router in the region.
+  * IAP tunnelling (default) or a VPN connection to the VPC network is required.
+* image_name (string) - The unique name of the resulting image. Defaults to `"{image_family}-{timestamp}"`.
+* image_family (string) - The name of the [image family](https://cloud.google.com/compute/docs/images/image-families-best-practices) to which the resulting image belongs. Defaults to `"nfs-proxy"`.
+* image_storage_location (string) - [Storage location](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#selecting_image_storage_location), either regional or multi-regional, where snapshot content is to be stored. Defaults to a nearby regional or multi-regional location.
+* use_iap (bool) - Whether to use an IAP proxy. Defaults to `true`.
+* use_internal_ip (bool) - If true, use the instance's internal IP instead of its external IP during building. Defaults to `true`.
+* skip_create_image (bool) - Skip creating the image. Useful for setting to `true` during a build test stage. Defaults to `false`.
+
+#### Example
+
+```hcl
+project = "my-gcp-project"
+zone    = "us-west1-a"
+```
+
+### Run Packer Build
+
+```bash
+packer build -vars-file image.pkrvars.hcl image
+```
+
+### Run Smoke Tests
+
+You can use the [smoke test suite](smoke-tests/README.md) to verify the basic functionality of the image.
+
+## Build Manually
 
 ### Navigate to Image Directory
 
