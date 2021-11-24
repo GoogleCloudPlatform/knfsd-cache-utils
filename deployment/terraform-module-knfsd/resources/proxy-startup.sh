@@ -25,6 +25,39 @@ function get_attribute() {
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
+# build_mount_options() builds the mount options from the GCP metadata attributes
+# Do not use this directly when mounting NFS exports, instead use the MOUNT_OPTIONS
+# variable. This is because other actions by the script can append additional options
+# such as 'fsc'.
+function build_mount_options() {
+  local -a OPTIONS=(
+    rw noatime nocto sync hard ac
+    vers=3
+    proto=tcp
+    mountvers=3
+    mountproto=tcp
+    timeo=600
+    retrans=2
+    lookupcache=all
+    local_lock=none
+    nconnect="$(get_attribute NCONNECT)"
+    acdirmin="$(get_attribute ACDIRMIN)"
+    acdirmax="$(get_attribute ACDIRMAX)"
+    acregmin="$(get_attribute ACREGMIN)"
+    acregmax="$(get_attribute ACREGMAX)"
+    rsize="$(get_attribute RSIZE)"
+    wsize="$(get_attribute WSIZE)"
+  )
+
+  local EXTRA_OPTIONS="$(get_attribute MOUNT_OPTIONS)"
+  if [[ -n "$EXTRA_OPTIONS" ]]; then
+    OPTIONS+=("$EXTRA_OPTIONS")
+  fi
+
+  local IFS=,
+  echo "${OPTIONS[*]}"
+}
+
 # mount_nfs_server() mounts an NFS Server from the cache
 # @param (str) NFS Sever IP
 # @param (str) NFS Server Export Path
@@ -45,7 +78,7 @@ function mount_nfs_server() {
   until [ "$ITER" -ge 4 ]
   do
     echo "(Attempt $ITER/3) Mouting NFS Share: $1:$2..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $1:$2 $3
+    mount -t nfs -o "$MOUNT_OPTIONS" $1:$2 $3
     if [ $? = 0 ]; then
       echo "NFS mount succeeded for $1:$2."
       break
@@ -154,21 +187,26 @@ function trim_slash() {
 
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
+
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
 EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
-NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
-VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+MOUNT_OPTIONS="$(build_mount_options)"
+
+NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
+VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+
 ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
-NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
+
 CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
 CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
+
 echo "Done reading metadata."
 
 # Run the CUSTOM_PRE_STARTUP_SCRIPT
@@ -219,15 +257,16 @@ if [ $NUMDRIVES -gt 0 ]; then
   # Start FS-Cache
   echo "Starting FS-Cache..."
   systemctl start cachefilesd
-  FSC=,fsc
+  MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
   echo "FS-Cache started."
 else
   echo "No SSD devices(s) found. FS-Cache will remain disabled."
-  FSC=
 fi
 
 # Truncate the exports file to avoid stale/duplicate exports if the server restarts
 : > /etc/exports
+
+echo "Mount options: ${MOUNT_OPTIONS}"
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
@@ -355,5 +394,11 @@ echo "$CUSTOM_POST_STARTUP_SCRIPT" > /custom-post-startup-script.sh
 chmod +x /custom-post-startup-script.sh
 bash /custom-post-startup-script.sh
 echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
+
+echo "NFS Mounts"
+findmnt -ut nfs
+
+echo "NFS Exports"
+exportfs -s
 
 echo "Reached Proxy Startup Exit. Happy caching!"
