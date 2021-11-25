@@ -8,6 +8,7 @@
 * (GCP) Fixed remove duplicate and stale exports when restarting
 * (GCP) Added configuration for NFS mount options
 * (GCP) Added configuration for NFS export options
+* (GCP) Added configuration option for read ahead
 
 ## (GCP) Fixed specifying project/region/zone
 
@@ -139,3 +140,7 @@ Also added `MOUNT_OPTIONS` to allow specifying any additional NFS mount options 
 ## (GCP) Added configuration for NFS export options
 
 Added `EXPORT_OPTIONS` to allow specifying custom NFS export options.
+
+## (GCP) Added configuration option for read ahead
+
+This allows tuning the read ahead value of the proxy for performance based upon the workload.

@@ -77,6 +77,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server-conf")
     NUM_NFS_THREADS        = var.NUM_NFS_THREADS
     VFS_CACHE_PRESSURE     = var.VFS_CACHE_PRESSURE
+    READ_AHEAD_KB          = floor(var.READ_AHEAD / 1024)
     LOADBALANCER_IP        = google_compute_address.nfsproxy_static.address
     serial-port-enable     = "TRUE"
 

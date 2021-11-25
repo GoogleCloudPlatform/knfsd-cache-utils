@@ -145,6 +145,11 @@ variable "VFS_CACHE_PRESSURE" {
   type    = string
 }
 
+variable "READ_AHEAD" {
+  default = 8388608
+  type    = number
+}
+
 variable "ENABLE_UDP" {
   default = false
   type    = bool

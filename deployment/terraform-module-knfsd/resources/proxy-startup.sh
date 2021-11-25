@@ -222,6 +222,7 @@ EXPORT_OPTIONS="$(build_export_options)"
 NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
 VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
 
 ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
@@ -364,12 +365,20 @@ done
 echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
 
 
-# Set Readahead Value to 8mb
-for LOCAL_MOUNT in $(cat /proc/mounts | grep nfs | grep -v /proc/fs/nfsd | awk '{print $2}'); do
-   echo "Setting readahead value to 8mb for $LOCAL_MOUNT..."
-   echo 8192 > /sys/class/bdi/0:`stat -c "%d" $LOCAL_MOUNT`/read_ahead_kb
-   echo "Finished readahead value to 8mb for $LOCAL_MOUNT."
+# Set Read ahead Value to 8 MiB
+# Originally read ahead default to rsize * 15, but with rsizes now allowing 1 MiB
+# a 15 MiB read ahead was too large. Newer versions of Ubuntu changed the
+# default to a fixed value of 128 KiB which is now too small.
+# Currently we're assuming the max read size of 1 MiB and using rsize * 8.
+echo "Setting read ahead for NFS mounts"
+findmnt -rnu -t nfs -o MAJ:MIN,TARGET |
+while read MOUNT; do
+  DEVICE="$(cut -d ' ' -f 1 <<< "$MOUNT")"
+  MOUNT_PATH="$(cut -d ' ' -f 2- <<< "$MOUNT")"
+  echo "Setting read ahead for $MOUNT_PATH..."
+  echo "$READ_AHEAD_KB" > /sys/class/bdi/"$DEVICE"/read_ahead_kb
 done
+echo "Finished setting read ahead for NFS mounts"
 
 # Set VFS Cache Pressure
 echo "Setting VFS Cache Pressure to $VFS_CACHE_PRESSURE..."
