@@ -226,6 +226,8 @@ else
   FSC=
 fi
 
+# Truncate the exports file to avoid stale/duplicate exports if the server restarts
+: > /etc/exports
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
