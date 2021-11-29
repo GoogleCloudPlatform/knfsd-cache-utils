@@ -5,6 +5,7 @@
 * (GCP) Prevent mounting over system directories
 * (GCP) Added `EXCLUDED_EXPORTS` option to exclude exports from auto-discovery
 * (GCP) Added optional UDP load balancer
+* (GCP) Fixed remove duplicate and stale exports when restarting
 
 ## (GCP) Fixed specifying project/region/zone
 
@@ -113,3 +114,9 @@ Use Terraform to re-create the reserved address and the forwarding rules:
 ```bash
 terraform apply
 ```
+
+## (GCP) Fixed remove duplicate and stale exports when restarting
+
+The `/etc/exports` file was not cleared when running the start up script. When rebooting a proxy instance this would create duplicate entries (or leave stale entries) in the `/etc/exports` file.
+
+The `/etc/exports` file is now cleared by the start up script before appending any exports.
