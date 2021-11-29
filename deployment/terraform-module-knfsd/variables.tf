@@ -29,6 +29,11 @@ variable "EXPORT_HOST_AUTO_DETECT" {
   default = ""
 }
 
+variable "EXCLUDED_EXPORTS" {
+  type    = string
+  default = ""
+}
+
 variable "EXPORT_CIDR" {
   type    = string
   default = "10.0.0.0/8"
