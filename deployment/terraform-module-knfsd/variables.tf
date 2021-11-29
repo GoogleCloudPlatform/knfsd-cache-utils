@@ -134,6 +134,11 @@ variable "MOUNT_OPTIONS" {
   type    = string
 }
 
+variable "EXPORT_OPTIONS" {
+  default = ""
+  type    = string
+}
+
 
 variable "VFS_CACHE_PRESSURE" {
   default = "100"

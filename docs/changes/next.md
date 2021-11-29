@@ -7,6 +7,7 @@
 * (GCP) Added optional UDP load balancer
 * (GCP) Fixed remove duplicate and stale exports when restarting
 * (GCP) Added configuration for NFS mount options
+* (GCP) Added configuration for NFS export options
 
 ## (GCP) Fixed specifying project/region/zone
 
@@ -134,3 +135,7 @@ Added variables to Terraform for:
 * `WSIZE`
 
 Also added `MOUNT_OPTIONS` to allow specifying any additional NFS mount options not covered by existing Terraform variables.
+
+## (GCP) Added configuration for NFS export options
+
+Added `EXPORT_OPTIONS` to allow specifying custom NFS export options.

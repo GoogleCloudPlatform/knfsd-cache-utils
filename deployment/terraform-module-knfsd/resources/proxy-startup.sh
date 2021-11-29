@@ -58,6 +58,29 @@ function build_mount_options() {
   echo "${OPTIONS[*]}"
 }
 
+# build_export_options() builds the common export options for all exports
+# Do not use this directly, the result will be cached in EXPORT_OPTIONS
+function build_export_options() {
+  local -a OPTIONS=(
+    rw
+    sync
+    wdelay
+    no_root_squash
+    no_all_squash
+    no_subtree_check
+    sec=sys
+    secure
+  )
+
+  local EXTRA_OPTIONS="$(get_attribute EXPORT_OPTIONS)"
+  if [[ -n "$EXTRA_OPTIONS" ]]; then
+    OPTIONS+=("$EXTRA_OPTIONS")
+  fi
+
+  local IFS=,
+  echo "${OPTIONS[*]}"
+}
+
 # mount_nfs_server() mounts an NFS Server from the cache
 # @param (str) NFS Sever IP
 # @param (str) NFS Server Export Path
@@ -101,7 +124,7 @@ FSID=10 # Set Initial FSID
 function add_nfs_export() {
 
   echo "Creating NFS share export for $1..."
-  echo "$1   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
+  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID}${2})" >>/etc/exports
   echo "Finished creating NFS share export for $1."
 
   FSID=$((FSID + 10))
@@ -194,6 +217,7 @@ DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 MOUNT_OPTIONS="$(build_mount_options)"
+EXPORT_OPTIONS="$(build_export_options)"
 
 NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
@@ -266,7 +290,8 @@ fi
 # Truncate the exports file to avoid stale/duplicate exports if the server restarts
 : > /etc/exports
 
-echo "Mount options: ${MOUNT_OPTIONS}"
+echo "Mount options : ${MOUNT_OPTIONS}"
+echo "Export options: ${EXPORT_OPTIONS}"
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."

@@ -63,14 +63,15 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     EXPORT_CIDR             = var.EXPORT_CIDR
 
     # mount options
-    NCONNECT      = var.NCONNECT_VALUE
-    ACDIRMIN      = var.ACDIRMIN
-    ACDIRMAX      = var.ACDIRMAX
-    ACREGMIN      = var.ACREGMIN
-    ACREGMAX      = var.ACREGMAX
-    RSIZE         = var.RSIZE
-    WSIZE         = var.WSIZE
-    MOUNT_OPTIONS = var.MOUNT_OPTIONS
+    NCONNECT       = var.NCONNECT_VALUE
+    ACDIRMIN       = var.ACDIRMIN
+    ACDIRMAX       = var.ACDIRMAX
+    ACREGMIN       = var.ACREGMIN
+    ACREGMAX       = var.ACREGMAX
+    RSIZE          = var.RSIZE
+    WSIZE          = var.WSIZE
+    MOUNT_OPTIONS  = var.MOUNT_OPTIONS
+    EXPORT_OPTIONS = var.EXPORT_OPTIONS
 
     # system
     NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server-conf")
