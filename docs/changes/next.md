@@ -6,6 +6,9 @@
 * (GCP) Added `EXCLUDED_EXPORTS` option to exclude exports from auto-discovery
 * (GCP) Added optional UDP load balancer
 * (GCP) Fixed remove duplicate and stale exports when restarting
+* (GCP) Added configuration for NFS mount options
+* (GCP) Added configuration for NFS export options
+* (GCP) Added configuration option for read ahead
 
 ## (GCP) Fixed specifying project/region/zone
 
@@ -120,3 +123,24 @@ terraform apply
 The `/etc/exports` file was not cleared when running the start up script. When rebooting a proxy instance this would create duplicate entries (or leave stale entries) in the `/etc/exports` file.
 
 The `/etc/exports` file is now cleared by the start up script before appending any exports.
+
+## (GCP) Added configuration for NFS mount options
+
+Added variables to Terraform for:
+
+* `ACDIRMIN`
+* `ACDIRMAX`
+* `ACREGMIN`
+* `ACREGMAX`
+* `RSIZE`
+* `WSIZE`
+
+Also added `MOUNT_OPTIONS` to allow specifying any additional NFS mount options not covered by existing Terraform variables.
+
+## (GCP) Added configuration for NFS export options
+
+Added `EXPORT_OPTIONS` to allow specifying custom NFS export options.
+
+## (GCP) Added configuration option for read ahead
+
+This allows tuning the read ahead value of the proxy for performance based upon the workload.

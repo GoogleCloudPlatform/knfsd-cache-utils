@@ -55,24 +55,42 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   }
 
   metadata = {
-    EXPORT_MAP                  = var.EXPORT_MAP
-    EXPORT_HOST_AUTO_DETECT     = var.EXPORT_HOST_AUTO_DETECT
-    DISCO_MOUNT_EXPORT_MAP      = var.DISCO_MOUNT_EXPORT_MAP
-    EXCLUDED_EXPORTS            = var.EXCLUDED_EXPORTS
-    EXPORT_CIDR                 = var.EXPORT_CIDR
-    NCONNECT_VALUE              = var.NCONNECT_VALUE
-    VFS_CACHE_PRESSURE          = var.VFS_CACHE_PRESSURE
-    NUM_NFS_THREADS             = var.NUM_NFS_THREADS
-    LOADBALANCER_IP             = google_compute_address.nfsproxy_static.address
+    # mounts
+    EXPORT_MAP              = var.EXPORT_MAP
+    EXPORT_HOST_AUTO_DETECT = var.EXPORT_HOST_AUTO_DETECT
+    DISCO_MOUNT_EXPORT_MAP  = var.DISCO_MOUNT_EXPORT_MAP
+    EXCLUDED_EXPORTS        = var.EXCLUDED_EXPORTS
+    EXPORT_CIDR             = var.EXPORT_CIDR
+
+    # mount options
+    NCONNECT       = var.NCONNECT_VALUE
+    ACDIRMIN       = var.ACDIRMIN
+    ACDIRMAX       = var.ACDIRMAX
+    ACREGMIN       = var.ACREGMIN
+    ACREGMAX       = var.ACREGMAX
+    RSIZE          = var.RSIZE
+    WSIZE          = var.WSIZE
+    MOUNT_OPTIONS  = var.MOUNT_OPTIONS
+    EXPORT_OPTIONS = var.EXPORT_OPTIONS
+
+    # system
+    NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server-conf")
+    NUM_NFS_THREADS        = var.NUM_NFS_THREADS
+    VFS_CACHE_PRESSURE     = var.VFS_CACHE_PRESSURE
+    READ_AHEAD_KB          = floor(var.READ_AHEAD / 1024)
+    LOADBALANCER_IP        = google_compute_address.nfsproxy_static.address
+    serial-port-enable     = "TRUE"
+
+    # metrics
     ENABLE_STACKDRIVER_METRICS  = var.ENABLE_STACKDRIVER_METRICS
     COLLECTD_METRICS_CONFIG     = file("${path.module}/resources/monitoring/knfsd.conf")
     COLLECTD_METRICS_SCRIPT     = file("${path.module}/resources/monitoring/knfsd.sh")
     COLLECTD_ROOT_EXPORT_SCRIPT = file("${path.module}/resources/monitoring/export-root.sh")
-    startup-script              = file("${path.module}/resources/proxy-startup.sh")
-    NFS_KERNEL_SERVER_CONF      = file("${path.module}/resources/nfs-kernel-server-conf")
-    CUSTOM_PRE_STARTUP_SCRIPT   = var.CUSTOM_PRE_STARTUP_SCRIPT
-    CUSTOM_POST_STARTUP_SCRIPT  = var.CUSTOM_POST_STARTUP_SCRIPT
-    serial-port-enable          = "TRUE"
+
+    # scripts
+    startup-script             = file("${path.module}/resources/proxy-startup.sh")
+    CUSTOM_PRE_STARTUP_SCRIPT  = var.CUSTOM_PRE_STARTUP_SCRIPT
+    CUSTOM_POST_STARTUP_SCRIPT = var.CUSTOM_POST_STARTUP_SCRIPT
   }
 
   labels = {

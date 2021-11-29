@@ -25,6 +25,62 @@ function get_attribute() {
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
+# build_mount_options() builds the mount options from the GCP metadata attributes
+# Do not use this directly when mounting NFS exports, instead use the MOUNT_OPTIONS
+# variable. This is because other actions by the script can append additional options
+# such as 'fsc'.
+function build_mount_options() {
+  local -a OPTIONS=(
+    rw noatime nocto sync hard ac
+    vers=3
+    proto=tcp
+    mountvers=3
+    mountproto=tcp
+    timeo=600
+    retrans=2
+    lookupcache=all
+    local_lock=none
+    nconnect="$(get_attribute NCONNECT)"
+    acdirmin="$(get_attribute ACDIRMIN)"
+    acdirmax="$(get_attribute ACDIRMAX)"
+    acregmin="$(get_attribute ACREGMIN)"
+    acregmax="$(get_attribute ACREGMAX)"
+    rsize="$(get_attribute RSIZE)"
+    wsize="$(get_attribute WSIZE)"
+  )
+
+  local EXTRA_OPTIONS="$(get_attribute MOUNT_OPTIONS)"
+  if [[ -n "$EXTRA_OPTIONS" ]]; then
+    OPTIONS+=("$EXTRA_OPTIONS")
+  fi
+
+  local IFS=,
+  echo "${OPTIONS[*]}"
+}
+
+# build_export_options() builds the common export options for all exports
+# Do not use this directly, the result will be cached in EXPORT_OPTIONS
+function build_export_options() {
+  local -a OPTIONS=(
+    rw
+    sync
+    wdelay
+    no_root_squash
+    no_all_squash
+    no_subtree_check
+    sec=sys
+    secure
+  )
+
+  local EXTRA_OPTIONS="$(get_attribute EXPORT_OPTIONS)"
+  if [[ -n "$EXTRA_OPTIONS" ]]; then
+    OPTIONS+=("$EXTRA_OPTIONS")
+  fi
+
+  local IFS=,
+  echo "${OPTIONS[*]}"
+}
+
 # mount_nfs_server() mounts an NFS Server from the cache
 # @param (str) NFS Sever IP
 # @param (str) NFS Server Export Path
@@ -45,7 +101,7 @@ function mount_nfs_server() {
   until [ "$ITER" -ge 4 ]
   do
     echo "(Attempt $ITER/3) Mouting NFS Share: $1:$2..."
-    mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $1:$2 $3
+    mount -t nfs -o "$MOUNT_OPTIONS" $1:$2 $3
     if [ $? = 0 ]; then
       echo "NFS mount succeeded for $1:$2."
       break
@@ -68,7 +124,7 @@ FSID=10 # Set Initial FSID
 function add_nfs_export() {
 
   echo "Creating NFS share export for $1..."
-  echo "$1   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash$2)" >>/etc/exports
+  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID}${2})" >>/etc/exports
   echo "Finished creating NFS share export for $1."
 
   FSID=$((FSID + 10))
@@ -154,21 +210,28 @@ function trim_slash() {
 
 # Get Variables from VM Metadata Server
 echo "Reading metadata from metadata server..."
+
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
 EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
-NCONNECT_VALUE=$(get_attribute NCONNECT_VALUE)
-VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+MOUNT_OPTIONS="$(build_mount_options)"
+EXPORT_OPTIONS="$(build_export_options)"
+
+NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
+VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
+
 ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
-NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
+
 CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
 CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
+
 echo "Done reading metadata."
 
 # Run the CUSTOM_PRE_STARTUP_SCRIPT
@@ -219,15 +282,17 @@ if [ $NUMDRIVES -gt 0 ]; then
   # Start FS-Cache
   echo "Starting FS-Cache..."
   systemctl start cachefilesd
-  FSC=,fsc
+  MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
   echo "FS-Cache started."
 else
   echo "No SSD devices(s) found. FS-Cache will remain disabled."
-  FSC=
 fi
 
 # Truncate the exports file to avoid stale/duplicate exports if the server restarts
 : > /etc/exports
+
+echo "Mount options : ${MOUNT_OPTIONS}"
+echo "Export options: ${EXPORT_OPTIONS}"
 
 # Loop through $EXPORT_MAP and mount each share defined in the EXPORT_MAP
 echo "Beginning processing of standard NFS re-exports (EXPORT_MAP)..."
@@ -300,12 +365,20 @@ done
 echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
 
 
-# Set Readahead Value to 8mb
-for LOCAL_MOUNT in $(cat /proc/mounts | grep nfs | grep -v /proc/fs/nfsd | awk '{print $2}'); do
-   echo "Setting readahead value to 8mb for $LOCAL_MOUNT..."
-   echo 8192 > /sys/class/bdi/0:`stat -c "%d" $LOCAL_MOUNT`/read_ahead_kb
-   echo "Finished readahead value to 8mb for $LOCAL_MOUNT."
+# Set Read ahead Value to 8 MiB
+# Originally read ahead default to rsize * 15, but with rsizes now allowing 1 MiB
+# a 15 MiB read ahead was too large. Newer versions of Ubuntu changed the
+# default to a fixed value of 128 KiB which is now too small.
+# Currently we're assuming the max read size of 1 MiB and using rsize * 8.
+echo "Setting read ahead for NFS mounts"
+findmnt -rnu -t nfs -o MAJ:MIN,TARGET |
+while read MOUNT; do
+  DEVICE="$(cut -d ' ' -f 1 <<< "$MOUNT")"
+  MOUNT_PATH="$(cut -d ' ' -f 2- <<< "$MOUNT")"
+  echo "Setting read ahead for $MOUNT_PATH..."
+  echo "$READ_AHEAD_KB" > /sys/class/bdi/"$DEVICE"/read_ahead_kb
 done
+echo "Finished setting read ahead for NFS mounts"
 
 # Set VFS Cache Pressure
 echo "Setting VFS Cache Pressure to $VFS_CACHE_PRESSURE..."
@@ -355,5 +428,11 @@ echo "$CUSTOM_POST_STARTUP_SCRIPT" > /custom-post-startup-script.sh
 chmod +x /custom-post-startup-script.sh
 bash /custom-post-startup-script.sh
 echo "Finished running CUSTOM_POST_STARTUP_SCRIPT..."
+
+echo "NFS Mounts"
+findmnt -ut nfs
+
+echo "NFS Exports"
+exportfs -s
 
 echo "Reached Proxy Startup Exit. Happy caching!"

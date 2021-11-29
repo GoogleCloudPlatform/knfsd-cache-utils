@@ -93,14 +93,61 @@ variable "SERVICE_LABEL" {
   type    = string
 }
 
+
 variable "NCONNECT_VALUE" {
   default = "16"
   type    = string
 }
 
+variable "ACDIRMIN" {
+  default = 600
+  type    = number
+}
+
+variable "ACDIRMAX" {
+  default = 600
+  type    = number
+}
+
+variable "ACREGMIN" {
+  default = 600
+  type    = number
+}
+
+variable "ACREGMAX" {
+  default = 600
+  type    = number
+}
+
+variable "RSIZE" {
+  default = 1048576
+  type    = number
+}
+
+variable "WSIZE" {
+  default = 1048576
+  type    = number
+}
+
+variable "MOUNT_OPTIONS" {
+  default = ""
+  type    = string
+}
+
+variable "EXPORT_OPTIONS" {
+  default = ""
+  type    = string
+}
+
+
 variable "VFS_CACHE_PRESSURE" {
   default = "100"
   type    = string
+}
+
+variable "READ_AHEAD" {
+  default = 8388608
+  type    = number
 }
 
 variable "ENABLE_UDP" {
