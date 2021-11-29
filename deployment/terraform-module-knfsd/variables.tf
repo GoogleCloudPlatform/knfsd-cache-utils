@@ -103,6 +103,11 @@ variable "VFS_CACHE_PRESSURE" {
   type    = string
 }
 
+variable "ENABLE_UDP" {
+  default = false
+  type    = bool
+}
+
 variable "ENABLE_AUTOHEALING_HEALTHCHECKS" {
   default = true
   type    = bool

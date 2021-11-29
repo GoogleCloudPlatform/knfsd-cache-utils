@@ -23,4 +23,12 @@ resource "google_compute_address" "nfsproxy_static" {
   address_type = "INTERNAL"
   subnetwork   = var.SUBNETWORK
   address      = var.LOADBALANCER_IP
+  purpose      = "SHARED_LOADBALANCER_VIP"
+
+  lifecycle {
+    # Cannot change the purpose of an address that is in use.
+    # Originally this resource was deployed with a purpose of "GCE_ENDPOINT".
+    # To support both TCP and UDP the purpose needs to be changed to "SHARED_LOADBALANCER_VIP".
+    ignore_changes = [purpose]
+  }
 }
