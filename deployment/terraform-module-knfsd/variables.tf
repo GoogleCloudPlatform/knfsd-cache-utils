@@ -41,16 +41,17 @@ variable "EXPORT_CIDR" {
 
 variable "PROJECT" {
   type = string
+  default = ""
 }
 
 variable "REGION" {
-  default = "us-west1"
   type    = string
+  default = ""
 }
 
 variable "ZONE" {
-  default = "us-west1-a"
   type    = string
+  default = ""
 }
 
 variable "NETWORK" {

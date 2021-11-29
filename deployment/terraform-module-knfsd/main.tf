@@ -17,6 +17,8 @@
 
 # Static IP used for the Load Balancer. This can be manually set via the LOADBALANCER_IP variable, otherwise it defaults to null which allocates a random IP address
 resource "google_compute_address" "nfsproxy_static" {
+  project      = var.PROJECT
+  region       = var.REGION
   name         = "${var.PROXY_BASENAME}-static-ip"
   address_type = "INTERNAL"
   subnetwork   = var.SUBNETWORK

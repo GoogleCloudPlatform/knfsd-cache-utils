@@ -19,6 +19,8 @@ Before deploying a Knfsd Cluster in Google Cloud, you should make sure the follo
 | [gcloud](https://cloud.google.com/sdk/install)                                 | You should have [gcloud](https://cloud.google.com/sdk/install) installed and configured                                                                                                                                                                                                                                                     |
 | [Terraform](https://www.terraform.io/downloads.html)                           | You should have Terraform 0.12 or above installed.                                                                                                                                                                                                                                                                                          |
 
+If you **do not** currently use Terraform, follow [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli) to download and install it.
+
 ## Metrics
 
 These deployment scripts can optionally configure the exporting a range of metrics from each Knfsd Node into [Google Cloud Operations](https://cloud.google.com/products/operations) (formerly Stackdriver). These are exported via the [Stackdriver Monitoring Agent](https://cloud.google.com/monitoring/agent) which is installed as part of the [build scripts](/image).
@@ -76,95 +78,70 @@ There is a slight delay for metric ingestion (1-2 mins) and then for a new node 
 
 **Note: See the [Configuration Variables](#Configuration-Variables) section for advance configuration options**
 
-### Use with Existing Terraform Configuration
+Basic usage of this module is as follows:
 
-If you have an existing Terraform Environment - you can simply add a configuration block for the Terraform Module - and edit the variables as required.
-
-```hcl
-module "terraform-module-knfsd" {
-
+```terraform
+module "nfs_proxy" {
     source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.3.0"
 
     # Google Cloud Project Configuration
-    PROJECT                                     = "my-gcp-project"
-    REGION                                      = "us-west1"
-    ZONE                                        = "us-west1-a"
+    PROJECT                        = "my-gcp-project"
+    REGION                         = "us-west1"
+    ZONE                           = "us-west1-a"
 
     # Network Configuration
-    NETWORK                                     = "my-vpc"
-    SUBNETWORK                                  = "my-subnet"
-    AUTO_CREATE_FIREWALL_RULES                  = false
-    LOADBALANCER_IP                             = "10.67.4.5"
+    NETWORK                        = "my-vpc"
+    SUBNETWORK                     = "my-subnet"
+    AUTO_CREATE_FIREWALL_RULES     = false
+    LOADBALANCER_IP                = "10.67.4.5"
 
     # Knfsd Proxy Configuration
-    PROXY_IMAGENAME                             = "knfsd-base-image"
-    EXPORT_MAP                                  = "10.0.5.5;/remoteexport;/remoteexport"
-    PROXY_BASENAME                              = "rendercluster1"
-    KNFSD_NODES                                 = 3
-
+    PROXY_IMAGENAME                = "knfsd-base-image"
+    EXPORT_MAP                     = "10.0.5.5;/remoteexport;/remoteexport"
+    PROXY_BASENAME                 = "rendercluster1"
+    KNFSD_NODES                    = 3
 }
 
 // Prints the IP address of the Load Balancer
 output "load_balancer_ip_address" {
-    value = module.terraform-module-knfsd.nfsproxy_loadbalancer_ipaddress
+    value = module.nfs_proxy.nfsproxy_loadbalancer_ipaddress
 }
 
 // Prints the DNS address of the Load Balancer
 output "load_balancer_dns_address" {
-    value = module.terraform-module-knfsd.nfsproxy_loadbalancer_dnsaddress
+    value = module.nfs_proxy.nfsproxy_loadbalancer_dnsaddress
 }
 ```
 
 Edit the above [configuration variables](#Configuration-Variables) to match your desired configuration.
 
-### Use without Existing Terraform Configuration
+### Provider Default Values
 
-If you **do not** currently use Terraform, follow [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli) to download and install it.
+The Terraform module also supports supplying the project, region and zone using provider default values. Set the project, region, and/or zone properties on the Google Terraform provider. Omit these properties from the module.
 
-Create a file called `deploy.tf` and add the following contents:
-
-```
-module "terraform-module-knfsd" {
-
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.3.0"
-
-    # Google Cloud Project Configuration
-    PROJECT                                     = "my-gcp-project"
-    REGION                                      = "us-west1"
-    ZONE                                        = "us-west1-a"
-
-    # Network Configuration
-    NETWORK                                     = "my-vpc"
-    SUBNETWORK                                  = "my-subnet"
-    AUTO_CREATE_FIREWALL_RULES                  = false
-    LOADBALANCER_IP                             = "10.67.4.5"
-
-    # Knfsd Proxy Configuration
-    PROXY_IMAGENAME                             = "knfsd-base-image"
-    EXPORT_MAP                                  = "10.0.5.5;/remoteexport;/remoteexport"
-    KNFSD_NODES                                 = 3
-
-}
-
-// Prints the IP address of the Load Balancer
-output "load_balancer_ip_address" {
-    value = module.terraform-module-knfsd.nfsproxy_loadbalancer_ipaddress
-}
-
-// Prints the DNS address of the Load Balancer
-output "load_balancer_dns_address" {
-    value = module.terraform-module-knfsd.nfsproxy_loadbalancer_dnsaddress
-}
-
+```terraform
 provider "google" {
-  project     = <PROJECT>
-  region      = <REGION>
-  zone        = <ZONE>
-  credentials = file("service-account-key.json")
+  project     = "my-gcp-project
+  region      = "us-west1"
+  zone        = "us-west1-a
+}
+
+module "nfs_proxy" {
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.3.0"
+
+    # Network Configuration
+    NETWORK                        = "my-vpc"
+    SUBNETWORK                     = "my-subnet"
+    AUTO_CREATE_FIREWALL_RULES     = false
+    LOADBALANCER_IP                = "10.67.4.5"
+
+    # Knfsd Proxy Configuration
+    PROXY_IMAGENAME                = "knfsd-base-image"
+    EXPORT_MAP                     = "10.0.5.5;/remoteexport;/remoteexport"
+    PROXY_BASENAME                 = "rendercluster1"
+    KNFSD_NODES                    = 3
 }
 ```
-
-Edit the above [configuration variables](#Configuration-Variables) to match your desired configuration.
 
 ### Generate Service Account
 
@@ -190,6 +167,14 @@ gcloud iam service-accounts add-iam-policy-binding $PROJECT_NUMBER-compute@devel
 gcloud projects add-iam-policy-binding $GOOGLE_PROJECT --member serviceAccount:terraform-deployment-sa@$GOOGLE_PROJECT.iam.gserviceaccount.com --role='roles/monitoring.admin'
 ```
 
+Create or update the Google provider in Terraform to use the service account key file:
+
+```terraform
+provider "google" {
+  credentials = file("service-account-key.json")
+}
+```
+
 **Warning: The service-account-key.json should be stored securely - do not commit to Git or share with any unauthorised party**
 
 ### Deploy Knfsd
@@ -205,11 +190,11 @@ terraform apply
 
 ### Google Cloud Project Configuration
 
-| Variable | Description                                                                                                                                                     | Required | Default      |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
-| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to (must also be set in `provider.tf`).                                                       | True     | N/A          |
-| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources (must also be set in `provider.tf`). | True     | `us-west1`   |
-| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources (must also be set in `provider.tf`).      | True     | `us-west1-a` |
+| Variable | Description                                                                                                                                                                     | Required | Default |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to. If it is not provided, the provider project is used.                                                      | False    | N/A     |
+| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources. If it is not provided, the provider region is used. | False    | N/A     |
+| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources. If it is not provided, the provider zone is used.        | False    | N/A     |
 
 ### Network Configuration
 
