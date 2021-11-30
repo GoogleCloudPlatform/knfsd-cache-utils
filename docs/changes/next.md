@@ -9,6 +9,7 @@
 * (GCP) Added configuration for NFS mount options
 * (GCP) Added configuration for NFS export options
 * (GCP) Added configuration option for read ahead
+* (GCP) Explicitly set MIG `update_policy` to proactively replace instances, and make parameters configurable
 
 ## (GCP) Fixed specifying project/region/zone
 
@@ -144,3 +145,7 @@ Added `EXPORT_OPTIONS` to allow specifying custom NFS export options.
 ## (GCP) Added configuration option for read ahead
 
 This allows tuning the read ahead value of the proxy for performance based upon the workload.
+
+## (GCP) Explicitly set MIG `update_policy` to proactively replace instances, and make parameters configurable
+
+This ensures that a change in instance configuration is rolled out immediately to ensure that all caches are running an identical configuration.
