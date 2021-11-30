@@ -137,6 +137,12 @@ resource "google_compute_instance_group_manager" "proxy-group" {
   // Set the Target Size to null if autoscaling is enabled
   target_size = (var.ENABLE_KNFSD_AUTOSCALING == true ? null : var.KNFSD_NODES)
 
+  update_policy {
+    type                    = "PROACTIVE"
+    minimal_action          = var.MIG_MINIMAL_ACTION
+    max_unavailable_percent = var.MIG_MAX_UNAVAILABLE_PERCENT
+    replacement_method      = var.MIG_REPLACEMENT_METHOD
+  }
 
   version {
     name              = "v1"

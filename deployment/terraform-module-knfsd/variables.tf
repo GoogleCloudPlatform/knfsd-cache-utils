@@ -40,7 +40,7 @@ variable "EXPORT_CIDR" {
 }
 
 variable "PROJECT" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -207,5 +207,20 @@ variable "LOCAL_SSDS" {
 
 variable "MACHINE_TYPE" {
   default = "n1-highmem-16"
+  type    = string
+}
+
+variable "MIG_MINIMAL_ACTION" {
+  default = "RESTART"
+  type = string
+}
+
+variable "MIG_MAX_UNAVAILABLE_PERCENT" {
+  default = "100"
+  type    = number
+}
+
+variable "MIG_REPLACEMENT_METHOD" {
+  default = "SUBSTITUTE"
   type    = string
 }
