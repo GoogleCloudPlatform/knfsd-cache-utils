@@ -2,7 +2,7 @@
 
 This directory contains a [Terraform Module](https://www.terraform.io/docs/modules/index.html) for deploying a Knfsd cluster on Google Cloud.
 
-**Note:** The master branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
+**Note:** The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
 
 ```
 source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.4.0"
