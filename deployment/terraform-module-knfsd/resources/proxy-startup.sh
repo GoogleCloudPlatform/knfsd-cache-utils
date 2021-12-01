@@ -228,6 +228,7 @@ ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
 COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
+ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
 
 CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
 CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
@@ -414,6 +415,17 @@ if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
 
 else
   echo "Metrics are disabled. Skipping..."
+fi
+
+# Enable Knfsd Agent if Configured
+if [ "$ENABLE_KNFSD_AGENT" = "true" ]; then
+
+  echo "Starting Knfsd Agent..."
+  systemctl start knfsd-agent
+  echo "Finished Starting Knfsd Agent."
+
+else
+  echo "Knfsd Agent disabled. Skipping..."
 fi
 
 # Start NFS Server

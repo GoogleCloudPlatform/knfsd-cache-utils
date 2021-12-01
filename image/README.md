@@ -16,7 +16,7 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 cd image/scripts
 ```
 
-### Update settings in brackets <> below and set variables 
+### Update settings in brackets <> below and set variables
 ```
 export BUILD_MACHINE_NAME=knfsd-build-machine
 export BUILD_MACHINE_ZONE=<europe-west2-a>
@@ -29,7 +29,7 @@ export BUILD_MACHINE_SUBNET=<europe-west2-subnet>
 ```
 gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
-    --machine-type=c2-standard-30 \
+    --machine-type=c2-standard-16 \
     --project=$GOOGLE_CLOUD_PROJECT \
     --image=ubuntu-2010-groovy-v20210323 \
     --image-project=ubuntu-os-cloud \
@@ -46,20 +46,29 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
 gcloud compute firewall-rules create allow-ssh-ingress-from-iap --direction=INGRESS --action=allow --rules=tcp:22 --source-ranges=35.235.240.0/20 --network=$BUILD_MACHINE_NETWORK --project=$GOOGLE_CLOUD_PROJECT
 ```
 
+### Copy Knfsd Agent Source Code to Machine
+```
+gcloud beta compute scp --recurse ../knfsd-agent build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+```
+
 ### SSH to Build Machine
 ```
-gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
+gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Switch to Root
 ```
 sudo su
-```
-
-### Run the script 1_build_image.sh 
-
-```
 cd
+```
+
+# Move Knfsd Agent Source Code
+```
+mv /home/build/knfsd-agent .
+```
+
+### Run the script 1_build_image.sh
+```
 ./1_build_image.sh
 ```
 
@@ -71,7 +80,7 @@ reboot
 
 ### SSH to your Build Machine to run subsequent commands.
 ```
-gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap
+gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Switch to Root
@@ -92,10 +101,10 @@ sudo shutdown -h now
 
 ### On your Cloud Shell host machine, create the Custom Disk Image
 ```
-gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE
+gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Delete Build Machine
 ```
-gcloud compute instances delete $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE
+gcloud compute instances delete $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
 ```
