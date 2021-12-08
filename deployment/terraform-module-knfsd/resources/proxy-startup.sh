@@ -418,7 +418,7 @@ else
 fi
 
 # Enable Knfsd Agent if Configured
-if [ "$ENABLE_KNFSD_AGENT" = "true" ]; then
+if [[ "$ENABLE_KNFSD_AGENT" = "true" ]]; then
 
   echo "Starting Knfsd Agent..."
   systemctl start knfsd-agent
