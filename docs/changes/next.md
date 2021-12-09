@@ -10,6 +10,7 @@
 * (GCP) Packer build script
 * (GCP) Use fixed ports for NFS services
 * (GCP) Configure mount point timeout when building the image
+* (GCP) Auto-discovery for NetApp exports using NetApp REST API
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -69,3 +70,9 @@ This was especially problematic if the client used UDP to access the portmapper 
 
 Moved this configuration into the modprobe options when the image is built.
 You will need to build a new image when updating to the latest Terraform to avoid issues with stale file handles.
+
+## (GCP) Auto-discovery for NetApp exports using NetApp REST API
+
+This can be used to discover exports on a NetApp system using the NetApp REST API when the `showmount` command is disabled on the source server.
+
+This replaces the old `DISCO_MOUNT_EXPORT_MAP` that used the `tree` command to discover nested mounts (junction points).

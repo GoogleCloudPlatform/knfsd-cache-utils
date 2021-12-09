@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+locals {
+  enable_service_account = var.SERVICE_ACCOUNT != "" || var.ENABLE_STACKDRIVER_METRICS
+  scopes = (
+    var.SERVICE_ACCOUNT != "" ? ["cloud-platform"] :
+    var.ENABLE_STACKDRIVER_METRICS ? ["logging-write", "monitoring-write"] :
+    []
+  )
+}
 
 # Static IP used for the Load Balancer. This can be manually set via the LOADBALANCER_IP variable, otherwise it defaults to null which allocates a random IP address
 resource "google_compute_address" "nfsproxy_static" {

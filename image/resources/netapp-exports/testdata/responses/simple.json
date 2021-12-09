@@ -1,0 +1,46 @@
+{
+  "records": [
+    {
+      "uuid": "1b58ca87-2d93-11ec-86fb-ebf808c63a47",
+      "name": "svm_netapptest_root",
+      "nas": {
+        "path": "/"
+      },
+      "_links": {
+        "self": {
+          "href": "/api/v1/storage/volumes/1b58ca87-2d93-11ec-86fb-ebf808c63a47"
+        }
+      }
+    },
+    {
+      "uuid": "4ababbd0-2da2-11ec-86fb-ebf808c63a47",
+      "name": "archive",
+      "nas": {
+        "path": "/archive"
+      },
+      "_links": {
+        "self": {
+          "href": "/api/v1/storage/volumes/4ababbd0-2da2-11ec-86fb-ebf808c63a47"
+        }
+      }
+    },
+    {
+      "uuid": "75bbfdec-2d93-11ec-86fb-ebf808c63a47",
+      "name": "assets",
+      "nas": {
+        "path": "/assets"
+      },
+      "_links": {
+        "self": {
+          "href": "/api/v1/storage/volumes/75bbfdec-2d93-11ec-86fb-ebf808c63a47"
+        }
+      }
+    }
+  ],
+  "num_records": 3,
+  "_links": {
+    "self": {
+      "href": "/api/v1/storage/volumes?nas.path=!null&fields=nas.path&max_records=100"
+    }
+  }
+}

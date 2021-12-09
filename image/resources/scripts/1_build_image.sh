@@ -126,6 +126,16 @@ install_knfsd_agent() (
 
 )
 
+install_netapp_exports() (
+    echo "Installing netapp-exports...."
+    echo -e "------${SHELL_DEFAULT}"
+    cd netapp-exports
+    go test ./...
+    go build -o /usr/local/bin/netapp-exports
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+)
+
 # download_kernel() downloads the 5.11.8 Kernel
 download_kernel() {
 
@@ -172,6 +182,7 @@ build_install_nfs-utils
 install_stackdriver_agent
 install_golang
 install_knfsd_agent
+install_netapp_exports
 download_kernel
 install_kernel
 copy_config

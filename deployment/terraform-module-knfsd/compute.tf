@@ -62,6 +62,17 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     EXCLUDED_EXPORTS        = var.EXCLUDED_EXPORTS
     EXPORT_CIDR             = var.EXPORT_CIDR
 
+    # NetApp auto-discovery
+    ENABLE_NETAPP_AUTO_DETECT = var.ENABLE_NETAPP_AUTO_DETECT
+    NETAPP_HOST               = var.NETAPP_HOST
+    NETAPP_URL                = var.NETAPP_URL
+    NETAPP_USER               = var.NETAPP_USER
+    NETAPP_SECRET             = var.NETAPP_SECRET
+    NETAPP_SECRET_PROJECT     = var.NETAPP_SECRET_PROJECT
+    NETAPP_SECRET_VERSION     = var.NETAPP_SECRET_VERSION
+    NETAPP_CA                 = var.NETAPP_CA
+    NETAPP_ALLOW_COMMON_NAME  = var.NETAPP_ALLOW_COMMON_NAME
+
     # mount options
     NCONNECT       = var.NCONNECT_VALUE
     ACDIRMIN       = var.ACDIRMIN
@@ -108,9 +119,10 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   # We use a dnaymic block for service_account here as we only want to assign an SA if we have metrics enabled.
   # If we do not have metrics enabled there is no need for an SA
   dynamic "service_account" {
-    for_each = var.ENABLE_STACKDRIVER_METRICS ? [1] : []
+    for_each = local.enable_service_account ? [1] : []
     content {
-      scopes = ["logging-write", "monitoring-write"]
+      email  = var.SERVICE_ACCOUNT
+      scopes = local.scopes
     }
   }
 }

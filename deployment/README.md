@@ -243,6 +243,42 @@ terraform apply
 | MIG_REPLACEMENT_METHOD          | The instance replacement method for managed instance groups. Valid values are: `RECREATE`, `SUBSTITUTE`.<br><br>If `SUBSTITUTE` (default), the group replaces VM instances with new instances that have randomly generated names. If `RECREATE`, instance names are preserved. You must also set `MIG_MAX_UNAVAILABLE_PERCENT` to be greater than 0 (default is already `100` so this only applies if you have modified this variable).                         | `false`                                                                                                                                                                                                                        | `SUBSTITUTE`    |
 | MIG_MINIMAL_ACTION              | Minimal action to be taken on an instance. You can specify either RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a RESTART, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.                                          | `false`                                                                                                                                                                                                                        | `RESTART`       |
 | ENABLE_KNFSD_AGENT              | Should the [Knfsd Agent](../../image/knfsd-agent/README.md) be started at Proxy Startup?                                                                                                                                                                                                                                                                                                                                                                                                             | `false`                                                                                                                                                                                                                        | `true`          |
+
+### NetApp Exports Auto-Discovery
+
+| Variable                  | Description                                                                                                                                                                                                                                                                           | Required                                 | Default                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ---------------------------------------- | ------------------------------------- |
+| ENABLE_NETAPP_AUTO_DETECT | Enables automatic discovery of exports using the NetApp REST API.                                                                                                                                                                                                                     | False                                    | `false`                               |
+| NETAPP_HOST               | DNS or IP of the NetApp server. This is the DNS or IP name clients use when mounting the NFS shares.                                                                                                                                                                                  | If `ENABLE_NETAPP_AUTO_DETECT` is `true` |                                       |
+| NETAPP_URL                | URL of the NetApp REST API. This *must* include the API version and end with a slash, for example `https://netapp.example/api/v1/`.                                                                                                                                                   | If `ENABLE_NETAPP_AUTO_DETECT` is `true` |                                       |
+| NETAPP_USER               | The username used to authenticate with the NetApp REST API.                                                                                                                                                                                                                           | If `ENABLE_NETAPP_AUTO_DETECT` is `true` |                                       |
+| NETAPP_SECRET             | The name of a GCP Secret containing the NetApp REST API password.                                                                                                                                                                                                                     | If `ENABLE_NETAPP_AUTO_DETECT` is `true` |                                       |
+| NETAPP_SECRET_PROJECT     | The GCP project containing the secret.                                                                                                                                                                                                                                                | False                                    | The project the cluster is running in |
+| NETAPP_SECRET_VERSION     | The version of the secret.                                                                                                                                                                                                                                                            | False                                    | `latest`                              |
+| NETAPP_CA                 | PEM encoded certificate containing the root certificate for the NetApp REST API. This can also include intermediate certificates to provide the full certificate chain. To read this from a file use the [Terraform file function](https://www.terraform.io/language/functions/file). | If `ENABLE_NETAPP_AUTO_DETECT` is `true` |                                       |
+| NETAPP_ALLOW_COMMON_NAME  | Allows using the Common Name (CN) field of the certificate as a DNS name when the certificate does not include a Subject Alternate Name (SAN) field.                                                                                                                                  | False                                    | `false`                               |
+
+For instructions on how to get the NetApp root CA certificate, and verify the `netapp-exports` command works see the [netapp-exports README](../image/resources/netapp-exports/README.md).
+
+#### NetApp Self-Signed Certificates
+
+Modern SSL certificates use the Subject Alternate Name (SAN) field to provide a list of DNS names and IPs that are valid for the certificate.
+
+However, older certificates relied on the Common Name (CN) field. This use has been deprecated and is no longer supported by default as the Common Name field was ambiguous.
+
+If you have a certificate that does not contain a Subject Alternate Name then you can set `NETAPP_ALLOW_COMMON_NAME=true`. When this is enabled the Common Name *must* be the DNS name or IP address of the NetApp cluster. This DNS name or IP address *must* be used for the `NETAPP_URL` host.
+
+If the certificate contains a Subject Alternate Name then the Common Name will be ignored.
+
+#### Updating NetApp secret
+
+Normally using the `latest` version for secrets in Terraform is discouraged because Terraform will not detect when a new version is added to the secret. However, in this case using `latest` does not cause any issues because the secret is only used when a proxy instance is starting up.
+
+To update the NetApp secret, just add a new version and disable the old version. Once the new version has been verified as valid the old version can be destroyed.
+
+Changing the password and updating the secret will not affect any running instances as the password is only required to generate the list of exports when the instance starts.
+
+
 ### Mount Options
 
 These mount options are for the proxy to the source server.

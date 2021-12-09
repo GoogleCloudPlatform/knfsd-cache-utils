@@ -233,6 +233,19 @@ ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
 CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
 CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
 
+# Auto-discovery of exports using NetApp API.
+# Need to be exported so that the netapp-exports tool can read them from
+# the local environment.
+export ENABLE_NETAPP_AUTO_DETECT="$(get_attribute ENABLE_NETAPP_AUTO_DETECT)"
+export NETAPP_HOST="$(get_attribute NETAPP_HOST)"
+export NETAPP_URL="$(get_attribute NETAPP_URL)"
+export NETAPP_USER="$(get_attribute NETAPP_USER)"
+export NETAPP_SECRET="$(get_attribute NETAPP_SECRET)"
+export NETAPP_SECRET_PROJECT="$(get_attribute NETAPP_SECRET_PROJECT)"
+export NETAPP_SECRET_VERSION="$(get_attribute NETAPP_SECRET_VERSION)"
+export NETAPP_CA="$(get_attribute NETAPP_CA)"
+export NETAPP_ALLOW_COMMON_NAME="$(get_attribute NETAPP_ALLOW_COMMON_NAME)"
+
 echo "Done reading metadata."
 
 # Run the CUSTOM_PRE_STARTUP_SCRIPT
@@ -310,10 +323,8 @@ echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
 # Loop through $EXPORT_HOST_AUTO_DETECT and detect re-export mount NFS Exports
 echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
 for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
-
   # Detect the mounts on the NFS Server
   for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}') | sort; do
-
     # Mount the NFS Server export
     if is_excluded_export "$REMOTE_EXPORT"; then
       echo "Skipped "$REMOTE_EXPORT", exported was excluded"
@@ -322,12 +333,39 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
       # Create /etc/exports entry for filesystem
       add_nfs_export "$REMOTE_EXPORT" ""
     fi
-
   done
-
-
 done
 echo "Finished processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)."
+
+
+if [[ "$ENABLE_NETAPP_AUTO_DETECT" == "true" ]]; then
+  echo "Beginning processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)..."
+
+  if [[ -n "$NETAPP_CA" ]]; then
+    # write the certificate to a file
+    NETAPP_CA_FILE="$(tempfile)"
+    echo "$NETAPP_CA" > "$NETAPP_CA_FILE"
+    export NETAPP_CA="$NETAPP_CA_FILE"
+  fi
+
+  netapp-exports |
+  while read REMOTE; do
+    REMOTE_IP="$(echo "$REMOTE" | cut -d ' ' -f1)"
+    REMOTE_EXPORT="$(echo "$REMOTE" | cut -d ' ' -f2-)"
+
+    # Mount the NFS Server export
+    if is_excluded_export "$REMOTE_EXPORT"; then
+      echo "Skipped "$REMOTE_EXPORT", exported was excluded"
+    else
+      mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
+      # Create /etc/exports entry for filesystem
+      add_nfs_export "$REMOTE_EXPORT" ",nohide"
+    fi
+  done
+
+  echo "Finished processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)."
+fi
+
 
 # Loop through $DISCO_MOUNT_EXPORT_MAP and mount each share defined in the DISCO_MOUNT_EXPORT_MAP
 echo "Beginning processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)..."

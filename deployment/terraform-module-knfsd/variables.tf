@@ -93,6 +93,10 @@ variable "SERVICE_LABEL" {
   type    = string
 }
 
+variable "SERVICE_ACCOUNT" {
+  default = ""
+  type    = string
+}
 
 variable "NCONNECT_VALUE" {
   default = "16"
@@ -229,8 +233,53 @@ variable "ENABLE_KNFSD_AGENT" {
   default = true
   type    = bool
 }
-   
+
 variable "DISABLED_NFS_VERSIONS" {
   default = "4.0,4.1,4.2"
-  type = string
+  type    = string
+}
+
+variable "ENABLE_NETAPP_AUTO_DETECT" {
+  default = false
+  type    = bool
+}
+
+variable "NETAPP_HOST" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_URL" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_USER" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_SECRET" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_SECRET_PROJECT" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_SECRET_VERSION" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_CA" {
+  type    = string
+  default = ""
+}
+
+variable "NETAPP_ALLOW_COMMON_NAME" {
+  type    = bool
+  default = false
 }

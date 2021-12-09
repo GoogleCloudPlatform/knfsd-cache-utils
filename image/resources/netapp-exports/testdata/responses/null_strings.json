@@ -1,0 +1,24 @@
+{
+  "records": [
+    {
+      "nas": {
+        "path": "/foo"
+      }
+    },
+    {
+      "nas": {
+        "path": null
+      }
+    },
+    {
+      "nas": {
+        "path": "/bar"
+      }
+    }
+  ],
+  "_links": {
+    "next": {
+      "href": null
+    }
+  }
+}

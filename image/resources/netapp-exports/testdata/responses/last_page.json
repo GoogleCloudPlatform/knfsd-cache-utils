@@ -1,0 +1,22 @@
+{
+  "records": [
+    {
+      "uuid": "75bbfdec-2d93-11ec-86fb-ebf808c63a47",
+      "name": "assets",
+      "nas": {
+        "path": "/assets"
+      },
+      "_links": {
+        "self": {
+          "href": "/api/v1/storage/volumes/75bbfdec-2d93-11ec-86fb-ebf808c63a47"
+        }
+      }
+    }
+  ],
+  "num_records": 1,
+  "_links": {
+    "self": {
+      "href": "/api/v1/storage/volumes?start.uuid=4ababbd0-2da2-11ec-86fb-ebf808c63a47&nas.path=!null&fields=nas.path&max_records=100"
+    }
+  }
+}
