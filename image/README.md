@@ -11,10 +11,10 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 
 ## Usage
 
-### Navigate to Scripts Directory
+### Navigate to Image Directory
 
 ```bash
-cd image/scripts
+cd image
 ```
 
 ### Update settings in brackets <> below and set variables
@@ -40,7 +40,6 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --subnet=$BUILD_MACHINE_SUBNET \
     --boot-disk-size=20GB \
     --boot-disk-type=pd-ssd \
-    --metadata-from-file=BUILD_IMAGE_SCRIPT=1_build_image.sh,startup-script=0_init.sh \
     --metadata=serial-port-enable=TRUE
 ```
 
@@ -50,10 +49,10 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
 gcloud compute firewall-rules create allow-ssh-ingress-from-iap --direction=INGRESS --action=allow --rules=tcp:22 --source-ranges=35.235.240.0/20 --network=$BUILD_MACHINE_NETWORK --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Copy Knfsd Agent Source Code to Machine
+### Copy Resources to Build Machine
 
 ```bash
-gcloud compute scp --recurse ../knfsd-agent build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+gcloud compute scp --recurse resources/* build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 **NOTE:** You might get some errors when connecting while the instance is still booting. These errors will be generic network errors, or errors exchanging keys such as:
@@ -67,43 +66,40 @@ ERROR: (gcloud.compute.start-iap-tunnel) Error while connecting [4003: 'failed t
 ### SSH to Build Machine
 
 ```bash
-gcloud compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+gcloud compute ssh build@$BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Switch to Root
+### Run the Build Image Script
 
 ```bash
-sudo su
-cd
+sudo bash scripts/1_build_image.sh
 ```
 
-### Move Knfsd Agent Source Code
+When this script completes you should see:
 
-```bash
-mv /home/build/knfsd-agent .
+```text
+SUCCESS: Please reboot for new kernel to take effect
 ```
 
-### Run the script 1_build_image.sh
+### Reboot Build Machine
+
+Once the build image script has completed, check there were no errors and reboot the machine. This will restart the build machine with the new kernel.
 
 ```bash
-./1_build_image.sh
-```
-
-### After the installation is complete, reboot your Build Machine to run the updated code
-
-```bash
-reboot
+sudo reboot
 ```
 
 **NOTE: When your Build Machine reboots, your Cloud Console will revert to your host machine.**
 
-### SSH to your Build Machine to run subsequent commands
+### SSH to Build Machine to run subsequent commands
 
 ```bash
-gcloud compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+gcloud compute ssh build@$BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Validate Newer Kernel version is installed
+### Validate Kernel Version
+
+Verify that the build machine booted using the new kernel version.
 
 ```bash
 uname -r
