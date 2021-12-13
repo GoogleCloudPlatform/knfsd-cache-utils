@@ -40,7 +40,7 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --subnet=$BUILD_MACHINE_SUBNET \
     --boot-disk-size=20GB \
     --boot-disk-type=pd-ssd \
-    --metadata=serial-port-enable=TRUE
+    --metadata=serial-port-enable=TRUE,block-project-ssh-keys=TRUE
 ```
 
 ### (Optional) Create Firewall Rule for IAP SSH Access
@@ -107,10 +107,21 @@ uname -r
 
 **Output from above command should indicate kernel version `5.11.8-051108-generic`.**
 
-### Shutdown Instance
+### Finalize the Build Machine
+
+This will clean up the local disk prior to creating the image (such as removing the build user).
+
+Once the clean up is complete, the instance will shutdown.
 
 ```bash
-sudo shutdown -h now
+sudo bash scripts/9_finalize.sh
+```
+
+You will get the following warnings, these can safely be ignored:
+
+```text
+userdel: user build is currently used by process 1431
+userdel: build mail spool (/var/mail/build) not found
 ```
 
 ### On your Cloud Shell host machine, create the Custom Disk Image
