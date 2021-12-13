@@ -25,6 +25,8 @@ export BUILD_MACHINE_ZONE=<europe-west2-a>
 export GOOGLE_CLOUD_PROJECT=<knfsd-deployment-test>
 export BUILD_MACHINE_NETWORK=<knfsd-test>
 export BUILD_MACHINE_SUBNET=<europe-west2-subnet>
+export IMAGE_FAMILY=knfsd-proxy
+export IMAGE_NAME="${IMAGE_FAMILY}-$(date -u +%F-%H%M%S)"
 ```
 
 ### Create Build Machine
@@ -127,7 +129,7 @@ userdel: build mail spool (/var/mail/build) not found
 ### On your Cloud Shell host machine, create the Custom Disk Image
 
 ```bash
-gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
+gcloud compute images create $IMAGE_NAME --family=$IMAGE_FAMILY --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Delete Build Machine
