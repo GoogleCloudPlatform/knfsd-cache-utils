@@ -104,6 +104,34 @@ install_stackdriver_agent() {
 
 }
 
+# install_golang() installs golang
+install_golang() {
+
+    echo "Installing golang...."
+    echo -e "------${SHELL_DEFAULT}"
+    cd ~
+    curl -o go1.17.3.linux-amd64.tar.gz https://dl.google.com/go/go1.17.3.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.3.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+
+}
+
+# install_knfsd_agent() installs the knfsd-agent (see https://github.com/GoogleCloudPlatform/knfsd-cache-utils/tree/main/image/knfsd-agent)
+install_knfsd_agent() {
+
+    echo "Installing knfsd-agent...."
+    echo -e "------${SHELL_DEFAULT}"
+    cd /root/knfsd-agent/src
+    go build -o /usr/local/bin/knfsd-agent *.go
+    cp /root/knfsd-agent/knfsd-logrotate.conf /etc/logrotate.d/
+    cp /root/knfsd-agent/knfsd-agent.service /etc/systemd/system/
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+
+}
+
 # download_kernel() downloads the 5.11.8 Kernel
 download_kernel() {
 
@@ -142,6 +170,8 @@ install_build_dependencies
 download_nfs-utils
 build_install_nfs-utils
 install_stackdriver_agent
+install_golang
+install_knfsd_agent
 download_kernel
 install_kernel
 

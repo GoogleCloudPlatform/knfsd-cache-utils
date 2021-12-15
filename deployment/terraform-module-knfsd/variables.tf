@@ -212,7 +212,7 @@ variable "MACHINE_TYPE" {
 
 variable "MIG_MINIMAL_ACTION" {
   default = "RESTART"
-  type = string
+  type    = string
 }
 
 variable "MIG_MAX_UNAVAILABLE_PERCENT" {
@@ -225,6 +225,11 @@ variable "MIG_REPLACEMENT_METHOD" {
   type    = string
 }
 
+variable "ENABLE_KNFSD_AGENT" {
+  default = true
+  type    = bool
+}
+   
 variable "DISABLED_NFS_VERSIONS" {
   default = "4.0,4.1,4.2"
   type = string

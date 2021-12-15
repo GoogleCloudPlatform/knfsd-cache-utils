@@ -74,6 +74,16 @@ You can change this behaviour if you wish, but it is not recommended.
 
 There is a slight delay for metric ingestion (1-2 mins) and then for a new node to spin up and initialise (~2 mins). When a scaling event occurs new traffic will continue to be sent to the existing healthy nodes in the cluster until there is a new node ready to handle the connections. It is therefore recommended that you set your `KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD` slightly lower than the maximum number of connections a single Knfsd node can handle. This will start the scaling event early and make sure a new node is ready before your existing nodes become overloaded.
 
+## Knfsd Agent
+
+By default, each Knfsd node will also run the [Knfsd Agent](../../image/knfsd-agent/README.md). This is a small Golang application that exposes a web server with some API Methods. Currently the Knfsd Agent only supports a basic informational API method (`/api/v1.0/nodeinfo`). This method provides basic information on the Knfsd node. It is useful for determining which backend node you are connected to when connecting to the Knfsd Cluster via the Internal Load Balancer.
+
+Over time this will API will be expanded with additional capabilities.
+
+This agent listens on port `80` and can be disabled by setting `ENABLE_KNFSD_AGENT` to `false` in the Terraform.
+
+For information on the API Methods, see the [Knfsd Agent README.md](../../image/knfsd-agent/README.md).
+
 ## Usage
 
 **Note: See the [Configuration Variables](#Configuration-Variables) section for advance configuration options**
@@ -232,7 +242,7 @@ terraform apply
 | MIG_MAX_UNAVAILABLE_PERCENT     | The maximum number of instances that can be unavailable during automated MIG updates ([see docs](https://cloud.google.com/compute/docs/instance-groups/rolling-out-updates-to-managed-instance-groups#max_unavailable)). Defaults to 100% to ensure consistent cache instances within the MIG.                                                                                                                                                                  | `false`                                                                                                                                                                                                                        | `100`           |
 | MIG_REPLACEMENT_METHOD          | The instance replacement method for managed instance groups. Valid values are: `RECREATE`, `SUBSTITUTE`.<br><br>If `SUBSTITUTE` (default), the group replaces VM instances with new instances that have randomly generated names. If `RECREATE`, instance names are preserved. You must also set `MIG_MAX_UNAVAILABLE_PERCENT` to be greater than 0 (default is already `100` so this only applies if you have modified this variable).                         | `false`                                                                                                                                                                                                                        | `SUBSTITUTE`    |
 | MIG_MINIMAL_ACTION              | Minimal action to be taken on an instance. You can specify either RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a RESTART, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.                                          | `false`                                                                                                                                                                                                                        | `RESTART`       |
-
+| ENABLE_KNFSD_AGENT              | Should the [Knfsd Agent](../../image/knfsd-agent/README.md) be started at Proxy Startup?                                                                                                                                                                                                                                                                                                                                                                                                             | `false`                                                                                                                                                                                                                        | `true`          |
 ### Mount Options
 
 These mount options are for the proxy to the source server.

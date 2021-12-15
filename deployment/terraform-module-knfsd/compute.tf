@@ -88,10 +88,11 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     COLLECTD_METRICS_SCRIPT     = file("${path.module}/resources/monitoring/knfsd.sh")
     COLLECTD_ROOT_EXPORT_SCRIPT = file("${path.module}/resources/monitoring/export-root.sh")
 
-    # scripts
+    # scripts / software
     startup-script             = file("${path.module}/resources/proxy-startup.sh")
     CUSTOM_PRE_STARTUP_SCRIPT  = var.CUSTOM_PRE_STARTUP_SCRIPT
     CUSTOM_POST_STARTUP_SCRIPT = var.CUSTOM_POST_STARTUP_SCRIPT
+    ENABLE_KNFSD_AGENT         = var.ENABLE_KNFSD_AGENT
   }
 
   labels = {
