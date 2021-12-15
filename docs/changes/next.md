@@ -3,6 +3,7 @@
 * (GCP) Stop reporting file system usage metrics for NFS mounts
 * (GCP) Implement the knfsd-agent which provides a HTTP API for interacting with Knfsd nodes
 * (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
+* (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
 
 ## (GCP) Stop reporting file system usage metrics for NFS mounts
 
@@ -23,3 +24,7 @@ If upgrading from `v.0.4.0` and below you will need to build a [new version of t
 Adds the ability to explicitly disable NFS Versions in `nfs-kernel-server`. Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version.
 
 With this change, by default, NFS versions `4.0`, `4.1`, and `4.2` are now disabled on all proxies. To enable it, set a custom value for `DISABLED_NFS_VERSIONS`.
+
+## (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
+
+Removes the legacy 1 second sleep that is performed before each call to the GCP Metadata server. This speeds up proxy startup by ~20 seconds.

@@ -21,7 +21,6 @@ set -e
 # get_attribute() retrieves an attribute from VM Metadata Server (https://cloud.google.com/compute/docs/metadata/overview)
 # @param (str) attribute name
 function get_attribute() {
-  sleep 1
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
