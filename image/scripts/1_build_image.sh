@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,7 @@ SHELL_DEFAULT='\033[0m'
 
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
-    
+
     # Install Cachefilesd
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
@@ -74,13 +74,8 @@ download_nfs-utils() {
 # build_install_nfs-utils() builds and installs nfs-utils
 build_install_nfs-utils() {
 
-    # Make directory for nfs-utils
-    echo -n "Creating directory for nfs-utils source... "
-    mkdir -p ~/nfs-utils
-    echo "DONE"
-
     echo -e "${SHELL_YELLOW}"
-    echo "Downloading nfs-utils..."
+    echo "Installing nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
     cd ~/nfs-utils/nfs-utils-2.5.3
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss

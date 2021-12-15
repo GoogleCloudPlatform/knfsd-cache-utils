@@ -224,3 +224,8 @@ variable "MIG_REPLACEMENT_METHOD" {
   default = "SUBSTITUTE"
   type    = string
 }
+
+variable "DISABLED_NFS_VERSIONS" {
+  default = "4.0,4.1,4.2"
+  type = string
+}
