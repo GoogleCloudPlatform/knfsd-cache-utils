@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -o errexit
+set -o pipefail
 
-# get_script() fetches a key from the metadata server and writes it to a file
-function get_script() {
-    curl -Ss -o "/root/$2" "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
-}
+echo "Verifying file owenership"
+# Make sure the build user / group does not own any files on disk we're about
+# to image; excluding the home directory since we're about to delete that.
+FOUND=$(find / -mount \( -user build -prune -or -group build -prune \) -and -not \( -path ~build -prune \) )
+if [[ -n "${FOUND}" ]]; then
+	>&2 echo "ERROR: Found files owned by build"
+	>&2 echo "${FOUND}"
+	exit 1
+fi
 
-# Fetch scripts and make executable
-get_script BUILD_IMAGE_SCRIPT 1_build_image.sh
-chmod +x /root/1_build_image.sh
+echo "Removing build user"
+userdel -rf build
 
+echo "Shutting down"
+shutdown -h now

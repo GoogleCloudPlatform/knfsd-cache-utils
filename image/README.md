@@ -11,22 +11,27 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 
 ## Usage
 
-### Navigate to Scripts Directory
-```
-cd image/scripts
+### Navigate to Image Directory
+
+```bash
+cd image
 ```
 
 ### Update settings in brackets <> below and set variables
-```
+
+```bash
 export BUILD_MACHINE_NAME=knfsd-build-machine
 export BUILD_MACHINE_ZONE=<europe-west2-a>
 export GOOGLE_CLOUD_PROJECT=<knfsd-deployment-test>
 export BUILD_MACHINE_NETWORK=<knfsd-test>
 export BUILD_MACHINE_SUBNET=<europe-west2-subnet>
+export IMAGE_FAMILY=knfsd-proxy
+export IMAGE_NAME="${IMAGE_FAMILY}-$(date -u +%F-%H%M%S)"
 ```
 
-### Create a Build Machine
-```
+### Create Build Machine
+
+```bash
 gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=c2-standard-16 \
@@ -37,74 +42,98 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --subnet=$BUILD_MACHINE_SUBNET \
     --boot-disk-size=20GB \
     --boot-disk-type=pd-ssd \
-    --metadata-from-file=BUILD_IMAGE_SCRIPT=1_build_image.sh,startup-script=0_init.sh \
-    --metadata=serial-port-enable=TRUE
+    --metadata=serial-port-enable=TRUE,block-project-ssh-keys=TRUE
 ```
 
 ### (Optional) Create Firewall Rule for IAP SSH Access
-```
+
+```bash
 gcloud compute firewall-rules create allow-ssh-ingress-from-iap --direction=INGRESS --action=allow --rules=tcp:22 --source-ranges=35.235.240.0/20 --network=$BUILD_MACHINE_NETWORK --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Copy Knfsd Agent Source Code to Machine
+### Copy Resources to Build Machine
+
+```bash
+gcloud compute scp --recurse resources/* build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
-gcloud beta compute scp --recurse ../knfsd-agent build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+
+**NOTE:** You might get some errors when connecting while the instance is still booting. These errors will be generic network errors, or errors exchanging keys such as:
+
+```text
+ERROR: (gcloud.compute.start-iap-tunnel) Error while connecting [4047: 'Failed to lookup instance'].
+
+ERROR: (gcloud.compute.start-iap-tunnel) Error while connecting [4003: 'failed to connect to backend']. (Failed to connect to port 22)
 ```
 
 ### SSH to Build Machine
-```
-gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+
+```bash
+gcloud compute ssh build@$BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Switch to Root
-```
-sudo su
-cd
+### Run the Build Image Script
+
+```bash
+sudo bash scripts/1_build_image.sh
 ```
 
-# Move Knfsd Agent Source Code
-```
-mv /home/build/knfsd-agent .
+When this script completes you should see:
+
+```text
+SUCCESS: Please reboot for new kernel to take effect
 ```
 
-### Run the script 1_build_image.sh
-```
-./1_build_image.sh
+### Reboot Build Machine
+
+Once the build image script has completed, check there were no errors and reboot the machine. This will restart the build machine with the new kernel.
+
+```bash
+sudo reboot
 ```
 
-### After the installation is complete, reboot your Build Machine to run the updated code.
-```
-reboot
-```
-**NB: When your Build Machine reboots, your Cloud Console will revert to your host machine.**
+**NOTE: When your Build Machine reboots, your Cloud Console will revert to your host machine.**
 
-### SSH to your Build Machine to run subsequent commands.
-```
-gcloud beta compute ssh $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+### SSH to Build Machine to run subsequent commands
+
+```bash
+gcloud compute ssh build@$BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
-### Switch to Root
-```
-sudo su
-```
+### Validate Kernel Version
 
-### Validate Newer Kernel version is installed
-```
+Verify that the build machine booted using the new kernel version.
+
+```bash
 uname -r
 ```
+
 **Output from above command should indicate kernel version `5.11.8-051108-generic`.**
 
-### Shutdown Instance
+### Finalize the Build Machine
+
+This will clean up the local disk prior to creating the image (such as removing the build user).
+
+Once the clean up is complete, the instance will shutdown.
+
+```bash
+sudo bash scripts/9_finalize.sh
 ```
-sudo shutdown -h now
+
+You will get the following warnings, these can safely be ignored:
+
+```text
+userdel: user build is currently used by process 1431
+userdel: build mail spool (/var/mail/build) not found
 ```
 
 ### On your Cloud Shell host machine, create the Custom Disk Image
-```
-gcloud compute images create knfsd-image --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
+
+```bash
+gcloud compute images create $IMAGE_NAME --family=$IMAGE_FAMILY --source-disk=$BUILD_MACHINE_NAME --source-disk-zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 ### Delete Build Machine
-```
+
+```bash
 gcloud compute instances delete $BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --project=$GOOGLE_CLOUD_PROJECT
 ```
