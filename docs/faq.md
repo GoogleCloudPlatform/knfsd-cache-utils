@@ -78,3 +78,11 @@ When using the proxy, the proxy cannot distinguish between a standard `GETATTR` 
 `acdirmin` and `acdirmax` can be used to adjust directory metadata's expiry time on the proxy. Lowering this will force the proxy to re-validate the metadata with the source more often. This will result in the proxy detecting changes to the source more quickly but increase the number of metadata requests sent by the proxy to the source.
 
 The proxy will still cache the `READDIR` results even after the directory metadata has expired. If the directory metadata (`mtime`) still matches the proxy will continue to use the cached `READDIR` results.
+
+## Supplementary Groups
+
+The NFS protocol only supports a maximum of 16 supplementary (auxiliary) groups when using UNIX (`sec=sys`) authentication.
+
+If your system relies on users with more than 16 supplementary groups the NFS proxy will need to be connected to LDAP so that the proxy can resolve the full list of groups for a user.
+
+Once connected to LDAP you need to add `--manage-gids` to the `RPCMOUNTDOPTS` in the `/etc/default/nfs-kernel-server` file.
