@@ -53,31 +53,25 @@ install_build_dependencies() {
 }
 
 # download_nfs-utils() downloads version 2.5.3 of nfs-utils
-download_nfs-utils() {
-
-    # Make directory for nfs-utils
-    echo -n "Creating directory for nfs-utils source... "
-    mkdir -p ~/nfs-utils
-    echo "DONE"
+download_nfs-utils() (
 
     echo -e "${SHELL_YELLOW}"
     echo "Downloading nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
-    cd ~/nfs-utils
-    curl -o ~/nfs-utils/nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
-    tar xvf ~/nfs-utils/nfs-utils-2.5.3.tar.gz
+    curl -o nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
+    tar xvf nfs-utils-2.5.3.tar.gz
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
-}
+)
 
 # build_install_nfs-utils() builds and installs nfs-utils
-build_install_nfs-utils() {
+build_install_nfs-utils() (
 
     echo -e "${SHELL_YELLOW}"
     echo "Installing nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
-    cd ~/nfs-utils/nfs-utils-2.5.3
+    cd nfs-utils-2.5.3
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
     make -j20
     make install -j20
@@ -86,7 +80,7 @@ build_install_nfs-utils() {
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
-}
+)
 
 # install_stackdriver_agent() installs the Stackdriver Agent for metrics
 install_stackdriver_agent() {
@@ -109,7 +103,6 @@ install_golang() {
 
     echo "Installing golang...."
     echo -e "------${SHELL_DEFAULT}"
-    cd ~
     curl -o go1.17.3.linux-amd64.tar.gz https://dl.google.com/go/go1.17.3.linux-amd64.tar.gz
     rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.3.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
@@ -119,34 +112,35 @@ install_golang() {
 }
 
 # install_knfsd_agent() installs the knfsd-agent (see https://github.com/GoogleCloudPlatform/knfsd-cache-utils/tree/main/image/knfsd-agent)
-install_knfsd_agent() {
+install_knfsd_agent() (
 
     echo "Installing knfsd-agent...."
     echo -e "------${SHELL_DEFAULT}"
-    cd /root/knfsd-agent/src
+    cd knfsd-agent/src
     go build -o /usr/local/bin/knfsd-agent *.go
-    cp /root/knfsd-agent/knfsd-logrotate.conf /etc/logrotate.d/
-    cp /root/knfsd-agent/knfsd-agent.service /etc/systemd/system/
+    cd ..
+    cp knfsd-logrotate.conf /etc/logrotate.d/
+    cp knfsd-agent.service /etc/systemd/system/
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
-}
+)
 
 # download_kernel() downloads the 5.11.8 Kernel
 download_kernel() {
 
     # Make directory for kernel Images
     echo -n "Creating directory for kernel Images... "
-    mkdir -p ~/kernel-images
+    mkdir -p kernel-images
     echo "DONE"
 
     # Download Kernel .deb packages from kernel.ubuntu.com
     echo "Downloading kernel .deb files..."
     echo -e "------${SHELL_DEFAULT}"
-    curl -o ~/kernel-images/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
-    curl -o ~/kernel-images/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb
-    curl -o ~/kernel-images/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
-    curl -o ~/kernel-images/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
+    curl -o kernel-images/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
+    curl -o kernel-images/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb
+    curl -o kernel-images/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
+    curl -o kernel-images/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -158,7 +152,7 @@ install_kernel() {
     # Install the new kernel using dpkg
     echo "Installing kernel...."
     echo -e "------${SHELL_DEFAULT}"
-    dpkg -i ~/kernel-images/*
+    dpkg -i kernel-images/*
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
