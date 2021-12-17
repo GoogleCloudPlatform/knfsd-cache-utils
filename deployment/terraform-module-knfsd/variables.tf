@@ -229,3 +229,8 @@ variable "ENABLE_KNFSD_AGENT" {
   default = true
   type    = bool
 }
+   
+variable "DISABLED_NFS_VERSIONS" {
+  default = "4.0,4.1,4.2"
+  type = string
+}

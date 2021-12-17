@@ -222,6 +222,7 @@ EXPORT_OPTIONS="$(build_export_options)"
 NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
 VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
+DISABLED_NFS_VERSIONS=$(get_attribute DISABLED_NFS_VERSIONS)
 READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
 
 ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
@@ -389,9 +390,17 @@ echo "Finished setting VFS Cache Pressure."
 # Set NFS Kernel Server Config
 echo "$NFS_KERNEL_SERVER_CONF" >/etc/default/nfs-kernel-server
 
-# Set number of NFS Threads
+# Build Flags to Disable NFS Versions
+for v in $(echo $DISABLED_NFS_VERSIONS | sed "s/,/ /g"); do
+  DISABLED_NFS_VERSIONS_FLAGS="$DISABLED_NFS_VERSIONS_FLAGS --no-nfs-version $v"
+done
+
+# Set number of NFS Threads and NFS Server Disable Flags
+# Note.... Due to https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=738063 and https://unix.stackexchange.com/questions/205403/disable-nfsv4-server-on-debian-allow-nfsv3
+# we have to set the DISABLED_NFS_VERSIONS_FLAGS flags from above under the RPCNFSDCOUNT config value as RPCMOUNTDOPTS does not work. This should be resolved when we upgrade to
+# nfs-utils/1:2.5.4-1~exp1 +
 echo "Setting number of NFS Threads to $NUM_NFS_THREADS..."
-sed -i "s/^\(RPCNFSDCOUNT=\).*/\1${NUM_NFS_THREADS}/" /etc/default/nfs-kernel-server
+sed -i "s/^\(RPCNFSDCOUNT=\).*/\1\"${NUM_NFS_THREADS}${DISABLED_NFS_VERSIONS_FLAGS}\"/" /etc/default/nfs-kernel-server
 echo "Finished setting number of NFS Threads."
 
 # Enable Metrics if Configured

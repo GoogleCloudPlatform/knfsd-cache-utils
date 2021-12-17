@@ -3,6 +3,7 @@
 * (GCP) Stop reporting file system usage metrics for NFS mounts
 * (GCP) Implement the knfsd-agent which provides a HTTP API for interacting with Knfsd nodes
 * (GCP) Remove --manage-gids from RPCMOUNTDOPTS
+* (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
 
 ## (GCP) Stop reporting file system usage metrics for NFS mounts
 
@@ -27,3 +28,9 @@ This was causing the NFS proxy to ignore the auxiliary groups in the incoming NF
 When the proxy then sends the request to the source server, the new request was missing the auxiliary groups. This would cause permission errors when accessing files that depended on those auxiliary groups.
 
 The `--manage-gids` option only makes sense if the proxy is connected to LDAP.
+
+## (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
+
+Adds the ability to explicitly disable NFS Versions in `nfs-kernel-server`. Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version.
+
+With this change, by default, NFS versions `4.0`, `4.1`, and `4.2` are now disabled on all proxies. To enable it, set a custom value for `DISABLED_NFS_VERSIONS`.

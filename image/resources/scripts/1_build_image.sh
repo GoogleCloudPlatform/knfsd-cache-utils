@@ -69,7 +69,7 @@ download_nfs-utils() (
 build_install_nfs-utils() (
 
     echo -e "${SHELL_YELLOW}"
-    echo "Downloading nfs-utils..."
+    echo "Installing nfs-utils..."
     echo -e "------${SHELL_DEFAULT}"
     cd nfs-utils-2.5.3
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
