@@ -9,6 +9,17 @@ This directory contains scripts that will automatically take a vanilla Ubuntu 20
 
 For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
 
+## Essential Package Versions
+
+For the image we are using a specific version for this packages:
+
+* stackdriver-agent=6.1.4-1.focal
+* cachefilesd=0.10.10-0.2ubuntu1
+* rpcbind=1.2.5-8
+* nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
+* nfs-utils=2.5.3
+* kernel=5.11.8-051108
+
 ## Usage
 
 ### Navigate to Image Directory
@@ -31,12 +42,16 @@ export IMAGE_NAME="${IMAGE_FAMILY}-$(date -u +%F-%H%M%S)"
 
 ### Create Build Machine
 
+The standard machine type is e2-standard-8, you can use a higher one if you want to improve build speed.
+
+**IMPORTANT:** It is recommended not to change the disk boot-disk-size. The performance can increase but the image size will be larger and this will force any VMs to use the larger size drive.
+
 ```bash
 gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
-    --machine-type=c2-standard-16 \
+    --machine-type=e2-standard-8 \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image=ubuntu-2010-groovy-v20210323 \
+    --image-family=ubuntu-2004-lts \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \

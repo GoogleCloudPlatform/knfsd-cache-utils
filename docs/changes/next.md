@@ -1,10 +1,20 @@
 # Next
 
+* (GCP) Use LTS versions of Ubuntu
+* (GCP) Use a smaller machine type when building the image
 * (GCP) Stop reporting file system usage metrics for NFS mounts
 * (GCP) Implement the knfsd-agent which provides a HTTP API for interacting with Knfsd nodes
 * (GCP) Remove --manage-gids from RPCMOUNTDOPTS
 * (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
 * (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
+
+## (GCP) Use LTS versions of Ubuntu
+
+LTS (Long-Term Support) versions of Ubuntu are preferred for stability. These versions are supported for longer a longer period of time thus require less frequent updates to new major versions. LTS versions are normally released every 2 years and supported for 5 years. Non-LTS versions are only supported for 9 months and released every 6 months.
+
+## (GCP) Use a smaller machine type when building the image
+
+Sometimes c2-standard-32 instances are unavailable in a specific zone. The build machine was changed to use a more available machine type. A larger machine type can be used to improve the build times if they're too slow.
 
 ## (GCP) Stop reporting file system usage metrics for NFS mounts
 
