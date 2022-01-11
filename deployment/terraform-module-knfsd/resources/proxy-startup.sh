@@ -242,12 +242,6 @@ chmod +x /custom-pre-startup-script.sh
 bash /custom-pre-startup-script.sh
 echo "Finished running CUSTOM_PRE_STARTUP_SCRIPT..."
 
-# Set NFS Client Timeout
-# Load NFS if it isn't already loaded
-modprobe nfs nfs_mountpoint_expiry_timeout=-1
-# In case NFS was already loaded set the option directly
-sysctl -w fs.nfs.nfs_mountpoint_timeout=-1
-
 # List attatched NVME local SSDs
 echo "Detecting local NVMe drives..."
 DRIVESLIST=$(/bin/ls /dev/nvme0n*)

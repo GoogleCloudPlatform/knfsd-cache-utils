@@ -158,6 +158,12 @@ install_kernel() {
 
 }
 
+copy_config() {
+    chown --recursive root:root etc
+    chmod --recursive 0644 etc
+    cp --recursive ./etc /
+}
+
 # Prep Server
 install_nfs_packages
 install_build_dependencies
@@ -168,6 +174,7 @@ install_golang
 install_knfsd_agent
 download_kernel
 install_kernel
+copy_config
 
 echo
 echo

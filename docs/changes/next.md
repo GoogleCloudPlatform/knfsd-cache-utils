@@ -8,6 +8,8 @@
 * (GCP) Add ability to explicitly disable NFS Versions in `nfs-kernel-server` and default to disabling NFS versions `4.0`, `4.1`, and `4.2`
 * (GCP) Remove the metadata server read sleep from `proxy-startup.sh`
 * (GCP) Packer build script
+* (GCP) Use fixed ports for NFS services
+* (GCP) Configure mount point timeout when building the image
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -54,3 +56,16 @@ Removes the legacy 1 second sleep that is performed before each call to the GCP 
 ## (GCP) Packer build script
 
 Packer script to automate building the knfsd image on GCP.
+
+## (GCP) Use fixed ports for NFS services
+
+This allows defining a firewall rule that only permits clients to access the ports required by NFS.
+Previously the firewall rule had to allow any port.
+
+This also improves stability when the load balancer connects a client to a different instance.
+This was especially problematic if the client used UDP to access the portmapper or mountd services, as the UDP load balancer could connect the client to a different instance compared with TCP.
+
+## (GCP) Configure mount point timeout when building the image
+
+Moved this configuration into the modprobe options when the image is built.
+You will need to build a new image when updating to the latest Terraform to avoid issues with stale file handles.
