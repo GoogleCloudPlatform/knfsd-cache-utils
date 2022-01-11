@@ -27,11 +27,11 @@ source "googlecompute" "nfs-proxy" {
   image_family            = var.image_family
   image_name              = local.image_name
   image_description       = "NFS caching proxy server"
-  image_storage_locations = var.image_storage_location = "" ? null : [var.image_storage_location]
+  image_storage_locations = var.image_storage_location == "" ? null : [var.image_storage_location]
 
   # Source image
   source_image_family     = "ubuntu-2004-lts"
-  source_image_project_id = "ubuntu-os-cloud"
+  source_image_project_id = ["ubuntu-os-cloud"]
 
   # Communicator
   communicator    = "ssh"
