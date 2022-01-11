@@ -5,7 +5,7 @@ This directory contains scripts for building an image for Knfsd. We start with a
 * Installation of a newer kernel which has better support for NFS re-exporting
 * Installation of supporting components such as `nfs-kernel-server`, `cachefilesd` and the `stackdriver-agent`
 
-This directory contains scripts that will automatically take a vanilla Ubuntu 20.10 image and build the Knfsd Image.
+This directory contains scripts that will automatically take a vanilla Ubuntu 20.04 image and build the Knfsd Image.
 
 For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
 
