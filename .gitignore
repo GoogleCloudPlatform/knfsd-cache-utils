@@ -21,3 +21,6 @@
 
 # Service Account
 service-account-key.json
+
+# Build files
+image/resources.tgz

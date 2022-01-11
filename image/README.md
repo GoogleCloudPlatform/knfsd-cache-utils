@@ -20,6 +20,26 @@ For the image we are using a specific version for this packages:
 * nfs-utils=2.5.3
 * kernel=5.11.8-051108
 
+## Ports
+
+### General
+
+* 80    - HTTP (knfsd-agent)
+
+### NFS v3
+
+* 111   - RPC portmapper
+* 2049  - NFS
+* 20048 - mountd
+* 20050 - nlm
+* 20051 - statd
+* 20052 - lockd
+
+### NFS v4
+
+* 2049  - NFS
+* 20053 - NFS v4 callback
+
 ## Build Using Packer
 
 Download Packer 1.7.8 or higher from <https://packer.io/downloads>.
@@ -114,7 +134,8 @@ gcloud compute firewall-rules create allow-ssh-ingress-from-iap --direction=INGR
 ### Copy Resources to Build Machine
 
 ```bash
-gcloud compute scp --recurse resources/* build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
+tar -czf resources.tgz -C resources .
+gcloud compute scp resources.tgz build@$BUILD_MACHINE_NAME: --zone=$BUILD_MACHINE_ZONE --tunnel-through-iap --project=$GOOGLE_CLOUD_PROJECT
 ```
 
 **NOTE:** You might get some errors when connecting while the instance is still booting. These errors will be generic network errors, or errors exchanging keys such as:
@@ -134,6 +155,7 @@ gcloud compute ssh build@$BUILD_MACHINE_NAME --zone=$BUILD_MACHINE_ZONE --tunnel
 ### Run the Build Image Script
 
 ```bash
+tar -zxf resources.tgz
 sudo bash scripts/1_build_image.sh
 ```
 
