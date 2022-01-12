@@ -19,11 +19,6 @@ variable "EXPORT_MAP" {
   default = ""
 }
 
-variable "DISCO_MOUNT_EXPORT_MAP" {
-  type    = string
-  default = ""
-}
-
 variable "EXPORT_HOST_AUTO_DETECT" {
   type    = string
   default = ""

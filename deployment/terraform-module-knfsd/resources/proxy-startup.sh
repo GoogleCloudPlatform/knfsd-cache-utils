@@ -212,7 +212,6 @@ echo "Reading metadata from metadata server..."
 
 EXPORT_MAP=$(get_attribute EXPORT_MAP)
 EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
-DISCO_MOUNT_EXPORT_MAP=$(get_attribute DISCO_MOUNT_EXPORT_MAP)
 readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 MOUNT_OPTIONS="$(build_mount_options)"
@@ -365,38 +364,6 @@ if [[ "$ENABLE_NETAPP_AUTO_DETECT" == "true" ]]; then
 
   echo "Finished processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)."
 fi
-
-
-# Loop through $DISCO_MOUNT_EXPORT_MAP and mount each share defined in the DISCO_MOUNT_EXPORT_MAP
-echo "Beginning processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)..."
-for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
-
-  # Split the components of the entry in EXPORT_MAP
-  REMOTE_IP="$(echo $i | cut -d';' -f1)"
-  REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
-  LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
-
-  # Mount the NFS Server export
-  if is_excluded_export "$REMOTE_EXPORT"; then
-    echo "Skipped "$REMOTE_EXPORT", exported was excluded"
-  else
-    mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
-
-    # Discover NFS crossmounts via tree command
-    echo "Discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
-    tree -d $LOCAL_EXPORT >/dev/null
-    echo "Finished discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
-
-    # Create an individual export for each crossmount
-    for mountpoint in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT | awk '{print $6}'); do
-      add_nfs_export "$mountpoint" ",crossmnt"
-    done
-
-  fi
-
-done
-echo "Finished processing of crossmount NFS re-exports (DISCO_MOUNT_EXPORT_MAP)."
-
 
 # Set Read ahead Value to 8 MiB
 # Originally read ahead default to rsize * 15, but with rsizes now allowing 1 MiB

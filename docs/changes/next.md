@@ -11,6 +11,7 @@
 * (GCP) Use fixed ports for NFS services
 * (GCP) Configure mount point timeout when building the image
 * (GCP) Auto-discovery for NetApp exports using NetApp REST API
+* (GCP) Removed DISCO_MOUNT_EXPORT_MAP
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -76,3 +77,9 @@ You will need to build a new image when updating to the latest Terraform to avoi
 This can be used to discover exports on a NetApp system using the NetApp REST API when the `showmount` command is disabled on the source server.
 
 This replaces the old `DISCO_MOUNT_EXPORT_MAP` that used the `tree` command to discover nested mounts (junction points).
+
+## (GCP) Removed DISCO_MOUNT_EXPORT_MAP
+
+This command would cause excessive I/O due to the use of the tree command to discover nested exports. Most nested exports were on NetApp file servers due to junction points.
+
+Support for automatically discovering nested mounts is now handled using the NetApp REST API.
