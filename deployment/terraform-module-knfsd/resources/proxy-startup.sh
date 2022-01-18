@@ -312,7 +312,7 @@ echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUT
 for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
 
   # Detect the mounts on the NFS Server
-  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}'); do
+  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}') | sort; do
 
     # Mount the NFS Server export
     if is_excluded_export "$REMOTE_EXPORT"; then
