@@ -60,6 +60,12 @@ function build_mount_options() {
 # build_export_options() builds the common export options for all exports
 # Do not use this directly, the result will be cached in EXPORT_OPTIONS
 function build_export_options() {
+  local HIDE_OPT
+  local NOHIDE="$(get_attribute NOHIDE)"
+  if [[ $NOHIDE == 'true' ]]; then
+    HIDE_OPT="nohide"
+  fi
+
   local -a OPTIONS=(
     rw
     sync
@@ -69,6 +75,7 @@ function build_export_options() {
     no_subtree_check
     sec=sys
     secure
+    $HIDE_OPT
   )
 
   local EXTRA_OPTIONS="$(get_attribute EXPORT_OPTIONS)"
@@ -123,7 +130,7 @@ FSID=10 # Set Initial FSID
 function add_nfs_export() {
 
   echo "Creating NFS share export for $1..."
-  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID}${2})" >>/etc/exports
+  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID})" >>/etc/exports
   echo "Finished creating NFS share export for $1."
 
   FSID=$((FSID + 10))
@@ -314,7 +321,7 @@ for i in $(echo $EXPORT_MAP | sed "s/,/ /g"); do
   mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
 
   # Create /etc/exports entry for filesystem
-  add_nfs_export "$LOCAL_EXPORT" ""
+  add_nfs_export "$LOCAL_EXPORT"
 
 done
 echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
@@ -330,7 +337,7 @@ for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
     else
       mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
       # Create /etc/exports entry for filesystem
-      add_nfs_export "$REMOTE_EXPORT" ""
+      add_nfs_export "$REMOTE_EXPORT"
     fi
   done
 done
@@ -358,7 +365,7 @@ if [[ "$ENABLE_NETAPP_AUTO_DETECT" == "true" ]]; then
     else
       mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
       # Create /etc/exports entry for filesystem
-      add_nfs_export "$REMOTE_EXPORT" ",nohide"
+      add_nfs_export "$REMOTE_EXPORT"
     fi
   done
 

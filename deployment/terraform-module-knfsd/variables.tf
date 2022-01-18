@@ -128,6 +128,11 @@ variable "WSIZE" {
   type    = number
 }
 
+variable "NOHIDE" {
+  default = true
+  type    = bool
+}
+
 variable "MOUNT_OPTIONS" {
   default = ""
   type    = string

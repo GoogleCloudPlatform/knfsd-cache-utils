@@ -80,6 +80,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     ACREGMAX       = var.ACREGMAX
     RSIZE          = var.RSIZE
     WSIZE          = var.WSIZE
+    NOHIDE         = var.NOHIDE
     MOUNT_OPTIONS  = var.MOUNT_OPTIONS
     EXPORT_OPTIONS = var.EXPORT_OPTIONS
 

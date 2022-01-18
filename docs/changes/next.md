@@ -12,6 +12,7 @@
 * (GCP) Configure mount point timeout when building the image
 * (GCP) Auto-discovery for NetApp exports using NetApp REST API
 * (GCP) Removed DISCO_MOUNT_EXPORT_MAP
+* (GCP) Set nohide on all exports by default
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -83,3 +84,9 @@ This replaces the old `DISCO_MOUNT_EXPORT_MAP` that used the `tree` command to d
 This command would cause excessive I/O due to the use of the tree command to discover nested exports. Most nested exports were on NetApp file servers due to junction points.
 
 Support for automatically discovering nested mounts is now handled using the NetApp REST API.
+
+## (GCP) Set nohide on all exports by default
+
+This allows nested mounts, even those explicitly defined using `EXPORT_MAP` to be exported automatically to clients without the client needing to mount them explicitly.
+
+A NOHIDE option has been added to the Terraform to disable this option if required. To remove the nohide option set `NOHIDE = true` in Terraform.

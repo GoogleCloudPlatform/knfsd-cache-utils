@@ -292,7 +292,13 @@ These mount options are for the proxy to the source server.
 | RSIZE          | The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                               | False    | `1048576` |
 | WSIZE          | The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                                | False    | `1048576` |
 | MOUNT_OPTIONS  | Any additional NFS mount options not covered by existing variables. These options will be applied to all NFS mounts.                                                                                                                   | False    | `""`      |
-| EXPORT_OPTIONS | Any custom NFS exports options. These options will be applied to all NFS exports.                                                                                                                                                      | False    | `""`      |
+
+### Export Options
+
+| Variable       | Description                                                                       | Required | Default   |
+| -------------- | --------------------------------------------------------------------------------- | -------- | --------- |
+| NOHIDE         | When `true`, adds the `nohide` option to all the exports.                         | False    | `true`    |
+| EXPORT_OPTIONS | Any custom NFS exports options. These options will be applied to all NFS exports. | False    | `""`      |
 
 ### Autoscaling Configuration
 
