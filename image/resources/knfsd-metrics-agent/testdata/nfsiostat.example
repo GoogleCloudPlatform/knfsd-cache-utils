@@ -1,0 +1,9 @@
+10.0.0.2:/source-01/a1/b1/c1 mounted on /mnt/nested/a1/b1/c1:
+
+           ops/s       rpc bklog
+         474.916           0.000
+
+read:              ops/s            kB/s           kB/op         retrans    avg RTT (ms)    avg exe (ms)
+                 126.816       86603.576         682.909        0 (0.0%)          66.494          66.639
+write:             ops/s            kB/s           kB/op         retrans    avg RTT (ms)    avg exe (ms)
+                  59.772       60720.543        1015.877        0 (0.0%)        1254.378        1957.527

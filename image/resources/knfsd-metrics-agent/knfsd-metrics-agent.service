@@ -1,0 +1,18 @@
+[Unit]
+Description=Knfsd Metrics Agent
+After=stackdriver-agent.service
+BindsTo=stackdriver-agent.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+Environment=COLLECTD_INTERVAL=60
+Environment=METRICS_SOCKET_PATH=/run/collectd-unixsock
+# Currently using collectd 5.8.1
+Environment=METRICS_ENABLE_META=false
+EnvironmentFile=-/etc/default/knfsd-metrics-agent
+ExecStart=/usr/local/bin/knfsd-metrics-agent
+
+[Install]
+WantedBy=multi-user.target

@@ -13,6 +13,7 @@
 * (GCP) Auto-discovery for NetApp exports using NetApp REST API
 * (GCP) Removed DISCO_MOUNT_EXPORT_MAP
 * (GCP) Set nohide on all exports by default
+* (GCP) Metrics collection agent to replace bash scripts
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -90,3 +91,13 @@ Support for automatically discovering nested mounts is now handled using the Net
 This allows nested mounts, even those explicitly defined using `EXPORT_MAP` to be exported automatically to clients without the client needing to mount them explicitly.
 
 A NOHIDE option has been added to the Terraform to disable this option if required. To remove the nohide option set `NOHIDE = true` in Terraform.
+
+## (GCP) Metrics collection agent to replace bash scripts
+
+A custom metrics agent fixes several issues with the original bash scripts:
+
+* Only read the slabinfo and mountstats once. Mountstats makes the biggest difference when you have a lot of exports.
+
+* Single thread monitoring mountstats. Previously a separate bash process was spawned per export.
+
+* Future support for a wider range of custom metrics.

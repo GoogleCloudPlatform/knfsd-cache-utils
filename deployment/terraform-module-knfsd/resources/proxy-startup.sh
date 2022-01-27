@@ -232,8 +232,6 @@ READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
 
 ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
-COLLECTD_METRICS_SCRIPT=$(get_attribute COLLECTD_METRICS_SCRIPT)
-COLLECTD_ROOT_EXPORT_SCRIPT=$(get_attribute COLLECTD_ROOT_EXPORT_SCRIPT)
 ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
 
 CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
@@ -330,7 +328,7 @@ echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
 echo "Beginning processing of dynamically detected host exports (EXPORT_HOST_AUTO_DETECT)..."
 for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
   # Detect the mounts on the NFS Server
-  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}') | sort; do
+  for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}' | sort); do
     # Mount the NFS Server export
     if is_excluded_export "$REMOTE_EXPORT"; then
       echo "Skipped "$REMOTE_EXPORT", exported was excluded"
@@ -412,20 +410,12 @@ echo "Finished setting number of NFS Threads."
 if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
 
   echo "Configuring Stackdriver metrics..."
-  echo "$COLLECTD_METRICS_SCRIPT" >/etc/stackdriver/knfsd-export.sh
-  chmod +x /etc/stackdriver/knfsd-export.sh
   echo "$COLLECTD_METRICS_CONFIG" >/etc/stackdriver/collectd.d/knfsd.conf
   echo "Finished configuring Stackdriver metrics..."
 
-  echo "Setting up root export script..."
-  echo "$COLLECTD_ROOT_EXPORT_SCRIPT" >/collectd-root-export-script.sh
-  chmod +x /collectd-root-export-script.sh
-  nohup /collectd-root-export-script.sh &
-  echo "Finished setting up root export script..."
-
-  echo "Starting Stackdriver Agent..."
-  systemctl start stackdriver-agent
-  echo "Finished starting Stackdriver Agent."
+  echo "Starting Metrics Agents..."
+  systemctl start stackdriver-agent knfsd-metrics-agent
+  echo "Finished starting Metrics Agents."
 
 else
   echo "Metrics are disabled. Skipping..."

@@ -1,0 +1,588 @@
+device sysfs mounted on /sys with fstype sysfs
+device proc mounted on /proc with fstype proc
+device udev mounted on /dev with fstype devtmpfs
+device devpts mounted on /dev/pts with fstype devpts
+device tmpfs mounted on /run with fstype tmpfs
+device /dev/sda1 mounted on / with fstype ext4
+device securityfs mounted on /sys/kernel/security with fstype securityfs
+device tmpfs mounted on /dev/shm with fstype tmpfs
+device tmpfs mounted on /run/lock with fstype tmpfs
+device tmpfs mounted on /sys/fs/cgroup with fstype tmpfs
+device cgroup2 mounted on /sys/fs/cgroup/unified with fstype cgroup2
+device cgroup mounted on /sys/fs/cgroup/systemd with fstype cgroup
+device pstore mounted on /sys/fs/pstore with fstype pstore
+device efivarfs mounted on /sys/firmware/efi/efivars with fstype efivarfs
+device none mounted on /sys/fs/bpf with fstype bpf
+device cgroup mounted on /sys/fs/cgroup/blkio with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/net_cls,net_prio with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/cpu,cpuacct with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/rdma with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/pids with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/memory with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/hugetlb with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/cpuset with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/perf_event with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/devices with fstype cgroup
+device cgroup mounted on /sys/fs/cgroup/freezer with fstype cgroup
+device systemd-1 mounted on /proc/sys/fs/binfmt_misc with fstype autofs
+device hugetlbfs mounted on /dev/hugepages with fstype hugetlbfs
+device mqueue mounted on /dev/mqueue with fstype mqueue
+device debugfs mounted on /sys/kernel/debug with fstype debugfs
+device tracefs mounted on /sys/kernel/tracing with fstype tracefs
+device sunrpc mounted on /run/rpc_pipefs with fstype rpc_pipefs
+device fusectl mounted on /sys/fs/fuse/connections with fstype fusectl
+device configfs mounted on /sys/kernel/config with fstype configfs
+device /dev/loop0 mounted on /snap/core18/2284 with fstype squashfs
+device /dev/loop1 mounted on /snap/core20/1270 with fstype squashfs
+device /dev/sda15 mounted on /boot/efi with fstype vfat
+device /dev/loop4 mounted on /snap/snapd/14295 with fstype squashfs
+device /dev/loop3 mounted on /snap/lxd/21835 with fstype squashfs
+device tmpfs mounted on /run/snapd/ns with fstype tmpfs
+device nsfs mounted on /run/snapd/ns/lxd.mnt with fstype nsfs
+device /dev/loop5 mounted on /snap/google-cloud-sdk/216 with fstype squashfs
+device /dev/md127 mounted on /var/cache/fscache with fstype ext4
+device 10.220.1.130:/files mounted on /files with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.220.1.130,mountvers=3,mountport=2050,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 933 1 4 0 0 4 4 0 4 0 2 0 0
+	xprt:	tcp 669 1 4 0 0 2 2 0 2 0 2 0 0
+	xprt:	tcp 764 1 4 0 0 2 2 0 2 0 2 0 0
+	xprt:	tcp 1018 1 4 0 0 2 2 0 2 0 2 0 0
+	xprt:	tcp 717 1 4 0 0 2 2 0 2 0 2 0 0
+	xprt:	tcp 1002 1 4 0 0 2 2 0 2 0 2 0 0
+	xprt:	tcp 938 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 729 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 848 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 817 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 770 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 946 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 875 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 738 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 675 1 2 0 0 1 1 0 1 0 2 0 0
+	xprt:	tcp 915 1 2 0 0 1 1 0 1 0 2 0 0
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 8 8 0 892 896 8 3 12 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 0 0 0 0 0 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 0 0 0 0 0 0 0 0 0
+	      FSSTAT: 11 11 0 1308 924 10 2 12 0
+	      FSINFO: 2 2 0 208 160 0 0 1 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01 mounted on /source-01 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	22 1118 0 0 0 3 1157 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 25 25 0 2912 2800 514 2692 3207 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 11 11 0 1352 2404 5 2 7 1
+	      ACCESS: 4 4 0 552 480 1 2 4 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 1 1 0 140 144 0 0 0 1
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 0 0 0 0 0 0 0 0 0
+	      FSSTAT: 18 18 0 2028 1512 12 481 494 0
+	      FSINFO: 2 2 0 208 160 0 0 1 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1 mounted on /source-01/a1 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	22 931 0 0 2 5 1041 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 24 24 0 2756 2688 3 2600 2605 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 11 11 0 1388 2172 0 2 3 3
+	      ACCESS: 4 4 0 552 480 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 3 3 0 524 432 0 0 0 3
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 508 1 0 1 0
+	      FSSTAT: 18 18 0 2028 1512 1 255 258 0
+	      FSINFO: 2 2 0 208 160 0 8 8 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1 mounted on /source-01/a1/b1 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	22 762 0 0 2 14 906 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 24 24 0 2756 2688 737 3124 3862 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 7 7 0 784 1596 1 5 6 0
+	      ACCESS: 4 4 0 552 480 0 2 2 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 7 7 0 980 1008 0 1 1 7
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 724 0 1 1 0
+	      FSSTAT: 18 18 0 2028 1512 2 69 72 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c1 mounted on /source-01/a1/b1/c1 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	735 583 46 1298 1275 89 3135 52493857 0 708261 0 209369 94 2 1218 213206 0 1218 0 0 41115604 0 0 2 0 0 0 
+	bytes:	3192666095616 213780041796 0 0 84480532480 213766918212 20627450 52494295 
+	fsc:	7720318 20627450 17855464 0 7850761 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 737 737 0 88304 82544 35374 286176 321577 0
+	     SETATTR: 65 65 0 9880 9360 6942 25960 32904 0
+	      LOOKUP: 89 89 0 12352 10324 11156 29171 40328 89
+	      ACCESS: 91 91 0 12236 10920 290 15448 15741 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 86895 86895 0 11470140 84491655040 14657 67556764 67575940 0
+	       WRITE: 209239 209239 0 215047121880 28436456 64717695 183773572 248497063 1253
+	      CREATE: 64 64 0 9756 17028 6220 26926 33148 1
+	       MKDIR: 26 26 0 4216 6968 0 280 281 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 42 42 0 5880 6048 0 9888 9890 0
+	       RMDIR: 20 20 0 2688 2880 0 64 64 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 37 37 0 6256 36520 1 106 109 0
+	      FSSTAT: 19 19 0 2148 1596 2 70 73 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 1066 1066 0 140712 136448 107085 717831 824957 0
+
+device 10.0.0.5:/source-01/a1/b1/c2 mounted on /source-01/a1/b1/c2 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 1 23 25 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 7 7 0
+	      FSSTAT: 9 9 0 1092 756 0 6 6 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c3 mounted on /source-01/a1/b1/c3 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 0 20 21 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 9 9 0
+	      FSSTAT: 9 9 0 1092 756 0 8 9 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c4 mounted on /source-01/a1/b1/c4 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 0 20 20 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 13 13 0
+	      FSSTAT: 9 9 0 1092 756 0 6 6 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c5 mounted on /source-01/a1/b1/c5 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18667 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 0 19 19 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 16 16 0
+	      FSSTAT: 9 9 0 1092 756 0 7 7 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c6 mounted on /source-01/a1/b1/c6 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18668 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 0 19 19 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 10 10 0
+	      FSSTAT: 9 9 0 1092 756 0 7 7 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device 10.0.0.5:/source-01/a1/b1/c7 mounted on /source-01/a1/b1/c7 with fstype nfs statvers=1.1
+	opts:	rw,sync,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.5,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	504659
+	caps:	caps=0x10003fcf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	7 2 0 0 1 0 20 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+	bytes:	0 0 0 0 0 0 0 0 
+	fsc:	0 0 0 0 0 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 1019 1 34 0 0 18673 18672 0 140556 0 28 31255 118626
+	xprt:	tcp 935 1 32 0 0 18678 18676 0 140788 0 28 31338 118822
+	xprt:	tcp 897 1 26 0 0 18703 18702 0 140806 0 29 31662 118805
+	xprt:	tcp 868 1 22 0 0 18667 18666 0 140860 0 29 31261 118932
+	xprt:	tcp 966 1 26 0 0 18702 18701 0 140671 0 29 31698 118636
+	xprt:	tcp 823 1 30 0 0 18690 18689 0 140876 0 29 31509 118899
+	xprt:	tcp 983 1 30 0 0 18687 18687 0 140912 0 29 31452 118932
+	xprt:	tcp 682 1 32 0 0 18691 18690 0 140834 0 29 31551 118844
+	xprt:	tcp 926 1 32 0 0 18668 18668 0 140925 0 29 31695 118973
+	xprt:	tcp 834 1 28 0 0 18685 18684 0 141058 0 29 31223 119104
+	xprt:	tcp 1015 1 28 0 0 18659 18657 0 140747 0 29 31442 118781
+	xprt:	tcp 986 1 26 0 0 18661 18661 0 140825 0 29 31562 118860
+	xprt:	tcp 896 1 30 0 0 18655 18654 0 140689 0 29 31657 118729
+	xprt:	tcp 760 1 32 0 0 18655 18655 0 140784 0 29 31474 118837
+	xprt:	tcp 847 1 32 0 0 18650 18649 0 140623 0 28 31378 118720
+	xprt:	tcp 723 1 34 0 0 18660 18658 0 140699 0 29 31746 118728
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 9 9 0 1040 1008 0 22 22 0
+	     SETATTR: 0 0 0 0 0 0 0 0 0
+	      LOOKUP: 0 0 0 0 0 0 0 0 0
+	      ACCESS: 2 2 0 328 240 0 0 0 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 0 0 0 0 0 0 0 0 0
+	       WRITE: 0 0 0 0 0 0 0 0 0
+	      CREATE: 0 0 0 0 0 0 0 0 0
+	       MKDIR: 0 0 0 0 0 0 0 0 0
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 0 0 0 0 0 0 0 0 0
+	      REMOVE: 0 0 0 0 0 0 0 0 0
+	       RMDIR: 0 0 0 0 0 0 0 0 0
+	      RENAME: 0 0 0 0 0 0 0 0 0
+	        LINK: 0 0 0 0 0 0 0 0 0
+	     READDIR: 0 0 0 0 0 0 0 0 0
+	 READDIRPLUS: 1 1 0 180 472 0 12 12 0
+	      FSSTAT: 9 9 0 1092 756 0 7 7 0
+	      FSINFO: 2 2 0 208 160 0 2 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 0 0 0 0 0 0 0 0 0
+
+device nfsd mounted on /proc/fs/nfsd with fstype nfsd
+device binfmt_misc mounted on /proc/sys/fs/binfmt_misc with fstype binfmt_misc
+device /dev/loop6 mounted on /snap/snapd/14549 with fstype squashfs
+device tmpfs mounted on /run/user/1014 with fstype tmpfs
+device /dev/loop7 mounted on /snap/google-cloud-sdk/223 with fstype squashfs
+device /dev/loop2 mounted on /snap/core20/1328 with fstype squashfs

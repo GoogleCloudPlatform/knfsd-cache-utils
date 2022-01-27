@@ -21,6 +21,12 @@ set -e
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
+create_users() {
+    # collectd group is used to control which services are allowed to access
+    # the socket
+    groupadd --system collectd
+}
+
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
 
@@ -126,6 +132,18 @@ install_knfsd_agent() (
 
 )
 
+install_knfsd_metrics_agent() (
+    echo "Installing knfsd-metrics-agent...."
+    echo -e "------${SHELL_DEFAULT}"
+
+    cd knfsd-metrics-agent
+    go build -o /usr/local/bin/knfsd-metrics-agent
+    cp knfsd-metrics-agent.service /etc/systemd/system/
+
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+)
+
 install_netapp_exports() (
     echo "Installing netapp-exports...."
     echo -e "------${SHELL_DEFAULT}"
@@ -175,6 +193,7 @@ copy_config() {
 }
 
 # Prep Server
+create_users
 install_nfs_packages
 install_build_dependencies
 download_nfs-utils
@@ -182,6 +201,7 @@ build_install_nfs-utils
 install_stackdriver_agent
 install_golang
 install_knfsd_agent
+install_knfsd_metrics_agent
 install_netapp_exports
 download_kernel
 install_kernel
