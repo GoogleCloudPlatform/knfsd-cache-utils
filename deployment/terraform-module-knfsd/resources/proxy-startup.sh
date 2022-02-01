@@ -211,7 +211,7 @@ function split() {
 # For example /local/bin/ will be changed to /local/bin.
 # A special case is made for / which will be left unchanged.
 function trim_slash() {
-  sed '\|^/$| !s|/+$||'
+  sed '\|^/$| !s|/*$||'
 }
 
 function init() {
