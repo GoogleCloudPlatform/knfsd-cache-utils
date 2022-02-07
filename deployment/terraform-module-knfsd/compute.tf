@@ -58,7 +58,8 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     # mounts
     EXPORT_MAP              = var.EXPORT_MAP
     EXPORT_HOST_AUTO_DETECT = var.EXPORT_HOST_AUTO_DETECT
-    EXCLUDED_EXPORTS        = var.EXCLUDED_EXPORTS
+    EXCLUDED_EXPORTS        = join("\n", var.EXCLUDED_EXPORTS)
+    INCLUDED_EXPORTS        = join("\n", var.INCLUDED_EXPORTS)
     EXPORT_CIDR             = var.EXPORT_CIDR
 
     # NetApp auto-discovery

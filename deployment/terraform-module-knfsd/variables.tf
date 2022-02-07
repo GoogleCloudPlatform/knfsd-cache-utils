@@ -25,8 +25,13 @@ variable "EXPORT_HOST_AUTO_DETECT" {
 }
 
 variable "EXCLUDED_EXPORTS" {
-  type    = string
-  default = ""
+  type    = list(string)
+  default = []
+}
+
+variable "INCLUDED_EXPORTS" {
+  type    = list(string)
+  default = []
 }
 
 variable "EXPORT_CIDR" {

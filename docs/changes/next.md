@@ -14,6 +14,9 @@
 * (GCP) Removed DISCO_MOUNT_EXPORT_MAP
 * (GCP) Set nohide on all exports by default
 * (GCP) Metrics collection agent to replace bash scripts
+* (GCP) wildcard support for `EXCLUDED_EXPORTS`
+* (GCP) `EXCLUDED_EXPORTS` changed to `list(string)`
+* (GCP) Add include filter patterns `INCLUDED_EXPORTS` for auto-discovery
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -101,3 +104,23 @@ A custom metrics agent fixes several issues with the original bash scripts:
 * Single thread monitoring mountstats. Previously a separate bash process was spawned per export.
 
 * Future support for a wider range of custom metrics.
+
+## (GCP) wildcard support for `EXCLUDED_EXPORTS`
+
+`EXCLUDED_EXPORTS` now supports wildcard patterns such as `/home/**`. See the [deployment README](../../deployment/README.md#filter-patterns) for full details.
+
+## (GCP) `EXCLUDED_EXPORTS` changed to `list(string)`
+
+`EXCLUDED_EXPORTS` now uses a list of strings instead of a comma delimited string.
+
+```terraform
+# Old Format
+EXCLUDED_EXPORTS = "/home,/bin"
+
+# New Format
+EXCLUDED_EXPORTS = ["/home", "/bin"]
+```
+
+## (GCP) Add include filter patterns `INCLUDED_EXPORTS` for auto-discovery
+
+When `INCLUDED_EXPORTS` is set, auto-discovery will only re-export exports that match an include pattern. This can be combined with `EXCLUDED_EXPORTS`, to only export paths that match an include pattern but do not match an exclude pattern. See the [deployment README](../../deployment/README.md#filter-patterns) for full details.

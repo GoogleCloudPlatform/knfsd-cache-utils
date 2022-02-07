@@ -28,6 +28,20 @@ function setup() {
 	assert_line -n 2 baz
 }
 
+@test "split ignores empty items" {
+	run split <<< "foo,,bar"
+	assert_success
+	assert_equal ${#lines[@]} 2
+	assert_line -n 0 foo
+	assert_line -n 1 bar
+}
+
+@test "split empty" {
+	run split <<< ""
+	assert_success
+	assert_equal ${#lines[@]} 0
+}
+
 @test "trim_slash" {
 	run trim_slash <<-EOT
 		/a/

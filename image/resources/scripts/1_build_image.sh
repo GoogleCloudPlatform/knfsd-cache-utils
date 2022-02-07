@@ -144,6 +144,16 @@ install_knfsd_metrics_agent() (
     echo "DONE"
 )
 
+install_filter_exports() (
+    echo "Installing netapp-exports...."
+    echo -e "------${SHELL_DEFAULT}"
+    cd filter-exports
+    go test ./...
+    go build -o /usr/local/bin/filter-exports
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+)
+
 install_netapp_exports() (
     echo "Installing netapp-exports...."
     echo -e "------${SHELL_DEFAULT}"
@@ -202,6 +212,7 @@ install_stackdriver_agent
 install_golang
 install_knfsd_agent
 install_knfsd_metrics_agent
+install_filter_exports
 install_netapp_exports
 download_kernel
 install_kernel

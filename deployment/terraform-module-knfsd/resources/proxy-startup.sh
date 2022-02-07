@@ -16,7 +16,9 @@
 #
 
 # Exit immediately if a command exits with a non-zero status
-set -e
+set -o errexit
+set -o pipefail
+shopt -s lastpipe
 
 # get_attribute() retrieves an attribute from VM Metadata Server (https://cloud.google.com/compute/docs/metadata/overview)
 # @param (str) attribute name
@@ -125,7 +127,6 @@ function mount_nfs_server() {
 
 # add_nfs_export() adds an entry to /etc/exports
 # @param (str) Local Directory
-# @param (str) Special Options
 FSID=10 # Set Initial FSID
 function add_nfs_export() {
 
@@ -135,6 +136,15 @@ function add_nfs_export() {
 
   FSID=$((FSID + 10))
 
+}
+
+# rexport() mounts and reexports an NFS share from another NFS server
+# @param (str) NFS Sever IP
+# @param (str) NFS Server Export Path
+# @param (str) Local Mount Path
+function reexport() {
+	mount_nfs_server "$1" "$2" "$3"
+	add_nfs_export "$3"
 }
 
 PROTECTED_PATHS=(
@@ -188,16 +198,14 @@ function is_protected_path() {
   return 1
 }
 
-# is_protected_path() checks if a path is in the excluded export list
-# @param (str) The path to check
-# @return 0 if the path is protected, non-zero if it is not protected.
-function is_excluded_export() {
-  for p in "${EXCLUDED_EXPORTS[@]}"; do
-    if [[ "$1" == "$p" ]] || [[ "$1" == "$p/" ]]; then
-      return 0
-    fi
-  done
-  return 1
+# filter_exports() filters exports base on the include and exclude patterns.
+# Reads list of exports from stdin and writes the filtered list to stdout.
+# Any parameters are passed to the filter-exports command
+function filter_exports() {
+	filter-exports "$@" \
+		-include "${WORKDIR}/include-filters" \
+		-exclude "${WORKDIR}/exclude-filters" \
+		-verbose
 }
 
 # split() splits a list of comma delimited values
@@ -215,12 +223,22 @@ function trim_slash() {
 }
 
 function init() {
+	# Set any variables cleanup depends upon as blank before setting the trap.
+	# This prevents stray environment variables causing unexpected behaviour.
+	WORKDIR=
+	trap cleanup EXIT
+
 	# Get Variables from VM Metadata Server
 	echo "Reading metadata from metadata server..."
 
+	WORKDIR="$(mktemp -d)"
+	# get_attribute INCLUDED_EXPORTS | split >"${WORKDIR}/include-filters"
+	# get_attribute EXCLUDED_EXPORTS | split >"${WORKDIR}/exclude-filters"
+	get_attribute INCLUDED_EXPORTS >"${WORKDIR}/include-filters"
+	get_attribute EXCLUDED_EXPORTS >"${WORKDIR}/exclude-filters"
+
 	EXPORT_MAP=$(get_attribute EXPORT_MAP)
 	EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
-	readarray -t EXCLUDED_EXPORTS < <(get_attribute EXCLUDED_EXPORTS | split | trim_slash)
 	EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 	MOUNT_OPTIONS="$(build_mount_options)"
 	EXPORT_OPTIONS="$(build_export_options)"
@@ -250,6 +268,12 @@ function init() {
 	export NETAPP_SECRET_VERSION="$(get_attribute NETAPP_SECRET_VERSION)"
 	export NETAPP_CA="$(get_attribute NETAPP_CA)"
 	export NETAPP_ALLOW_COMMON_NAME="$(get_attribute NETAPP_ALLOW_COMMON_NAME)"
+
+	# NetApp CA certificate needs to be stored in a file
+	if [[ -n "$NETAPP_CA" ]]; then
+		echo "$NETAPP_CA" >"${WORKDIR}/netapp-ca.pem"
+		export NETAPP_CA="${WORKDIR}/netapp-ca.pem"
+	fi
 
 	echo "Done reading metadata."
 
@@ -316,12 +340,7 @@ function export-map() {
 		REMOTE_IP="$(echo $i | cut -d';' -f1)"
 		REMOTE_EXPORT="$(echo $i | cut -d';' -f2)"
 		LOCAL_EXPORT="$(echo $i | cut -d';' -f3)"
-
-		# Mount the NFS Server export
-		mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
-
-		# Create /etc/exports entry for filesystem
-		add_nfs_export "$LOCAL_EXPORT"
+		reexport "$REMOTE_IP" "$REMOTE_EXPORT" "$LOCAL_EXPORT"
 	done
 
 	echo "Finished processing of standard NFS re-exports (EXPORT_MAP)."
@@ -333,15 +352,10 @@ function export-auto-detect() {
 
 	for REMOTE_IP in $(echo $EXPORT_HOST_AUTO_DETECT | sed "s/,/ /g"); do
 		# Detect the mounts on the NFS Server
-		for REMOTE_EXPORT in $(showmount -e --no-headers $REMOTE_IP | awk '{print $1}' | sort); do
+		showmount -e --no-headers $REMOTE_IP | filter_exports -field 1 | awk '{print $1}' | sort |
+		while read -r REMOTE_EXPORT; do
 			# Mount the NFS Server export
-			if is_excluded_export "$REMOTE_EXPORT"; then
-				echo "Skipped "$REMOTE_EXPORT", exported was excluded"
-			else
-				mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
-				# Create /etc/exports entry for filesystem
-				add_nfs_export "$REMOTE_EXPORT"
-			fi
+			reexport "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 		done
 	done
 
@@ -352,26 +366,13 @@ function export-netapp() {
 	if [[ "$ENABLE_NETAPP_AUTO_DETECT" == "true" ]]; then
 		echo "Beginning processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)..."
 
-		if [[ -n "$NETAPP_CA" ]]; then
-			# write the certificate to a file
-			NETAPP_CA_FILE="$(tempfile)"
-			echo "$NETAPP_CA" > "$NETAPP_CA_FILE"
-			export NETAPP_CA="$NETAPP_CA_FILE"
-		fi
-
-		netapp-exports |
-		while read REMOTE; do
+		netapp-exports | filter_exports -field 2 |
+		while read -r REMOTE; do
 			REMOTE_IP="$(echo "$REMOTE" | cut -d ' ' -f1)"
 			REMOTE_EXPORT="$(echo "$REMOTE" | cut -d ' ' -f2-)"
 
 			# Mount the NFS Server export
-			if is_excluded_export "$REMOTE_EXPORT"; then
-			echo "Skipped "$REMOTE_EXPORT", exported was excluded"
-			else
-			mount_nfs_server "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
-			# Create /etc/exports entry for filesystem
-			add_nfs_export "$REMOTE_EXPORT"
-			fi
+			reexport "$REMOTE_IP" "$REMOTE_EXPORT" "$REMOTE_EXPORT"
 		done
 
 		echo "Finished processing of dynamically detected NetApp exports (ENABLE_NETAPP_AUTO_DETECT)."
@@ -387,7 +388,7 @@ function configure-read-ahead() {
 	echo "Setting read ahead for NFS mounts"
 
 	findmnt -rnu -t nfs -o MAJ:MIN,TARGET |
-	while read MOUNT; do
+	while read -r MOUNT; do
 		DEVICE="$(cut -d ' ' -f 1 <<< "$MOUNT")"
 		MOUNT_PATH="$(cut -d ' ' -f 2- <<< "$MOUNT")"
 		echo "Setting read ahead for $MOUNT_PATH..."
@@ -466,6 +467,13 @@ function post-startup() {
 	exportfs -s
 
 	echo "Reached Proxy Startup Exit. Happy caching!"
+}
+
+function cleanup() {
+	# Do not call this explicitly, the init function sets an exit trap
+	if [[ -n "${WORKDIR}" ]] && [[ -d "${WORKDIR}" ]]; then
+		rm -rf "${WORKDIR}"
+	fi
 }
 
 function main() {

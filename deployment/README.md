@@ -222,7 +222,8 @@ terraform apply
 | PROXY_BASENAME                  | A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).                                                                                                                                                                                                                                                                                                                                                 | False                                                                                | `nfsproxy`      |
 | EXPORT_MAP                      | A list of NFS Exports to mount from on-premise and re-export in the format `<SOURCE_IP>;<SOURCE_EXPORT>;<TARGET_EXPORT>`.<br><br> For example to mount `10.0.0.1/export` from on-premise and re-export as `10.100.100.1/reexport` you would set the `EXPORT_MAP` variable to `10.100.100.1;/export;/reexport`.<br><br>You can specify multiple re-exports using a comma, for example `10.100.100.1;/assets;/assetscache,10.100.100.1;/textures;/texturescache`. | `EXPORT_MAP`, `EXPORT_HOST_AUTO_DETECT` or NetApp Auto-Discovery must be configured. | N/A             |
 | EXPORT_HOST_AUTO_DETECT         | A list of IP addresses or hostnames of NFS Filers that respond to the `showmount` command. Knfsd will automatically detect and re-export mounts from this filer. Exports paths on the cache will match the export path on the source filer.<br><br> You can specify multiple filers using a comma, for example `10.100.100.1,10.100.200.1`.                                                                                                                     | `EXPORT_MAP`, `EXPORT_HOST_AUTO_DETECT` or NetApp Auto-Discovery must be configured. | N/A             |
-| EXCLUDED_EXPORTS                | A list of export paths excluded from auto-discovery (comma separated). Auto-discovery will ignore any mounts using these paths. Can be used to ignore protected paths such as `/bin`. Does not apply to mounts specified in the `EXPORT_MAP`. Paths excluded from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                     | `false`                                                                              | `""`            |
+| EXCLUDED_EXPORTS                | A list of filter patterns to be excluded from auto-discovery (see [Filter Patterns](#filter-patterns)). Auto-discovery will ignore any exports that match any of the exclude patterns. Can be used to ignore protected paths such as `/bin`. Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                                       | `false`                                                                              | `""`            |
+| INCLUDED_EXPORTS                | If set, auto-discovery will only include paths matching a filter pattern from the include list (see [Filter Patterns](#filter-patterns)). Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                                                                                          | `false`                                                                              | `""`            |
 | EXPORT_CIDR                     | The CIDR to use in `/etc/exports` of the Knfsd Node for filesystem re-export.                                                                                                                                                                                                                                                                                                                                                                                   | False                                                                                | `10.0.0.0/8`    |
 | PROXY_IMAGENAME                 | The name of the Knfsd base [image](https://cloud.google.com/compute/docs/images).                                                                                                                                                                                                                                                                                                                                                                               | True                                                                                 | N/A             |
 | KNFSD_NODES                     | The number of Knfsd nodes to deploy as part of the cluster.                                                                                                                                                                                                                                                                                                                                                                                                     | False                                                                                | 3               |
@@ -277,7 +278,6 @@ To update the NetApp secret, just add a new version and disable the old version.
 
 Changing the password and updating the secret will not affect any running instances as the password is only required to generate the list of exports when the instance starts.
 
-
 ### Mount Options
 
 These mount options are for the proxy to the source server.
@@ -309,7 +309,73 @@ These mount options are for the proxy to the source server.
 | KNFSD_AUTOSCALING_MIN_INSTANCES             | The minimum number of Knfsd instances to set regardless of the traffic volumes.                                                        | False    | `1`     |
 | KNFSD_AUTOSCALING_MAX_INSTANCES             | The maximum number of Knfsd instances to set regardless of the traffic volumes.                                                        | False    | `10`    |
 
+## Filter Patterns
+
+Filter patterns use simple glob-style wildcard patterns. A single asterisk `*` will match any character except `/`. A double asterisk will match all the descendants of path.
+
+|                        | `/home` | `/home/*` | `/home/**` |
+| ---------------------- | :-----: | :-------: | :--------: |
+| `/home`                | **✔**   | **✘**     | **✘**      |
+| `/home/alice`          | **✘**   | **✔**     | **✔**      |
+| `/home/alice/projects` | **✘**   | **✘**     | **✔**      |
+
+NOTE: Filter patterns ending in a wildcard *will not* match the parent path. You need to add both the parent path, and the child patterns.
+
+```terraform
+# To exclude /home and all its descendants:
+EXCLUDED_EXPORTS = ["/home", "/home/**"]
+```
+
+| Special Terms | Meaning
+| ------------- | -------
+| `*`           | matches any sequence of characters except `/`
+| `/**`         | matches zero or more directories
+| `?`           | matches any single character except `/`
+| `[class]`     | matches any single character except `/` against a class of characters
+| `{alt1,...}`  | matches a sequence of characters if one of the comma-separated alternatives matches
+
+### Character Classes
+
+Character classes support the following:
+
+| Class      | Meaning
+| ---------- | -------
+| `[abc]`    | matches any single character within the set
+| `[a-z]`    | matches any single character in the range
+| `[^class]` | matches any single character which does *not* match the class
+| `[!class]` | same as `^`: negates the class
+
+### Combining include and exclude patterns
+
+Include and exclude patterns can be combined. For an export to be accepted (and re-exported), the export *must* match an include pattern, and *must not* match an exclude pattern.
+
 ## Caveats
+
+### Excluding nested mounts
+
+If you exclude a nested mount but still export the parent mount you may get I/O errors when accessing the nested mount.
+
+The exact behaviour will depend on how the source server has exported the nested mount.
+
+If the source server exports the mount with the `crossmnt`, or `nohide` options then trying to access the nested mount, or list the directory containing the nested mount will result in I/O errors.
+
+If the source server exports the mount without `crossmnt`, or `hide` options then the directory for the nested mount will be visible, but empty.
+
+It is advised that if you exclude a nested mount, you also exclude the parent mount. You may however exclude a parent mount but include a nested mount.
+
+For example, if you have the following mounts:
+
+```text
+/assets
+/assets/common
+/assets/common/textures
+```
+
+You could exclude `/assets`, but still export `/assets/common` and `/assets/common/textures`. You could also export only `/assets/common/textures`.
+
+However, exporting `/assets` but excluding `/assets/common` could cause errors.
+
+Exporting `/assets` and `/assets/common/textures`, but excluding `/assets/common` will likely fail, and can have unintended side-effects as the proxy will try to create the directory `/assets/common`.
 
 ### Combining auto-discovery and explicit mounts
 
