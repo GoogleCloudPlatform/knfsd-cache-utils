@@ -222,8 +222,8 @@ terraform apply
 | PROXY_BASENAME                  | A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).                                                                                                                                                                                                                                                                                                                                                 | False                                                                                | `nfsproxy`      |
 | EXPORT_MAP                      | A list of NFS Exports to mount from on-premise and re-export in the format `<SOURCE_IP>;<SOURCE_EXPORT>;<TARGET_EXPORT>`.<br><br> For example to mount `10.0.0.1/export` from on-premise and re-export as `10.100.100.1/reexport` you would set the `EXPORT_MAP` variable to `10.100.100.1;/export;/reexport`.<br><br>You can specify multiple re-exports using a comma, for example `10.100.100.1;/assets;/assetscache,10.100.100.1;/textures;/texturescache`. | `EXPORT_MAP`, `EXPORT_HOST_AUTO_DETECT` or NetApp Auto-Discovery must be configured. | N/A             |
 | EXPORT_HOST_AUTO_DETECT         | A list of IP addresses or hostnames of NFS Filers that respond to the `showmount` command. Knfsd will automatically detect and re-export mounts from this filer. Exports paths on the cache will match the export path on the source filer.<br><br> You can specify multiple filers using a comma, for example `10.100.100.1,10.100.200.1`.                                                                                                                     | `EXPORT_MAP`, `EXPORT_HOST_AUTO_DETECT` or NetApp Auto-Discovery must be configured. | N/A             |
-| EXCLUDED_EXPORTS                | A list of filter patterns to be excluded from auto-discovery (see [Filter Patterns](#filter-patterns)). Auto-discovery will ignore any exports that match any of the exclude patterns. Can be used to ignore protected paths such as `/bin`. Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                                       | `false`                                                                              | `""`            |
-| INCLUDED_EXPORTS                | If set, auto-discovery will only include paths matching a filter pattern from the include list (see [Filter Patterns](#filter-patterns)). Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                                                                                          | `false`                                                                              | `""`            |
+| EXCLUDED_EXPORTS                | A list of filter patterns to be excluded from auto-discovery (see [Filter Patterns](#filter-patterns)). Auto-discovery will ignore any exports that match any of the exclude patterns. Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                    | `false`                                                                              | `[]`            |
+| INCLUDED_EXPORTS                | If set, auto-discovery will only include paths matching a filter pattern from the include list (see [Filter Patterns](#filter-patterns)). Does not apply to mounts specified in the `EXPORT_MAP`. Paths filtered from auto-discovery can be explicitly exported using `EXPORT_MAP`, this can be used to change the export path.                                                                                                                                 | `false`                                                                              | `[]`            |
 | EXPORT_CIDR                     | The CIDR to use in `/etc/exports` of the Knfsd Node for filesystem re-export.                                                                                                                                                                                                                                                                                                                                                                                   | False                                                                                | `10.0.0.0/8`    |
 | PROXY_IMAGENAME                 | The name of the Knfsd base [image](https://cloud.google.com/compute/docs/images).                                                                                                                                                                                                                                                                                                                                                                               | True                                                                                 | N/A             |
 | KNFSD_NODES                     | The number of Knfsd nodes to deploy as part of the cluster.                                                                                                                                                                                                                                                                                                                                                                                                     | False                                                                                | 3               |
@@ -387,16 +387,31 @@ The behaviour of duplicates is undefined. The system might overwrite one mount w
 
 ### Limitations on export names
 
-The proxy cannot re-export paths that match standard Linux system directories such as `/bin`, `/dev`, `/usr/local/lib`, etc.
+The proxy cannot re-export any path that matches a symlink on the local server.
 
-While some NFS servers may support creating an export with at path such as `/bin`, attempting to re-export the path via the cache would result in the cache overlaying its local `/bin` directory with the mount.
+The most likely symlinks that will cause conflicts are:
 
-Also included in the list of protected directories is the `/home` directory. This is because some commands such as `gcloud compute ssh` will look for ssh keys in the home directory, and may create user home directories and ssh keys within the home directories. To prevent this undesired, and unexpected behaviour the `/home` directory is not supported.
+* `/bin`
+* `/lib`
+* `/lib32`
+* `/lib64`
+* `/libx32`
+* `/sbin`
 
-The proxy will fail to start if it attempts to export a protected path. Check the logs for errors such as:
+The proxy will fail to start if it attempts to export a path that matches a symlink. Check the logs for errors such as:
 
-> startup-script: ERROR: Cannot mount 10.0.0.2:/home because /home is a system path
+```text
+ERROR: Cannot mount 10.0.0.2:/bin because /bin matches a symlink
+```
 
-If you are providing a manual export list, specify a different path for the export, such as `10.0.0.2;/home;/mnt/home`.
+If you are providing a manual export list, specify a different path for the export, such as `10.0.0.2;/bin;/binaries`.
 
-If you're using auto-discovery add the path to the list of excluded exports, for example `EXCLUDED_EXPORTS = "/home,/dev"`.
+If you're using auto-discovery add the path to the list of excluded exports, for example `EXCLUDED_EXPORTS = ["/bin"]`
+
+For a full list of symlinks, start a compute instance using the proxy image (without the standard startup script) and run the command:
+
+```bash
+find / -type l
+```
+
+Most of the symlinks listed are unlikely to cause issues, such as `/usr/lib/x86_64-linux-gnu/libc.so.6`.

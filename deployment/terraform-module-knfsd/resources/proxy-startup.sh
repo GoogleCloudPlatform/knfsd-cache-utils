@@ -94,31 +94,34 @@ function build_export_options() {
 # @param (str) NFS Server Export Path
 # @param (str) Local Mount Path
 function mount_nfs_server() {
-  if is_protected_path "$3"; then
-    # immediatley terminate so that the proxy does not start with a bad configuration
-    echo "ERROR: Cannot mount $1:$2 because $3 a system path"
+  if [[ -L "$3" ]]; then
+    # terminate so that the proxy does not start with a bad configuration
+    echo "ERROR: Cannot mount $1:$2 because $3 matches a symlink" >&2
     exit 1
   fi
 
+  local remote="$1:$2"
+  local path="/srv/nfs/$3"
+
   # Make the local export directory
-  mkdir -p $3
+  mkdir -p "$path"
 
   # Disable exit on non-zero code and try to mount the NFS Share 3 times 60 seconds apart.
   set +e
   ITER=1
   until [ "$ITER" -ge 4 ]
   do
-    echo "(Attempt $ITER/3) Mouting NFS Share: $1:$2..."
-    mount -t nfs -o "$MOUNT_OPTIONS" $1:$2 $3
+    echo "(Attempt $ITER/3) Mouting NFS Share: $remote..."
+    mount -t nfs -o "$MOUNT_OPTIONS" "$remote" "$path"
     if [ $? = 0 ]; then
-      echo "NFS mount succeeded for $1:$2."
+      echo "NFS mount succeeded for $remote."
       break
     else
       if [ $ITER = 3 ]; then
-        echo "NFS mount failed for $1:$2. Maximum attempts reached, exiting with status 1..."
+        echo "NFS mount failed for $remote. Maximum attempts reached, exiting with status 1..."
         exit 1
       fi
-      echo "NFS mount failed for $1:$2. Retrying after 60 seconds..."
+      echo "NFS mount failed for $remote. Retrying after 60 seconds..."
       sleep 60
     fi
   done
@@ -127,15 +130,21 @@ function mount_nfs_server() {
 
 # add_nfs_export() adds an entry to /etc/exports
 # @param (str) Local Directory
-FSID=10 # Set Initial FSID
+NEXT_FSID=10 # Set Initial FSID
 function add_nfs_export() {
+  local FSID="${NEXT_FSID}"
+
+  if [[ $1 == / ]]; then
+    # Special handling when re-exporting root exports.
+    # For NFS v4 the FSID of the root should be set to 0.
+    FSID=0
+  else
+    NEXT_FSID=$((FSID + 10))
+  fi
 
   echo "Creating NFS share export for $1..."
   echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID})" >>/etc/exports
   echo "Finished creating NFS share export for $1."
-
-  FSID=$((FSID + 10))
-
 }
 
 # rexport() mounts and reexports an NFS share from another NFS server
@@ -145,57 +154,6 @@ function add_nfs_export() {
 function reexport() {
 	mount_nfs_server "$1" "$2" "$3"
 	add_nfs_export "$3"
-}
-
-PROTECTED_PATHS=(
-  # Standard system paths, does not include /media or /mnt as these are valid
-  # export targets.
-  # Although /home is a common export it's not supported by the proxy as it can
-  # cause issues with the GCP infrastructure such as the "gcloud compute ssh"
-  # command. GCP would create user directories and create ssh keys in the home
-  # directory.
-  # The root / is also included but this is handled by is_protected_path
-  /             /bin          /boot         /dev          /etc
-  /home         /lib          /lib32        /lib64        /libx32
-  /lost+found   /opt          /proc         /root         /run
-  /sbin         /snap         /srv          /sys          /tmp
-  /usr          /var
-
-  /usr/bin      /usr/config   /usr/games    /usr/include  /usr/lib
-  /usr/lib32    /usr/lib64    /usr/libexec  /usr/libx32   /usr/local
-  /usr/sbin     /usr/share    /usr/src
-
-  /usr/local/include          /usr/local/bin      /usr/local/etc
-  /usr/local/games            /usr/local/include  /usr/local/lib
-  /usr/local/man              /usr/local/sbin     /usr/local/share
-  /usr/local/src
-
-  # Our custom directory, need to look at moving this into either /var or /run
-  /statsexport
-)
-
-# is_protected_path() checks if a path is a system path
-#
-# Protected paths are not allowed to be used for mounts and includes paths such
-# as /bin. This is used when auto-discovering mounts to avoid accidentally
-# mounting over the root filesystem or bin folders.
-#
-# Sub-directories of protected paths are allowed though as it is valid to have
-# an export such as /opt/software, or /var/data.
-#
-# This is not designed to be fool-proof, and is only aimed to provide basic
-# protection for critical folders such as /bin so that the system remains
-# usable.
-#
-# @param (str) The path to check
-# @return 0 if the path is protected, non-zero if it is not protected.
-function is_protected_path() {
-  for p in "${PROTECTED_PATHS[@]}"; do
-    if [[ "$1" == "$p" ]] || [[ "$1" == "$p/" ]]; then
-      return 0
-    fi
-  done
-  return 1
 }
 
 # filter_exports() filters exports base on the include and exclude patterns.
@@ -447,8 +405,10 @@ function start-services() {
 
 	# Start NFS Server
 	echo "Starting nfs-kernel-server..."
-	systemctl start portmap
-	systemctl start nfs-kernel-server
+	if ! systemctl start portmap nfs-kernel-server; then
+		systemctl status portmap nfs-kernel-server
+		exit 1
+	fi
 	echo "Finished starting nfs-kernel-server..."
 }
 

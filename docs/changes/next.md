@@ -17,6 +17,7 @@
 * (GCP) wildcard support for `EXCLUDED_EXPORTS`
 * (GCP) `EXCLUDED_EXPORTS` changed to `list(string)`
 * (GCP) Add include filter patterns `INCLUDED_EXPORTS` for auto-discovery
+* (GCP) Remove restriction on protected paths
 
 ## (GCP) Use LTS versions of Ubuntu
 
@@ -124,3 +125,9 @@ EXCLUDED_EXPORTS = ["/home", "/bin"]
 ## (GCP) Add include filter patterns `INCLUDED_EXPORTS` for auto-discovery
 
 When `INCLUDED_EXPORTS` is set, auto-discovery will only re-export exports that match an include pattern. This can be combined with `EXCLUDED_EXPORTS`, to only export paths that match an include pattern but do not match an exclude pattern. See the [deployment README](../../deployment/README.md#filter-patterns) for full details.
+
+## (GCP) Remove restriction on protected paths
+
+The restriction on protected paths has been removed. This requires building a new proxy image to apply the NFS `rootdir` setting.
+
+**WARNING:** If you use the current Terraform with an old image, the old image will be vulnerable to the bug where auto-discovery can overwrite a system path such as `/home` with a mount.

@@ -200,6 +200,7 @@ copy_config() {
     chown --recursive root:root etc
     chmod --recursive 0644 etc
     cp --recursive ./etc /
+    mkdir -p /srv/nfs
 }
 
 # Prep Server
