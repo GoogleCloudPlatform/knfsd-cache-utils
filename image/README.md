@@ -20,6 +20,12 @@ For the image we are using a specific version for this packages:
 * nfs-utils=2.5.3
 * kernel=5.11.8-051108
 
+## Customizing the image
+
+If you need to customize the image (e.g. installing custom metric agents such as metricbeat), then you can add any custom steps to the `resources/scripts/8_custom.sh` file.
+
+Alternatively, if your build procedure is more complex, you can replace the customization step with your own process.
+
 ## Ports
 
 ### General
@@ -190,6 +196,16 @@ uname -r
 ```
 
 **Output from above command should indicate kernel version `5.11.8-051108-generic`.**
+
+### Customize the image
+
+If you have custom build steps, run them now.
+
+If you have added your custom build steps to the `8_custom.sh` script file, run:
+
+```bash
+sudo bash scripts/8_custom.sh
+```
 
 ### Finalize the Build Machine
 

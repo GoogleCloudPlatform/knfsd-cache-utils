@@ -62,6 +62,11 @@ build {
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = ["./scripts/8_custom.sh"]
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
       "./scripts/9_finalize.sh",
     ]
