@@ -243,6 +243,23 @@ terraform apply
 | MIG_REPLACEMENT_METHOD          | The instance replacement method for managed instance groups. Valid values are: `RECREATE`, `SUBSTITUTE`.<br><br>If `SUBSTITUTE` (default), the group replaces VM instances with new instances that have randomly generated names. If `RECREATE`, instance names are preserved. You must also set `MIG_MAX_UNAVAILABLE_PERCENT` to be greater than 0 (default is already `100` so this only applies if you have modified this variable).                         | `false`                                                                              | `SUBSTITUTE`    |
 | MIG_MINIMAL_ACTION              | Minimal action to be taken on an instance. You can specify either RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a RESTART, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.                                          | `false`                                                                              | `RESTART`       |
 | ENABLE_KNFSD_AGENT              | Should the [Knfsd Agent](../../image/knfsd-agent/README.md) be started at Proxy Startup?                                                                                                                                                                                                                                                                                                                                                                        | `false`                                                                              | `true`          |
+| SERVICE_ACCOUNT                 | Service account the NFS proxy compute instances will run with.                                                                                                                                                                                                                                                                                                                                                                                                  | False                                                                                | see service account |
+
+#### Service Account
+
+The default `SERVICE_ACCOUNT` depends on `ENABLE_STACKDRIVER_METRICS`.
+
+* When `false` the NFS proxy instances will a service account
+* When `true` the NFS proxy instances will use the default compute service account with the following scopes:
+  * `https://www.googleapis.com/auth/logging.write`
+  * `https://www.googleapis.com/auth/monitoring.write`
+
+If a custom service account is assigned the compute instances will use the `https://www.googleapis.com/auth/cloud-platform` scope. This allows the proxy instances access to any GCP API permitted by IAM.
+
+The service account will need the following project level IAM permissions:
+
+* Logs Writer (`roles/logging.logWriter`)
+* Monitoring Metric Writer (`roles/monitoring.metricWriter`)
 
 ### NetApp Exports Auto-Discovery
 
@@ -259,6 +276,13 @@ terraform apply
 | NETAPP_ALLOW_COMMON_NAME  | Allows using the Common Name (CN) field of the certificate as a DNS name when the certificate does not include a Subject Alternate Name (SAN) field.                                                                                                                                  | False                                    | `false`                               |
 
 For instructions on how to get the NetApp root CA certificate, and verify the `netapp-exports` command works see the [netapp-exports README](../image/resources/netapp-exports/README.md).
+
+**NOTE:** A service account must be assigned to allow the proxy access to the GCP secret. The service account will need to be granted the following permissions on the NetApp secret:
+
+* Secret Manager Viewer (`roles/secretmanager.viewer`)
+* Secret Manager Secret Accessor (`roles/secretmanager.secretAccessor`)
+
+**IMPORTANT:** *Do not* assign the permissions at the project level as this will allow the NetApp proxy to read any secret in the project. Assign the IAM permissions directly on the NetApp secret.
 
 #### NetApp Self-Signed Certificates
 
