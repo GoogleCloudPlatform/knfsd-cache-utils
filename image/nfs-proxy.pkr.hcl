@@ -30,7 +30,7 @@ source "googlecompute" "nfs-proxy" {
   image_storage_locations = var.image_storage_location == "" ? null : [var.image_storage_location]
 
   # Source image
-  source_image_family     = "ubuntu-2004-lts"
+  source_image_family     = "ubuntu-2110"
   source_image_project_id = ["ubuntu-os-cloud"]
 
   # Communicator
@@ -68,6 +68,7 @@ build {
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
     inline = [
+      "printf 'Kernel Version: %s\n' \"$(uname -r)\"",
       "./scripts/9_finalize.sh",
     ]
     expect_disconnect = true

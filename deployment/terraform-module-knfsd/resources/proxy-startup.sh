@@ -381,12 +381,8 @@ function configure-nfs() {
 function configure-metrics() {
 	# Enable Metrics if Configured
 	if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
-		echo "Configuring Stackdriver metrics..."
-		echo "$COLLECTD_METRICS_CONFIG" >/etc/stackdriver/collectd.d/knfsd.conf
-		echo "Finished configuring Stackdriver metrics..."
-
 		echo "Starting Metrics Agents..."
-		systemctl start stackdriver-agent knfsd-metrics-agent
+		systemctl start google-cloud-ops-agent
 		echo "Finished starting Metrics Agents."
 	else
 		echo "Metrics are disabled. Skipping..."

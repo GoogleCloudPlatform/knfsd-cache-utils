@@ -13,12 +13,12 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 
 For the image we are using a specific version for this packages:
 
-* stackdriver-agent=6.1.4-1.focal
+* google-cloud-ops-agent=2.11.0
 * cachefilesd=0.10.10-0.2ubuntu1
-* rpcbind=1.2.5-8
-* nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
+* rpcbind=1.2.5-9build1
+* nfs-kernel-server=1:1.3.4-6ubuntu1
 * nfs-utils=2.5.3
-* kernel=5.11.8-051108
+* kernel=5.17-rc5
 
 ## Customizing the image
 
@@ -122,7 +122,7 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=e2-standard-8 \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image-family=ubuntu-2004-lts \
+    --image-family=ubuntu-2110 \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \
@@ -195,7 +195,7 @@ Verify that the build machine booted using the new kernel version.
 uname -r
 ```
 
-**Output from above command should indicate kernel version `5.11.8-051108-generic`.**
+**Output from above command should indicate kernel version `5.17.0-051700rc5-generic`.**
 
 ### Customize the image
 

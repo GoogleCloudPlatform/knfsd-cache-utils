@@ -66,7 +66,7 @@
                         ],
                         "perSeriesAligner": "ALIGN_MEAN"
                       },
-                      "filter": "metric.type=\"agent.googleapis.com/disk/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"device\"=\"md127\" metric.label.\"state\"=\"free\""
+                      "filter": "metric.type=\"agent.googleapis.com/disk/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"device\"=\"/dev/md127\" metric.label.\"state\"=\"free\""
                     }
                   }
                 }

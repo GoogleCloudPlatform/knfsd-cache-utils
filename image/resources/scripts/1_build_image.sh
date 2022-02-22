@@ -21,11 +21,10 @@ set -e
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
-create_users() {
-    # collectd group is used to control which services are allowed to access
-    # the socket
-    groupadd --system collectd
-}
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_PRIORITY=critical
 
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
@@ -34,7 +33,7 @@ install_nfs_packages() {
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4 tree
+    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-9build1 nfs-kernel-server=1:1.3.4-6ubuntu1
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
     systemctl disable nfs-kernel-server
@@ -51,8 +50,7 @@ install_build_dependencies() {
     echo "Installing build dependencies..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get upgrade -y
-    apt-get install libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves build-essential libevent-dev libsqlite3-dev libblkid-dev libkeyutils-dev libdevmapper-dev -y
+    apt-get install -y libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves build-essential libevent-dev libsqlite3-dev libblkid-dev libkeyutils-dev libdevmapper-dev
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
@@ -88,17 +86,15 @@ build_install_nfs-utils() (
 
 )
 
-# install_stackdriver_agent() installs the Stackdriver Agent for metrics
+# install_stackdriver_agent() installs the Cloud Ops Agent for metrics
 install_stackdriver_agent() {
 
     echo -e "${SHELL_YELLOW}"
-    echo "Installing Stackdriver Agent dependencies..."
+    echo "Installing Cloud Ops Agent dependencies..."
     echo -e "------${SHELL_DEFAULT}"
-    curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
-    bash add-monitoring-agent-repo.sh
-    apt-get update
-    sudo apt-get install -y stackdriver-agent=6.1.4-1.focal
-    systemctl disable stackdriver-agent
+    curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+    bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.11.0
+    systemctl disable google-cloud-ops-agent
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
@@ -165,32 +161,40 @@ install_netapp_exports() (
 )
 
 # download_kernel() downloads the 5.11.8 Kernel
-download_kernel() {
+download_kernel() (
 
     # Make directory for kernel Images
     echo -n "Creating directory for kernel Images... "
     mkdir -p kernel-images
+    cd kernel-images
     echo "DONE"
 
-    # Download Kernel .deb packages from kernel.ubuntu.com
     echo "Downloading kernel .deb files..."
     echo -e "------${SHELL_DEFAULT}"
-    curl -o kernel-images/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
-    curl -o kernel-images/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-headers-5.11.8-051108_5.11.8-051108.202103200636_all.deb
-    curl -o kernel-images/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-image-unsigned-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
-    curl -o kernel-images/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.8/amd64/linux-modules-5.11.8-051108-generic_5.11.8-051108.202103200636_amd64.deb
+
+    # libssl3 is not available in the 21.10 repositories, it will be included
+    # in 22.04. For now download the package directly and install it.
+    curl -O http://mirrors.edge.kernel.org/ubuntu/pool/main/o/openssl/libssl3_3.0.1-0ubuntu1_amd64.deb
+
+    # Download 5.17-rc5 from mainline as this is not yet available as a final
+    # version, and is not available through Ubuntu's hardware enablement.
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-headers-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-headers-5.17.0-051700rc5_5.17.0-051700rc5.202202202230_all.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-image-unsigned-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-modules-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
+
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
-}
+)
 
-# install_kernel() installs the 5.11.8 kernel
+# install_kernel() installs the 5.17-rc5 kernel
 install_kernel() {
 
     # Install the new kernel using dpkg
     echo "Installing kernel...."
     echo -e "------${SHELL_DEFAULT}"
-    dpkg -i kernel-images/*
+    dpkg -i kernel-images/*.deb
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -204,7 +208,6 @@ copy_config() {
 }
 
 # Prep Server
-create_users
 install_nfs_packages
 install_build_dependencies
 download_nfs-utils
@@ -212,7 +215,7 @@ build_install_nfs-utils
 install_stackdriver_agent
 install_golang
 install_knfsd_agent
-install_knfsd_metrics_agent
+# install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
 download_kernel
