@@ -1,0 +1,17 @@
+receivers:
+  mounts:
+    query_proxy_instance:
+      enabled: true
+      timeout: 10s
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - mounts
+        - slabinfo
+      processors:
+        - resourcedetection
+        - metricstransform
+      exporters:
+        - googlecloud

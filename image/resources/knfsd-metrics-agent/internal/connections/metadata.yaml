@@ -1,0 +1,9 @@
+name: connections
+
+metrics:
+  nfs.connections:
+    enabled: true
+    description: The number of NFS Clients connected to the Knfsd filer (used for autoscaling)
+    unit: 1
+    gauge:
+      value_type: int

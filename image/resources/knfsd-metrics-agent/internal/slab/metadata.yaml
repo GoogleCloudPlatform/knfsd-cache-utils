@@ -1,0 +1,38 @@
+name: slabinfo
+
+metrics:
+  # TODO: Change these to two metrics and use resource labels for which cache
+  # is being reported. Not changing this now as it would be a breaking change
+  # to the existing dashboards.
+
+  slab.nfs_inode_cache.active_objects:
+    enabled: true
+    description: NFS inode Cache Cache Active Objects
+    extended_documentation: The number of active objects in the Linux NFS inode Cache
+    unit: 1
+    gauge:
+      value_type: int
+
+  slab.nfs_inode_cache.objsize:
+    enabled: true
+    description: NFS inode Cache Object Size
+    extended_documentation: The total size of the objects in the Linux NFS inode Cache
+    unit: 1
+    gauge:
+      value_type: int
+
+  slab.dentry_cache.active_objects:
+    enabled: true
+    description: Dentry Cache Active Objects
+    extended_documentation: The number of active objects in the Linux Dentry Cache
+    unit: 1
+    gauge:
+      value_type: int
+
+  slab.dentry_cache.objsize:
+    enabled: true
+    description: Dentry Cache Object Size
+    extended_documentation: The total size of the objects in the Linux Dentry Cache
+    unit: 1
+    gauge:
+      value_type: int

@@ -1,0 +1,12 @@
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - connections
+        - mounts
+        - slabinfo
+      processors:
+        - resourcedetection
+        - metricstransform
+      exporters:
+        - googlecloud

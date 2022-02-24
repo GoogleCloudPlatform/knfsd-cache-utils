@@ -118,6 +118,15 @@ func diffOperation(new, old procfs.NFSOperationStats) procfs.NFSOperationStats {
 	}
 }
 
+func find(ops []procfs.NFSOperationStats, name string) (procfs.NFSOperationStats, bool) {
+	for _, o := range ops {
+		if o.Operation == name {
+			return o, true
+		}
+	}
+	return procfs.NFSOperationStats{}, false
+}
+
 func sub(x, y uint64) uint64 {
 	if x >= y {
 		return x - y

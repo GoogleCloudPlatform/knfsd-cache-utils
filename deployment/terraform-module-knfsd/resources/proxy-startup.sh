@@ -208,7 +208,6 @@ function init() {
 	READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
 
 	ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
-	COLLECTD_METRICS_CONFIG=$(get_attribute COLLECTD_METRICS_CONFIG)
 	ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
 
 	CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
@@ -395,7 +394,7 @@ function configure-metrics() {
 	# Enable Metrics if Configured
 	if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
 		echo "Starting Metrics Agents..."
-		systemctl start google-cloud-ops-agent
+		systemctl start google-cloud-ops-agent knfsd-metrics-agent
 		echo "Finished starting Metrics Agents."
 	else
 		echo "Metrics are disabled. Skipping..."

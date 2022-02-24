@@ -1,0 +1,9 @@
+name: oldestfile
+
+metrics:
+  fscache.oldest_file:
+    enabled: true
+    description: Age of the oldest file in FS-Cache
+    unit: s
+    gauge:
+      value_type: int

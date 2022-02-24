@@ -134,6 +134,9 @@ install_knfsd_metrics_agent() (
 
     cd knfsd-metrics-agent
     go build -o /usr/local/bin/knfsd-metrics-agent
+
+    mkdir /etc/knfsd-metrics-agent
+    cp config/*.yaml /etc/knfsd-metrics-agent/
     cp knfsd-metrics-agent.service /etc/systemd/system/
 
     echo -e -n "${SHELL_YELLOW}------ "
@@ -215,7 +218,7 @@ build_install_nfs-utils
 install_stackdriver_agent
 install_golang
 install_knfsd_agent
-# install_knfsd_metrics_agent
+install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
 download_kernel

@@ -1,0 +1,137 @@
+receivers:
+  connections:
+    collection_interval: 1m
+
+  mounts:
+    collection_interval: 1m
+    # # Disable specific metrics, useful when debugging using the logging exporter
+    # metrics:
+    #   nfs.mount.ops_per_second:
+    #     enabled: false
+    #   nfs.mount.rpc_backlog:
+    #     enabled: false
+    #   nfs.mount.read_exe:
+    #     enabled: false
+    #   nfs.mount.read_rtt:
+    #     enabled: false
+    #   nfs.mount.write_exe:
+    #     enabled: false
+    #   nfs.mount.write_rtt:
+    #     enabled: false
+
+  slabinfo:
+    collection_interval: 1m
+    # # Disable specific metrics, useful when debugging using the logging exporter
+    # metrics:
+    #   slab.nfs_inode_cache.active_objects:
+    #     enabled: false
+    #   slab.nfs_inode_cache.objsize:
+    #     enabled: false
+    #   slab.dentry_cache.active_objects:
+    #     enabled: false
+    #   slab.dentry_cache.objsize:
+    #     enabled: false
+
+  # This may be useful for diagnostics to indicate if the proxy is culling.
+  # However, this can be expensive as it requires scanning all the cached blocks
+  # in FS-Cache, so be conservative on how often this information is scraped.
+  # By default this is not included in the pipeline.
+  oldestfile:
+    collection_interval: 10m
+
+processors:
+  resourcedetection:
+    detectors: [gce]
+
+  # NOTE: the open telemetry collector will interpolate environment variables
+  # Thus $1 will be replaced with the value of the environment variable named "1"
+  # This is escaped by using two dollars, thus use $$ in regexp.
+  metricstransform:
+    transforms:
+    - action: update
+      include: nfs.connections
+      new_name: nfs_connections
+
+    - action: update
+      include: nfs.mount.read_rtt
+      new_name: nfsiostat_mount_read_rtt
+
+    - action: update
+      include: nfs.mount.read_exe
+      new_name: nfsiostat_mount_read_exe
+
+    - action: update
+      include: nfs.mount.write_rtt
+      new_name: nfsiostat_mount_write_rtt
+
+    - action: update
+      include: nfs.mount.write_exe
+      new_name: nfsiostat_mount_write_exe
+
+    - action: update
+      include: nfs.mount.ops_per_second
+      new_name: nfsiostat_ops_per_second
+
+    - action: update
+      include: nfs.mount.rpc_backlog
+      new_name: nfsiostat_rpc_backlog
+
+    - action: update
+      include: slab.dentry_cache.active_objects
+      new_name: dentry_cache_active_objects
+
+    - action: update
+      include: slab.dentry_cache.objsize
+      new_name: dentry_cache_objsize
+
+    - action: update
+      include: slab.nfs_inode_cache.objsize
+      new_name: nfs_inode_cache_objsize
+
+    - action: update
+      include: slab.nfs_inode_cache.active_objects
+      new_name: nfs_inode_cache_active_objects
+
+    - action: update
+      include: fscache.oldest_file
+      new_name: fscache_oldest_file
+
+    # prefix all metrics with custom.googleapis.com/knfsd/
+    - action: update
+      include: ^(.*)$$
+      match_type: regexp
+      new_name: custom.googleapis.com/knfsd/$$1
+
+exporters:
+  # Useful when developing or debugging metrics. When running the agent from the
+  # command line this will write the metrics to the terminal.
+  logging:
+    loglevel: debug
+
+  googlecloud:
+    user_agent: knfsd-metrics-agent
+    metric:
+      prefix: ""
+      # Setting this to false will automatically create the metric descriptors.
+      # However, it will also reset the display name "custom.googleapi.com/knfsd/..."
+      # Disabling this and creating the metric descriptors using Terraform so
+      # that we can have nice display names.
+      skip_create_descriptor: true
+
+  prometheus:
+    endpoint: "localhost:9090"
+    send_timestamps: false
+    resource_to_telemetry_conversion:
+      enabled: true
+
+service:
+  telemetry:
+    logs:
+      level: info
+
+    metrics:
+      # disable telemetry, scraping these might confuse the data as it would
+      # generate similar metrics to the Ops Agent
+      level: none
+      # if telemetry is enabled, run it on a different port as Ops Agent uses 8888
+      address: ':8889'

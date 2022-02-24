@@ -14,12 +14,19 @@
  limitations under the License.
  */
 
+locals {
+  mount_labels = {
+    "server": "Source NFS server of the mount",
+    "path": "Source NFS path of the mount"
+  }
+}
+
 resource "google_monitoring_metric_descriptor" "dentry_cache_active_objects" {
   description  = "The number of active objects in the Linux Dentry Cache"
   display_name = "Dentry Cache Active Objects"
   type         = "custom.googleapis.com/knfsd/dentry_cache_active_objects"
   metric_kind  = "GAUGE"
-  value_type   = "DOUBLE"
+  value_type   = "INT64"
   unit         = "1"
 }
 
@@ -28,7 +35,7 @@ resource "google_monitoring_metric_descriptor" "dentry_cache_objsize" {
   display_name = "Dentry Cache Object Size"
   type         = "custom.googleapis.com/knfsd/dentry_cache_objsize"
   metric_kind  = "GAUGE"
-  value_type   = "DOUBLE"
+  value_type   = "INT64"
   unit         = "By"
 }
 
@@ -37,7 +44,7 @@ resource "google_monitoring_metric_descriptor" "nfs_inode_cache_active_objects" 
   display_name = "NFS inode Cache Cache Active Objects"
   type         = "custom.googleapis.com/knfsd/nfs_inode_cache_active_objects"
   metric_kind  = "GAUGE"
-  value_type   = "DOUBLE"
+  value_type   = "INT64"
   unit         = "1"
 }
 
@@ -46,7 +53,7 @@ resource "google_monitoring_metric_descriptor" "nfs_inode_cache_objsize" {
   display_name = "NFS inode Cache Object Size"
   type         = "custom.googleapis.com/knfsd/nfs_inode_cache_objsize"
   metric_kind  = "GAUGE"
-  value_type   = "DOUBLE"
+  value_type   = "INT64"
   unit         = "By"
 }
 
@@ -57,11 +64,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_mount_read_exe" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "ms"
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
 }
 
@@ -72,11 +82,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_mount_read_rtt" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "ms"
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
 }
 
@@ -87,11 +100,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_mount_write_exe" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "ms"
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
 }
 
@@ -102,11 +118,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_mount_write_rtt" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "ms"
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
 }
 
@@ -118,13 +137,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_ops_per_second" {
   value_type   = "DOUBLE"
   unit         = "1"
 
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
-
 }
 
 resource "google_monitoring_metric_descriptor" "nfsiostat_rpc_backlog" {
@@ -134,11 +154,14 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_rpc_backlog" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "1"
-  # Ignore labels as these are set by collectd
-  lifecycle {
-    ignore_changes = [
-      labels
-    ]
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
   }
 }
 
@@ -147,8 +170,17 @@ resource "google_monitoring_metric_descriptor" "nfs_connections" {
   display_name = "Knfsd NFS Clients Connected"
   type         = "custom.googleapis.com/knfsd/nfs_connections"
   metric_kind  = "GAUGE"
-  value_type   = "DOUBLE"
+  value_type   = "INT64"
   unit         = "1"
+}
+
+resource "google_monitoring_metric_descriptor" "fscache_oldest_file" {
+  description  = "Age of the oldest file in FS-Cache"
+  display_name = "Age of the oldest file in FS-Cache"
+  type         = "custom.googleapis.com/knfsd/fscache_oldest_file"
+  metric_kind  = "GAUGE"
+  value_type   = "INT64"
+  unit         = "s"
 }
 
 resource "google_monitoring_dashboard" "knfsd-monitoring-dashboard" {

@@ -95,8 +95,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     serial-port-enable     = "TRUE"
 
     # metrics
-    ENABLE_STACKDRIVER_METRICS  = var.ENABLE_STACKDRIVER_METRICS
-    COLLECTD_METRICS_CONFIG     = file("${path.module}/resources/monitoring/knfsd.conf")
+    ENABLE_STACKDRIVER_METRICS = var.ENABLE_STACKDRIVER_METRICS
 
     # scripts / software
     startup-script             = file("${path.module}/resources/proxy-startup.sh")
