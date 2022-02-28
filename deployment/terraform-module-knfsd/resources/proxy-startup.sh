@@ -281,7 +281,20 @@ function create-fs-cache() {
 
 		# Start FS-Cache
 		echo "Starting FS-Cache..."
-		systemctl start cachefilesd
+		if ! systemctl start cachefilesd; then
+			# Sometimes cachefilesd reports an error when starting but does
+			# start correctly. This is likely an error in the init script or
+			# with how systemd integrates with init scripts.
+			# Trying a second time normally works. If you check
+			# /proc/fs/fscache/caches the cache is actually active.
+			if ! systemctl start cachefilesd; then
+				# Second attempt failed, this is now a genuine error so report
+				# what went wrong and terminate.
+				systemctl status cachefilesd
+				exit 1
+			fi
+		fi
+
 		MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
 		echo "FS-Cache started."
 	else
