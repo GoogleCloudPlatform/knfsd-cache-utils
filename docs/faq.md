@@ -86,3 +86,40 @@ The NFS protocol only supports a maximum of 16 supplementary (auxiliary) groups 
 If your system relies on users with more than 16 supplementary groups the NFS proxy will need to be connected to LDAP so that the proxy can resolve the full list of groups for a user.
 
 Once connected to LDAP you need to add `--manage-gids` to the `RPCMOUNTDOPTS` in the `/etc/default/nfs-kernel-server` file.
+
+## Cache only writes, never reads, on 5.17 kernel
+
+When mounting NFS shares using the `sync` option the proxy will continuously write to the cache but never read.
+
+The `/proc/fs/fscache/stats` will show that there are 0 reads on the IO line:
+
+```text
+IO     : rd=0 wr=141739641
+```
+
+If kernel tracing for the `fscache_access` event is enabled and tracing observed, there will be constant `io_write` events, but no `io_read` events.
+
+```bash
+echo 1 >/sys/kernel/debug/tracing/events/fscache/fscache_access/enable
+cat /sys/kernel/debug/tracing/trace_pipe
+```
+
+To view only `io_read`:
+
+```bash
+cat /sys/kernel/debug/tracing/trace_pipe | grep io_read
+```
+
+The trace will show:
+
+```text
+kworker/u32:135-4409    [005] ..... 13156.260267: fscache_access: c=000000df BEGIN io_writ r=2 a=9
+          <...>-4350    [001] ..... 13156.260268: fscache_access: c=00000afd BEGIN io_writ r=2 a=5
+ kworker/u32:72-4346    [004] ..... 13156.260268: fscache_access: c=0000093c BEGIN io_writ r=2 a=4
+          <...>-4404    [010] ..... 13156.260272: fscache_access: c=000003b5 END   io      r=2 a=3
+kworker/u32:207-4481    [015] ..... 13156.260272: fscache_access: c=000008e7 END   io      r=2 a=6
+kworker/u32:162-4436    [002] ..... 13156.260274: fscache_access: c=000004f7 END   io      r=2 a=7
+kworker/u32:207-4481    [015] ..... 13156.260274: fscache_access: c=000008e7 BEGIN io_writ r=2 a=7
+kworker/u32:224-4498    [012] ..... 13156.260274: fscache_access: c=00000c55 END   io      r=2 a=1
+kworker/u32:162-4436    [002] ..... 13156.260275: fscache_access: c=000004f7 BEGIN io_writ r=2 a=8
+```

@@ -32,7 +32,7 @@ function get_attribute() {
 # such as 'fsc'.
 function build_mount_options() {
   local -a OPTIONS=(
-    rw noatime nocto sync hard ac
+    rw noatime nocto async hard ac
     vers=3
     proto=tcp
     mountvers=3
