@@ -259,7 +259,7 @@ function create-fs-cache() {
 		if [ ! -e /dev/md127 ]; then
 			# Make RAID array of attatched Local SSDs
 			echo "Creating RAID array from Local SSDs..."
-			sudo mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
+			mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
 			echo "Finished creating RAID array from Local SSDs."
 		fi
 
