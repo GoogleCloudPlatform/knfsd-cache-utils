@@ -137,7 +137,7 @@ install_knfsd_metrics_agent() (
 
     mkdir /etc/knfsd-metrics-agent
     cp config/*.yaml /etc/knfsd-metrics-agent/
-    cp knfsd-metrics-agent.service /etc/systemd/system/
+    cp systemd/proxy.service /etc/systemd/system/knfsd-metrics-agent.service
 
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"

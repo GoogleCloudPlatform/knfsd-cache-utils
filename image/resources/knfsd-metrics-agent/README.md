@@ -2,6 +2,8 @@
 
 This agent collects custom metrics about the operation of the NFS proxy. The agent can also support collecting NFS metrics from client instances, including enriching the metrics with the name of the NFS proxy instance the client is connected to.
 
+While the KNFSD Metrics Agent's primary use is on the proxy the agent is also designed to support running on clients to collect useful metrics such as the total execution and round trip time of NFS requests. See [Client Metrics](../../../docs/client-metrics.md) for a guide on installing the KNFSD Metrics Agent on a client.
+
 ## Pre-requisites
 
 Before this collector can be used with Google Cloud Monitoring, you must first apply the [knfsd-cache-utils/deployment/metrics/](../../../deployment/metrics/).
