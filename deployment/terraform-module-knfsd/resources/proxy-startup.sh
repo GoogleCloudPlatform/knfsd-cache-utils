@@ -106,18 +106,15 @@ function mount_nfs_server() {
   # Make the local export directory
   mkdir -p "$path"
 
-  # Disable exit on non-zero code and try to mount the NFS Share 3 times 60 seconds apart.
-  set +e
-  ITER=1
-  until [ "$ITER" -ge 4 ]
-  do
-    echo "(Attempt $ITER/3) Mouting NFS Share: $remote..."
-    mount -t nfs -o "$MOUNT_OPTIONS" "$remote" "$path"
-    if [ $? = 0 ]; then
+  # try to mount the NFS Share 3 times 60 seconds apart.
+  local -i attempt
+  for ((attempt=1; ; attempt++)); do
+    echo "(Attempt ${attempt}/3) Mouting NFS Share: $remote..."
+    if mount -t nfs -o "$MOUNT_OPTIONS" "$remote" "$path"; then
       echo "NFS mount succeeded for $remote."
       break
     else
-      if [ $ITER = 3 ]; then
+      if ((attempt >= 3)); then
         echo "NFS mount failed for $remote. Maximum attempts reached, exiting with status 1..."
         exit 1
       fi
@@ -125,7 +122,6 @@ function mount_nfs_server() {
       sleep 60
     fi
   done
-  set -e
 }
 
 # add_nfs_export() adds an entry to /etc/exports
