@@ -179,12 +179,11 @@ download_kernel() (
     # in 22.04. For now download the package directly and install it.
     curl -O http://mirrors.edge.kernel.org/ubuntu/pool/main/o/openssl/libssl3_3.0.1-0ubuntu1_amd64.deb
 
-    # Download 5.17-rc5 from mainline as this is not yet available as a final
-    # version, and is not available through Ubuntu's hardware enablement.
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-headers-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-headers-5.17.0-051700rc5_5.17.0-051700rc5.202202202230_all.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-image-unsigned-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17-rc5/amd64/linux-modules-5.17.0-051700rc5-generic_5.17.0-051700rc5.202202202230_amd64.deb
+    # Download 5.17 from mainline as is not available through Ubuntu's hardware enablement yet.
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-headers-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-headers-5.17.0-051700_5.17.0-051700.202203202130_all.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-image-unsigned-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
+    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-modules-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
 
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
