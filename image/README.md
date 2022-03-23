@@ -1,11 +1,11 @@
 # Instructions
 
-This directory contains scripts for building an image for Knfsd. We start with a vanilla Ubuntu 20.10 image but make a number of modifications, namely:
+This directory contains scripts for building an image for Knfsd. We start with the base GCP Ubuntu 21.10 image but make a number of modifications, namely:
 
 * Installation of a newer kernel which has better support for NFS re-exporting
 * Installation of supporting components such as `nfs-kernel-server`, `cachefilesd` and the `stackdriver-agent`
 
-This directory contains scripts that will automatically take a vanilla Ubuntu 20.04 image and build the Knfsd Image.
+This directory contains scripts that will automatically take the GCP Ubuntu 21.10 image and build the Knfsd Image.
 
 For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
 
@@ -18,7 +18,7 @@ For the image we are using a specific version for this packages:
 * rpcbind=1.2.5-9build1
 * nfs-kernel-server=1:1.3.4-6ubuntu1
 * nfs-utils=2.5.3
-* kernel=5.17-rc5
+* kernel=5.17.0
 
 ## Customizing the image
 
@@ -195,7 +195,7 @@ Verify that the build machine booted using the new kernel version.
 uname -r
 ```
 
-**Output from above command should indicate kernel version `5.17.0-051700rc5-generic`.**
+**Output from above command should indicate kernel version `5.17.0-051700-generic`.**
 
 ### Customize the image
 

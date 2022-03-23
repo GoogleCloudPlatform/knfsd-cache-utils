@@ -163,7 +163,7 @@ install_netapp_exports() (
     echo "DONE"
 )
 
-# download_kernel() downloads the 5.11.8 Kernel
+# download_kernel() downloads the 5.17.0 kernel
 download_kernel() (
 
     # Make directory for kernel Images
@@ -190,7 +190,7 @@ download_kernel() (
 
 )
 
-# install_kernel() installs the 5.17-rc5 kernel
+# install_kernel() installs the 5.17.0 kernel
 install_kernel() {
 
     # Install the new kernel using dpkg
