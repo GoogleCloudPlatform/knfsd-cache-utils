@@ -4,35 +4,52 @@ receivers:
 
   mounts:
     collection_interval: 1m
-    # # Disable specific metrics, useful when debugging using the logging exporter
     # metrics:
-    #   nfs.mount.ops_per_second:
+    #   nfs.mount.write_bytes:
     #     enabled: false
-    #   nfs.mount.rpc_backlog:
+    #   nfs.mount.operation.requests:
     #     enabled: false
-    #   nfs.mount.read_exe:
-    #     enabled: false
-    #   nfs.mount.read_rtt:
+    #   nfs.mount.operation.errors:
     #     enabled: false
     #   nfs.mount.write_exe:
     #     enabled: false
     #   nfs.mount.write_rtt:
     #     enabled: false
+    #   nfs.mount.ops_per_second:
+    #     enabled: false
+    #   nfs.mount.rpc_backlog:
+    #     enabled: false
+    #   nfs.mount.read_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.sent_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.received_bytes:
+    #     enabled: false
+    #   nfs.mount.operation.major_timeouts:
+    #     enabled: false
+    #   nfs.mount.read_exe:
+    #     enabled: false
+    #   nfs.mount.read_rtt:
+    #     enabled: false
 
   exports:
     collection_interval: 1m
+    # metrics:
+    #   nfs.exports.total_read_bytes:
+    #     enabled: false
+    #   nfs.exports.total_write_bytes:
+    #     enabled: false
 
   slabinfo:
     collection_interval: 1m
-    # # Disable specific metrics, useful when debugging using the logging exporter
     # metrics:
+    #   slab.dentry_cache.objsize:
+    #     enabled: false
     #   slab.nfs_inode_cache.active_objects:
     #     enabled: false
     #   slab.nfs_inode_cache.objsize:
     #     enabled: false
     #   slab.dentry_cache.active_objects:
-    #     enabled: false
-    #   slab.dentry_cache.objsize:
     #     enabled: false
 
   # This may be useful for diagnostics to indicate if the proxy is culling.
