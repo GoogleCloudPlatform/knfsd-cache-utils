@@ -20,7 +20,7 @@ set -o pipefail
 # Remove temporary files owned by build user
 find /tmp -user build -delete
 
-echo "Verifying file owenership"
+echo "Verifying file ownership"
 # Make sure the build user / group does not own any files on disk we're about
 # to image; excluding the home directory since we're about to delete that.
 FOUND=$(find / -mount \( -user build -prune -or -group build -prune \) -and -not \( -path ~build -prune \) )

@@ -58,6 +58,7 @@ build {
       "reboot",
     ]
     expect_disconnect = true
+    pause_after = "30s"
   }
 
   provisioner "shell" {
