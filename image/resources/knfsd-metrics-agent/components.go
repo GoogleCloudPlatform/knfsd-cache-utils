@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/connections"
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/exports"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/mounts"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/oldestfile"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/slab"
@@ -40,6 +41,7 @@ func components() (component.Factories, error) {
 	receivers, err := component.MakeReceiverFactoryMap(
 		connections.NewFactory(),
 		mounts.NewFactory(),
+		exports.NewFactory(),
 		slab.NewFactory(),
 		oldestfile.NewFactory(),
 	)

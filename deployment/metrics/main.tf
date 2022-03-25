@@ -17,8 +17,12 @@
 locals {
   mount_labels = {
     "server": "Source NFS server of the mount",
-    "path": "Source NFS path of the mount"
+    "path": "Source NFS path of the mount",
+    "instance": "Proxy instance the client is connected to",
   }
+  mount_operation_labels = merge(local.mount_labels, {
+    "operation": "NFS operation name",
+  })
 }
 
 resource "google_monitoring_metric_descriptor" "dentry_cache_active_objects" {
@@ -154,6 +158,42 @@ resource "google_monitoring_metric_descriptor" "nfsiostat_rpc_backlog" {
   metric_kind  = "GAUGE"
   value_type   = "DOUBLE"
   unit         = "1"
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
+  }
+}
+
+resource "google_monitoring_metric_descriptor" "mount_read_bytes" {
+  description  = "Bytes read from remote NFS server"
+  display_name = "NFS Mount Read Bytes"
+  type         = "custom.googleapis.com/knfsd/mount/read_bytes"
+  metric_kind  = "CUMULATIVE"
+  value_type   = "INT64"
+  unit         = "By"
+
+  dynamic "labels" {
+    for_each = local.mount_labels
+    content {
+      key = labels.key
+      value_type = "STRING"
+      description = labels.value
+    }
+  }
+}
+
+resource "google_monitoring_metric_descriptor" "mount_write_bytes" {
+  description  = "Bytes wrote to remote NFS server"
+  display_name = "NFS Mount Write Bytes"
+  type         = "custom.googleapis.com/knfsd/mount/write_bytes"
+  metric_kind  = "CUMULATIVE"
+  value_type   = "INT64"
+  unit         = "By"
 
   dynamic "labels" {
     for_each = local.mount_labels

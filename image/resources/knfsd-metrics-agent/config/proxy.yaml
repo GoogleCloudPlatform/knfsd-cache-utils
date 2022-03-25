@@ -4,6 +4,7 @@ service:
       receivers:
         - connections
         - mounts
+        - exports
         - slabinfo
       processors:
         - resourcedetection

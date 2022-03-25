@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/convert"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent/internal/mounts/internal/metadata"
 	"github.com/prometheus/procfs"
 	"go.opentelemetry.io/collector/component"
@@ -35,6 +36,7 @@ type nfsMount struct {
 	// included if QueryInstanceName is true
 	instance string
 
+	stats   *procfs.MountStatsNFS
 	summary summary
 }
 
@@ -128,6 +130,7 @@ func (s *mountScraper) findNFSMounts() ([]nfsMount, error) {
 					mount:   mount.Mount,
 					server:  server,
 					path:    path,
+					stats:   stats,
 					summary: newSummary(stats),
 				})
 			}
@@ -206,17 +209,35 @@ func (c *nodeInfoClient) queryInstanceName(addr string) (string, error) {
 }
 
 func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, rms pdata.ResourceMetricsSlice) {
+	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.stats.Bytes.ReadTotal))
+	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.stats.Bytes.WriteTotal))
+
+	for _, op := range mount.stats.Operations {
+		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), op.Operation)
+		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), op.Operation)
+		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), op.Operation)
+		s.mb.RecordNfsMountOperationMajorTimeoutsDataPoint(now, convert.Int64(op.MajorTimeouts), op.Operation)
+		s.mb.RecordNfsMountOperationErrorsDataPoint(now, convert.Int64(op.Errors), op.Operation)
+	}
+
+	// report original delta based metrics
+	s.reportDelta(mount, now)
+
+	resource := rms.AppendEmpty()
+	attributes := resource.Resource().Attributes()
+	attributes.InsertString(metadata.A.Server, mount.server)
+	attributes.InsertString(metadata.A.Path, mount.path)
+	if mount.instance != "" {
+		attributes.InsertString(metadata.A.Instance, mount.instance)
+	}
+	metrics := resource.InstrumentationLibraryMetrics().AppendEmpty().Metrics()
+	s.mb.Emit(metrics)
+}
+
+func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 	// TODO: Report counters instead of gauges
-	// TODO: Improve the metrics we're reporting
-	// TODO: Report on other operations, such as LOOKUPS
 
-	// When improving the metrics collected, need to consider the volume
-	// of data being produced. Perhaps make the metrics configurable.
-	// Alternatively summarise some metrics, such as instead of reporting
-	// every individual operation, just include a single summarised value
-	// for "metadata".
-
-	// Currently this is a direct port of the original script that used
+	// This is a direct port of the original script that used
 	// nfsiostat, so is limited to the data that was output by nfsiostat.
 	// Now that we have the raw data we can report a lot more metrics.
 	// We can also use counters instead of calculating the diff for many of
@@ -256,22 +277,12 @@ func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, rms pdata.Res
 	read := calc(delta, diff.read)
 	write := calc(delta, diff.write)
 
-	resource := rms.AppendEmpty()
-	attributes := resource.Resource().Attributes()
-	attributes.InsertString(metadata.A.Server, mount.server)
-	attributes.InsertString(metadata.A.Path, mount.path)
-	if mount.instance != "" {
-		attributes.InsertString(metadata.A.Instance, mount.instance)
-	}
-
-	metrics := resource.InstrumentationLibraryMetrics().AppendEmpty().Metrics()
 	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta)
 	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta)
 	s.mb.RecordNfsMountReadExeDataPoint(now, read.exePerOp)
 	s.mb.RecordNfsMountReadRttDataPoint(now, read.rttPerOp)
 	s.mb.RecordNfsMountWriteExeDataPoint(now, write.exePerOp)
 	s.mb.RecordNfsMountWriteRttDataPoint(now, write.rttPerOp)
-	s.mb.Emit(metrics)
 }
 
 func calc(delta float64, diff procfs.NFSOperationStats) op {

@@ -10,7 +10,12 @@ attributes:
   path:
     description: NFS mount's path
 
+  operation:
+    description: NFS operation name
+
 metrics:
+  # TODO: Change metrics to use a cumulative sum (counter) instead of a gauge
+
   nfs.mount.read_exe:
     enabled: true
     description: nfsiostat Mount Read EXE
@@ -19,8 +24,6 @@ metrics:
     gauge:
       value_type: double
 
-  # TODO: Combine read/write into a single stat and use an attribute to
-  # differentiate the operation
   nfs.mount.read_rtt:
     enabled: true
     description: nfsiostat Mount Read RTT
@@ -60,3 +63,71 @@ metrics:
     unit: 1
     gauge:
       value_type: double
+
+  nfs.mount.read_bytes:
+    enabled: true
+    description: Bytes read from remote NFS server
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.write_bytes:
+    enabled: true
+    description: Bytes wrote to remote NFS server
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.operation.requests:
+    enabled: true
+    description: Number of requests
+    unit: '{requests}'
+    attributes: [operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.operation.sent_bytes:
+    enabled: true
+    description: Total bytes sent for these operations, including RPC headers and payload
+    unit: By
+    attributes: [operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.operation.received_bytes:
+    enabled: true
+    description: Total bytes received for these operations, including RPC headers and payload
+    unit: By
+    attributes: [operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.operation.major_timeouts:
+    enabled: true
+    description: Number of times a request has had a major timeout
+    unit: '{timeouts}'
+    attributes: [operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.mount.operation.errors:
+    enabled: true
+    description: Number of requests that complete with tk_status < 0
+    unit: '{errors}'
+    attributes: [operation]
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative

@@ -1,0 +1,20 @@
+name: exports
+
+metrics:
+  nfs.exports.total_read_bytes:
+    enabled: true
+    description: Total bytes read by the NFS clients
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  nfs.exports.total_write_bytes:
+    enabled: true
+    description: Total bytes wrote by the NFS clients
+    unit: By
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative

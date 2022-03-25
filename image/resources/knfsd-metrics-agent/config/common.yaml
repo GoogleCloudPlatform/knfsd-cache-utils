@@ -19,6 +19,9 @@ receivers:
     #   nfs.mount.write_rtt:
     #     enabled: false
 
+  exports:
+    collection_interval: 1m
+
   slabinfo:
     collection_interval: 1m
     # # Disable specific metrics, useful when debugging using the logging exporter
@@ -75,6 +78,42 @@ processors:
     - action: update
       include: nfs.mount.rpc_backlog
       new_name: nfsiostat_rpc_backlog
+
+    - action: update
+      include: nfs.mount.read_bytes
+      new_name: mount/read_bytes
+
+    - action: update
+      include: nfs.mount.write_bytes
+      new_name: mount/write_bytes
+
+    - action: update
+      include: nfs.mount.operation.requests
+      new_name: mount/operation/requests
+
+    - action: update
+      include: nfs.mount.operation.sent_bytes
+      new_name: mount/operation/sent_bytes
+
+    - action: update
+      include: nfs.mount.operation.received_bytes
+      new_name: mount/operation/received_bytes
+
+    - action: update
+      include: nfs.mount.operation.major_timeouts
+      new_name: mount/operation/major_timeouts
+
+    - action: update
+      include: nfs.mount.operation.errors
+      new_name: mount/operation/errors
+
+    - action: update
+      include: nfs.exports.total_read_bytes
+      new_name: exports/total_read_bytes
+
+    - action: update
+      include: nfs.exports.total_write_bytes
+      new_name: exports/total_write_bytes
 
     - action: update
       include: slab.dentry_cache.active_objects

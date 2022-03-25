@@ -15,17 +15,42 @@ type MetricSettings struct {
 
 // MetricsSettings provides settings for mounts metrics.
 type MetricsSettings struct {
-	NfsMountOpsPerSecond MetricSettings `mapstructure:"nfs.mount.ops_per_second"`
-	NfsMountReadExe      MetricSettings `mapstructure:"nfs.mount.read_exe"`
-	NfsMountReadRtt      MetricSettings `mapstructure:"nfs.mount.read_rtt"`
-	NfsMountRPCBacklog   MetricSettings `mapstructure:"nfs.mount.rpc_backlog"`
-	NfsMountWriteExe     MetricSettings `mapstructure:"nfs.mount.write_exe"`
-	NfsMountWriteRtt     MetricSettings `mapstructure:"nfs.mount.write_rtt"`
+	NfsMountOperationErrors        MetricSettings `mapstructure:"nfs.mount.operation.errors"`
+	NfsMountOperationMajorTimeouts MetricSettings `mapstructure:"nfs.mount.operation.major_timeouts"`
+	NfsMountOperationReceivedBytes MetricSettings `mapstructure:"nfs.mount.operation.received_bytes"`
+	NfsMountOperationRequests      MetricSettings `mapstructure:"nfs.mount.operation.requests"`
+	NfsMountOperationSentBytes     MetricSettings `mapstructure:"nfs.mount.operation.sent_bytes"`
+	NfsMountOpsPerSecond           MetricSettings `mapstructure:"nfs.mount.ops_per_second"`
+	NfsMountReadBytes              MetricSettings `mapstructure:"nfs.mount.read_bytes"`
+	NfsMountReadExe                MetricSettings `mapstructure:"nfs.mount.read_exe"`
+	NfsMountReadRtt                MetricSettings `mapstructure:"nfs.mount.read_rtt"`
+	NfsMountRPCBacklog             MetricSettings `mapstructure:"nfs.mount.rpc_backlog"`
+	NfsMountWriteBytes             MetricSettings `mapstructure:"nfs.mount.write_bytes"`
+	NfsMountWriteExe               MetricSettings `mapstructure:"nfs.mount.write_exe"`
+	NfsMountWriteRtt               MetricSettings `mapstructure:"nfs.mount.write_rtt"`
 }
 
 func DefaultMetricsSettings() MetricsSettings {
 	return MetricsSettings{
+		NfsMountOperationErrors: MetricSettings{
+			Enabled: true,
+		},
+		NfsMountOperationMajorTimeouts: MetricSettings{
+			Enabled: true,
+		},
+		NfsMountOperationReceivedBytes: MetricSettings{
+			Enabled: true,
+		},
+		NfsMountOperationRequests: MetricSettings{
+			Enabled: true,
+		},
+		NfsMountOperationSentBytes: MetricSettings{
+			Enabled: true,
+		},
 		NfsMountOpsPerSecond: MetricSettings{
+			Enabled: true,
+		},
+		NfsMountReadBytes: MetricSettings{
 			Enabled: true,
 		},
 		NfsMountReadExe: MetricSettings{
@@ -37,6 +62,9 @@ func DefaultMetricsSettings() MetricsSettings {
 		NfsMountRPCBacklog: MetricSettings{
 			Enabled: true,
 		},
+		NfsMountWriteBytes: MetricSettings{
+			Enabled: true,
+		},
 		NfsMountWriteExe: MetricSettings{
 			Enabled: true,
 		},
@@ -44,6 +72,271 @@ func DefaultMetricsSettings() MetricsSettings {
 			Enabled: true,
 		},
 	}
+}
+
+type metricNfsMountOperationErrors struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.operation.errors metric with initial data.
+func (m *metricNfsMountOperationErrors) init() {
+	m.data.SetName("nfs.mount.operation.errors")
+	m.data.SetDescription("Number of requests that complete with tk_status < 0")
+	m.data.SetUnit("{errors}")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricNfsMountOperationErrors) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountOperationErrors) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountOperationErrors) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountOperationErrors(settings MetricSettings) metricNfsMountOperationErrors {
+	m := metricNfsMountOperationErrors{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricNfsMountOperationMajorTimeouts struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.operation.major_timeouts metric with initial data.
+func (m *metricNfsMountOperationMajorTimeouts) init() {
+	m.data.SetName("nfs.mount.operation.major_timeouts")
+	m.data.SetDescription("Number of times a request has had a major timeout")
+	m.data.SetUnit("{timeouts}")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricNfsMountOperationMajorTimeouts) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountOperationMajorTimeouts) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountOperationMajorTimeouts) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountOperationMajorTimeouts(settings MetricSettings) metricNfsMountOperationMajorTimeouts {
+	m := metricNfsMountOperationMajorTimeouts{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricNfsMountOperationReceivedBytes struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.operation.received_bytes metric with initial data.
+func (m *metricNfsMountOperationReceivedBytes) init() {
+	m.data.SetName("nfs.mount.operation.received_bytes")
+	m.data.SetDescription("Total bytes received for these operations, including RPC headers and payload")
+	m.data.SetUnit("By")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricNfsMountOperationReceivedBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountOperationReceivedBytes) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountOperationReceivedBytes) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountOperationReceivedBytes(settings MetricSettings) metricNfsMountOperationReceivedBytes {
+	m := metricNfsMountOperationReceivedBytes{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricNfsMountOperationRequests struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.operation.requests metric with initial data.
+func (m *metricNfsMountOperationRequests) init() {
+	m.data.SetName("nfs.mount.operation.requests")
+	m.data.SetDescription("Number of requests")
+	m.data.SetUnit("{requests}")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricNfsMountOperationRequests) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountOperationRequests) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountOperationRequests) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountOperationRequests(settings MetricSettings) metricNfsMountOperationRequests {
+	m := metricNfsMountOperationRequests{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricNfsMountOperationSentBytes struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.operation.sent_bytes metric with initial data.
+func (m *metricNfsMountOperationSentBytes) init() {
+	m.data.SetName("nfs.mount.operation.sent_bytes")
+	m.data.SetDescription("Total bytes sent for these operations, including RPC headers and payload")
+	m.data.SetUnit("By")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
+}
+
+func (m *metricNfsMountOperationSentBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountOperationSentBytes) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountOperationSentBytes) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountOperationSentBytes(settings MetricSettings) metricNfsMountOperationSentBytes {
+	m := metricNfsMountOperationSentBytes{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricNfsMountOpsPerSecond struct {
@@ -88,6 +381,57 @@ func (m *metricNfsMountOpsPerSecond) emit(metrics pdata.MetricSlice) {
 
 func newMetricNfsMountOpsPerSecond(settings MetricSettings) metricNfsMountOpsPerSecond {
 	m := metricNfsMountOpsPerSecond{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
+type metricNfsMountReadBytes struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.read_bytes metric with initial data.
+func (m *metricNfsMountReadBytes) init() {
+	m.data.SetName("nfs.mount.read_bytes")
+	m.data.SetDescription("Bytes read from remote NFS server")
+	m.data.SetUnit("By")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+}
+
+func (m *metricNfsMountReadBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountReadBytes) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountReadBytes) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountReadBytes(settings MetricSettings) metricNfsMountReadBytes {
+	m := metricNfsMountReadBytes{settings: settings}
 	if settings.Enabled {
 		m.data = pdata.NewMetric()
 		m.init()
@@ -242,6 +586,57 @@ func newMetricNfsMountRPCBacklog(settings MetricSettings) metricNfsMountRPCBackl
 	return m
 }
 
+type metricNfsMountWriteBytes struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.mount.write_bytes metric with initial data.
+func (m *metricNfsMountWriteBytes) init() {
+	m.data.SetName("nfs.mount.write_bytes")
+	m.data.SetDescription("Bytes wrote to remote NFS server")
+	m.data.SetUnit("By")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+}
+
+func (m *metricNfsMountWriteBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsMountWriteBytes) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsMountWriteBytes) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsMountWriteBytes(settings MetricSettings) metricNfsMountWriteBytes {
+	m := metricNfsMountWriteBytes{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
+}
+
 type metricNfsMountWriteExe struct {
 	data     pdata.Metric   // data buffer for generated metric.
 	settings MetricSettings // metric settings provided by user.
@@ -343,13 +738,20 @@ func newMetricNfsMountWriteRtt(settings MetricSettings) metricNfsMountWriteRtt {
 // MetricsBuilder provides an interface for scrapers to report metrics while taking care of all the transformations
 // required to produce metric representation defined in metadata and user settings.
 type MetricsBuilder struct {
-	startTime                  pdata.Timestamp
-	metricNfsMountOpsPerSecond metricNfsMountOpsPerSecond
-	metricNfsMountReadExe      metricNfsMountReadExe
-	metricNfsMountReadRtt      metricNfsMountReadRtt
-	metricNfsMountRPCBacklog   metricNfsMountRPCBacklog
-	metricNfsMountWriteExe     metricNfsMountWriteExe
-	metricNfsMountWriteRtt     metricNfsMountWriteRtt
+	startTime                            pdata.Timestamp
+	metricNfsMountOperationErrors        metricNfsMountOperationErrors
+	metricNfsMountOperationMajorTimeouts metricNfsMountOperationMajorTimeouts
+	metricNfsMountOperationReceivedBytes metricNfsMountOperationReceivedBytes
+	metricNfsMountOperationRequests      metricNfsMountOperationRequests
+	metricNfsMountOperationSentBytes     metricNfsMountOperationSentBytes
+	metricNfsMountOpsPerSecond           metricNfsMountOpsPerSecond
+	metricNfsMountReadBytes              metricNfsMountReadBytes
+	metricNfsMountReadExe                metricNfsMountReadExe
+	metricNfsMountReadRtt                metricNfsMountReadRtt
+	metricNfsMountRPCBacklog             metricNfsMountRPCBacklog
+	metricNfsMountWriteBytes             metricNfsMountWriteBytes
+	metricNfsMountWriteExe               metricNfsMountWriteExe
+	metricNfsMountWriteRtt               metricNfsMountWriteRtt
 }
 
 // metricBuilderOption applies changes to default metrics builder.
@@ -364,13 +766,20 @@ func WithStartTime(startTime pdata.Timestamp) metricBuilderOption {
 
 func NewMetricsBuilder(settings MetricsSettings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
-		startTime:                  pdata.NewTimestampFromTime(time.Now()),
-		metricNfsMountOpsPerSecond: newMetricNfsMountOpsPerSecond(settings.NfsMountOpsPerSecond),
-		metricNfsMountReadExe:      newMetricNfsMountReadExe(settings.NfsMountReadExe),
-		metricNfsMountReadRtt:      newMetricNfsMountReadRtt(settings.NfsMountReadRtt),
-		metricNfsMountRPCBacklog:   newMetricNfsMountRPCBacklog(settings.NfsMountRPCBacklog),
-		metricNfsMountWriteExe:     newMetricNfsMountWriteExe(settings.NfsMountWriteExe),
-		metricNfsMountWriteRtt:     newMetricNfsMountWriteRtt(settings.NfsMountWriteRtt),
+		startTime:                            pdata.NewTimestampFromTime(time.Now()),
+		metricNfsMountOperationErrors:        newMetricNfsMountOperationErrors(settings.NfsMountOperationErrors),
+		metricNfsMountOperationMajorTimeouts: newMetricNfsMountOperationMajorTimeouts(settings.NfsMountOperationMajorTimeouts),
+		metricNfsMountOperationReceivedBytes: newMetricNfsMountOperationReceivedBytes(settings.NfsMountOperationReceivedBytes),
+		metricNfsMountOperationRequests:      newMetricNfsMountOperationRequests(settings.NfsMountOperationRequests),
+		metricNfsMountOperationSentBytes:     newMetricNfsMountOperationSentBytes(settings.NfsMountOperationSentBytes),
+		metricNfsMountOpsPerSecond:           newMetricNfsMountOpsPerSecond(settings.NfsMountOpsPerSecond),
+		metricNfsMountReadBytes:              newMetricNfsMountReadBytes(settings.NfsMountReadBytes),
+		metricNfsMountReadExe:                newMetricNfsMountReadExe(settings.NfsMountReadExe),
+		metricNfsMountReadRtt:                newMetricNfsMountReadRtt(settings.NfsMountReadRtt),
+		metricNfsMountRPCBacklog:             newMetricNfsMountRPCBacklog(settings.NfsMountRPCBacklog),
+		metricNfsMountWriteBytes:             newMetricNfsMountWriteBytes(settings.NfsMountWriteBytes),
+		metricNfsMountWriteExe:               newMetricNfsMountWriteExe(settings.NfsMountWriteExe),
+		metricNfsMountWriteRtt:               newMetricNfsMountWriteRtt(settings.NfsMountWriteRtt),
 	}
 	for _, op := range options {
 		op(mb)
@@ -382,17 +791,54 @@ func NewMetricsBuilder(settings MetricsSettings, options ...metricBuilderOption)
 // another set of data points. This function will be doing all transformations required to produce metric representation
 // defined in metadata and user settings, e.g. delta/cumulative translation.
 func (mb *MetricsBuilder) Emit(metrics pdata.MetricSlice) {
+	mb.metricNfsMountOperationErrors.emit(metrics)
+	mb.metricNfsMountOperationMajorTimeouts.emit(metrics)
+	mb.metricNfsMountOperationReceivedBytes.emit(metrics)
+	mb.metricNfsMountOperationRequests.emit(metrics)
+	mb.metricNfsMountOperationSentBytes.emit(metrics)
 	mb.metricNfsMountOpsPerSecond.emit(metrics)
+	mb.metricNfsMountReadBytes.emit(metrics)
 	mb.metricNfsMountReadExe.emit(metrics)
 	mb.metricNfsMountReadRtt.emit(metrics)
 	mb.metricNfsMountRPCBacklog.emit(metrics)
+	mb.metricNfsMountWriteBytes.emit(metrics)
 	mb.metricNfsMountWriteExe.emit(metrics)
 	mb.metricNfsMountWriteRtt.emit(metrics)
+}
+
+// RecordNfsMountOperationErrorsDataPoint adds a data point to nfs.mount.operation.errors metric.
+func (mb *MetricsBuilder) RecordNfsMountOperationErrorsDataPoint(ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	mb.metricNfsMountOperationErrors.recordDataPoint(mb.startTime, ts, val, operationAttributeValue)
+}
+
+// RecordNfsMountOperationMajorTimeoutsDataPoint adds a data point to nfs.mount.operation.major_timeouts metric.
+func (mb *MetricsBuilder) RecordNfsMountOperationMajorTimeoutsDataPoint(ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	mb.metricNfsMountOperationMajorTimeouts.recordDataPoint(mb.startTime, ts, val, operationAttributeValue)
+}
+
+// RecordNfsMountOperationReceivedBytesDataPoint adds a data point to nfs.mount.operation.received_bytes metric.
+func (mb *MetricsBuilder) RecordNfsMountOperationReceivedBytesDataPoint(ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	mb.metricNfsMountOperationReceivedBytes.recordDataPoint(mb.startTime, ts, val, operationAttributeValue)
+}
+
+// RecordNfsMountOperationRequestsDataPoint adds a data point to nfs.mount.operation.requests metric.
+func (mb *MetricsBuilder) RecordNfsMountOperationRequestsDataPoint(ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	mb.metricNfsMountOperationRequests.recordDataPoint(mb.startTime, ts, val, operationAttributeValue)
+}
+
+// RecordNfsMountOperationSentBytesDataPoint adds a data point to nfs.mount.operation.sent_bytes metric.
+func (mb *MetricsBuilder) RecordNfsMountOperationSentBytesDataPoint(ts pdata.Timestamp, val int64, operationAttributeValue string) {
+	mb.metricNfsMountOperationSentBytes.recordDataPoint(mb.startTime, ts, val, operationAttributeValue)
 }
 
 // RecordNfsMountOpsPerSecondDataPoint adds a data point to nfs.mount.ops_per_second metric.
 func (mb *MetricsBuilder) RecordNfsMountOpsPerSecondDataPoint(ts pdata.Timestamp, val float64) {
 	mb.metricNfsMountOpsPerSecond.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordNfsMountReadBytesDataPoint adds a data point to nfs.mount.read_bytes metric.
+func (mb *MetricsBuilder) RecordNfsMountReadBytesDataPoint(ts pdata.Timestamp, val int64) {
+	mb.metricNfsMountReadBytes.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordNfsMountReadExeDataPoint adds a data point to nfs.mount.read_exe metric.
@@ -408,6 +854,11 @@ func (mb *MetricsBuilder) RecordNfsMountReadRttDataPoint(ts pdata.Timestamp, val
 // RecordNfsMountRPCBacklogDataPoint adds a data point to nfs.mount.rpc_backlog metric.
 func (mb *MetricsBuilder) RecordNfsMountRPCBacklogDataPoint(ts pdata.Timestamp, val float64) {
 	mb.metricNfsMountRPCBacklog.recordDataPoint(mb.startTime, ts, val)
+}
+
+// RecordNfsMountWriteBytesDataPoint adds a data point to nfs.mount.write_bytes metric.
+func (mb *MetricsBuilder) RecordNfsMountWriteBytesDataPoint(ts pdata.Timestamp, val int64) {
+	mb.metricNfsMountWriteBytes.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordNfsMountWriteExeDataPoint adds a data point to nfs.mount.write_exe metric.
@@ -433,12 +884,15 @@ func (mb *MetricsBuilder) Reset(options ...metricBuilderOption) {
 var Attributes = struct {
 	// Instance (NFS Proxy instance)
 	Instance string
+	// Operation (NFS operation name)
+	Operation string
 	// Path (NFS mount's path)
 	Path string
 	// Server (NFS mount's server)
 	Server string
 }{
 	"instance",
+	"operation",
 	"path",
 	"server",
 }
