@@ -33,7 +33,7 @@ install_nfs_packages() {
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-9build1 nfs-kernel-server=1:1.3.4-6ubuntu1
+    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
     systemctl disable nfs-kernel-server
@@ -163,40 +163,13 @@ install_netapp_exports() (
     echo "DONE"
 )
 
-# download_kernel() downloads the 5.17.0 kernel
-download_kernel() (
-
-    # Make directory for kernel Images
-    echo -n "Creating directory for kernel Images... "
-    mkdir -p kernel-images
-    cd kernel-images
-    echo "DONE"
-
-    echo "Downloading kernel .deb files..."
-    echo -e "------${SHELL_DEFAULT}"
-
-    # libssl3 is not available in the 21.10 repositories, it will be included
-    # in 22.04. For now download the package directly and install it.
-    curl -O http://mirrors.edge.kernel.org/ubuntu/pool/main/o/openssl/libssl3_3.0.1-0ubuntu1_amd64.deb
-
-    # Download 5.17 from mainline as is not available through Ubuntu's hardware enablement yet.
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-headers-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-headers-5.17.0-051700_5.17.0-051700.202203202130_all.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-image-unsigned-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
-    curl -O https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.17/amd64/linux-modules-5.17.0-051700-generic_5.17.0-051700.202203202130_amd64.deb
-
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
-
-)
-
-# install_kernel() installs the 5.17.0 kernel
+# install_kernel() installs the 5.13.0 kernel
 install_kernel() {
 
     # Install the new kernel using dpkg
     echo "Installing kernel...."
     echo -e "------${SHELL_DEFAULT}"
-    dpkg -i kernel-images/*.deb
+    apt-get install -y linux-generic-hwe-20.04=5.13.0.39.44~20.04.24
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -220,7 +193,6 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
-download_kernel
 install_kernel
 copy_config
 

@@ -1,7 +1,14 @@
 # Next
 
+* Revert to Ubuntu 20.04 with kernel 5.13
 * Abort mounting export after 3 attempts
 * Custom GCP labels for proxy VM instances
+
+## Revert to Ubuntu 20.04 with kernel 5.13
+
+5.17 is currently has too high a performance degradation in the new FS-Cache implementation. Currently observing a maximum of 40 MB/s per thread.
+
+Though the total throughput can still reach the maximum network speed (e.g. 1 GB/s) in aggregate the performance hit to individual clients shows a significant performance drop in workloads such as rendering.
 
 ## Abort mounting export after 3 attempts
 

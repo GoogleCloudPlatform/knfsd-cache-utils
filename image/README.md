@@ -1,11 +1,11 @@
 # Instructions
 
-This directory contains scripts for building an image for Knfsd. We start with the base GCP Ubuntu 21.10 image but make a number of modifications, namely:
+This directory contains scripts for building an image for Knfsd. We start with the base GCP Ubuntu 20.04 image but make a number of modifications, namely:
 
 * Installation of a newer kernel which has better support for NFS re-exporting
 * Installation of supporting components such as `nfs-kernel-server`, `cachefilesd` and the `stackdriver-agent`
 
-This directory contains scripts that will automatically take the GCP Ubuntu 21.10 image and build the Knfsd Image.
+This directory contains scripts that will automatically take the GCP Ubuntu 20.04 image and build the Knfsd Image.
 
 For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
 
@@ -15,10 +15,10 @@ For the image we are using a specific version for this packages:
 
 * google-cloud-ops-agent=2.11.0
 * cachefilesd=0.10.10-0.2ubuntu1
-* rpcbind=1.2.5-9build1
-* nfs-kernel-server=1:1.3.4-6ubuntu1
+* rpcbind=1.2.5-8
+* nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
 * nfs-utils=2.5.3
-* kernel=5.17.0
+* kernel=5.13.0
 
 ## Customizing the image
 
@@ -122,7 +122,7 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=e2-standard-8 \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image-family=ubuntu-2110 \
+    --image-family=ubuntu-2004-lts \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \
@@ -195,7 +195,7 @@ Verify that the build machine booted using the new kernel version.
 uname -r
 ```
 
-**Output from above command should indicate kernel version `5.17.0-051700-generic`.**
+**Output from above command should indicate kernel version `5.13.0-1023-gcp`.**
 
 ### Customize the image
 

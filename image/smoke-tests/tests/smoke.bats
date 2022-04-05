@@ -3,7 +3,7 @@ setup() {
 }
 
 @test "Proxy is running the correct kernel" {
-	local EXPECTED="5.17.0-051700-generic"
+	local EXPECTED="5.13.0-1023-gcp"
 	local KERNEL="$(exec-remote proxy -- uname -r)"
 	if [[ "${KERNEL}" != "${EXPECTED}" ]]; then
 		>&2 echo "Expected kernel version '${EXPECTED}' but was '${KERNEL}'"
