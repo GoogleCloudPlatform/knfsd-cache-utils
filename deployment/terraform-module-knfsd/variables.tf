@@ -69,6 +69,13 @@ variable "PROXY_BASENAME" {
   type    = string
 }
 
+variable "PROXY_LABELS" {
+  default = {
+    vm-type = "nfs-proxy",
+  }
+  type = map(string)
+}
+
 variable "PROXY_IMAGENAME" {
   type = string
 }

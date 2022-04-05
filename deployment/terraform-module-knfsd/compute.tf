@@ -23,6 +23,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   min_cpu_platform = "Intel Skylake"
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
+  labels           = var.PROXY_LABELS
 
   lifecycle {
     create_before_destroy = true
@@ -102,10 +103,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     CUSTOM_PRE_STARTUP_SCRIPT  = var.CUSTOM_PRE_STARTUP_SCRIPT
     CUSTOM_POST_STARTUP_SCRIPT = var.CUSTOM_POST_STARTUP_SCRIPT
     ENABLE_KNFSD_AGENT         = var.ENABLE_KNFSD_AGENT
-  }
-
-  labels = {
-    vm-type = "nfs-proxy"
   }
 
   scheduling {
