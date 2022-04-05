@@ -1,6 +1,7 @@
 # Next
 
 * Pin to last GCP image that includes 5.13 kernel
+* Custom KNFSD culling agent
 
 ## Pin to last GCP image that includes 5.13 kernel
 
@@ -9,6 +10,18 @@ sources list.
 
 Use a GCP image that has the 5.13 kernel pre-installed until the 5.15
 kernel can be tested.
+
+## Custom KNFSD culling agent
+
+cachefilesd will periodically stop culling files when the cache is full.
+
+This is because FS-Cache indicates that the file is still in use. It appears that NFS is not releasing the file while NFS still has the file in the slab cache. Dropping the slab cache forces NFS to release the files allowing cachefilesd to resume culling.
+
+When custom culling is enabled culling is disabled in cachefilesd and the agent takes over deleting files when the cache is over a certain threshold.
+
+While this is undefined behaviour in FS-Cache, in testing FS-Cache would drop its state and resume caching of files after dropping the dentries and inode cache (triggered writing 2 to /proc/sys/vm/drop_caches).
+
+The culling threshold *MUST* be greater than `bstop` and `fstop` in `/etc/cachefilesd.conf`, otherwise the cache can fill before the culling threshold is reached.
 
 # v0.7.1
 

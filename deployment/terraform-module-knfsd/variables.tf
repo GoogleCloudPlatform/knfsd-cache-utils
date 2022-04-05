@@ -182,7 +182,7 @@ variable "ENABLE_AUTOHEALING_HEALTHCHECKS" {
 }
 
 variable "HEALTHCHECK_INITIAL_DELAY_SECONDS" {
-  type = number
+  type    = number
   default = 600
 }
 
@@ -329,4 +329,57 @@ variable "NETAPP_CA" {
 variable "NETAPP_ALLOW_COMMON_NAME" {
   type    = bool
   default = false
+}
+
+variable "CULLING" {
+  type    = string
+  default = "default"
+
+  validation {
+    condition     = contains(["default", "custom", "none"], var.CULLING)
+    error_message = "CULLING must be one of [default, custom, none]."
+  }
+}
+
+variable "CULLING_LAST_ACCESS" {
+  type    = string
+  default = "" # calculate default based on LOCAL_SSDS
+
+  validation {
+    # This will also match the empty string, but in this case the empty string is allowed.
+    condition     = can(regex("^(\\d+h)?(\\d+m)?(\\d+s)?$", var.CULLING_LAST_ACCESS))
+    error_message = "CULLING_LAST_ACCESS must be a positive duration, e.g. '1h'. Valid time units are 'h' (hours), 'm' (minutes), 's' (seconds)."
+  }
+}
+
+variable "CULLING_THRESHOLD" {
+  type    = number
+  default = 20
+
+  validation {
+    condition     = var.CULLING_THRESHOLD == null || (var.CULLING_THRESHOLD >= 0 && var.CULLING_THRESHOLD <= 100)
+    error_message = "CULLING_THRESHOLD must between 0% and 100%."
+  }
+}
+
+variable "CULLING_INTERVAL" {
+  type    = string
+  default = "1m"
+
+  validation {
+    # This will also match the empty string, but in this case the empty string is allowed.
+    condition     = can(regex("^(\\d+h)?(\\d+m)?(\\d+s)?$", var.CULLING_INTERVAL))
+    error_message = "CULLING_INTERVAL must be a positive duration, e.g. '1h'. Valid time units are 'h' (hours), 'm' (minutes), 's' (seconds)."
+  }
+}
+
+variable "CULLING_QUIET_PERIOD" {
+  type    = string
+  default = ""
+
+  validation {
+    # This will also match the empty string, but in this case the empty string is allowed.
+    condition     = can(regex("^(\\d+h)?(\\d+m)?(\\d+s)?$", var.CULLING_QUIET_PERIOD))
+    error_message = "CULLING_QUIET_PERIOD must be a positive duration, e.g. '1h'. Valid time units are 'h' (hours), 'm' (minutes), 's' (seconds)."
+  }
 }

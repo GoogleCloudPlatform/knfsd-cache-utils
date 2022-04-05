@@ -26,6 +26,11 @@ export NEEDRESTART_SUSPEND=1
 export DEBIAN_FRONTEND=noninteractive
 export DEBIAN_PRIORITY=critical
 
+export QUILT_PATCHES=debian/patches
+export NAME=build EMAIL=build
+
+patches="$(pwd)/patches"
+
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
 
@@ -33,9 +38,7 @@ install_nfs_packages() {
     echo "Installing cachefilesd and rpcbind..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y cachefilesd=0.10.10-0.2ubuntu1 rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
-    echo "RUN=yes" >> /etc/default/cachefilesd
-    systemctl disable cachefilesd
+    apt-get install -y rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
     systemctl disable nfs-kernel-server
     systemctl disable nfs-idmapd.service
     echo -e -n "${SHELL_YELLOW}------"
@@ -50,7 +53,11 @@ install_build_dependencies() {
     echo "Installing build dependencies..."
     echo -e "------${SHELL_DEFAULT}"
     apt-get update
-    apt-get install -y libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves build-essential libevent-dev libsqlite3-dev libblkid-dev libkeyutils-dev libdevmapper-dev
+    apt-get install -y \
+        libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms \
+        libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
+        build-essential libevent-dev libsqlite3-dev libblkid-dev \
+        libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
@@ -80,7 +87,38 @@ build_install_nfs-utils() (
     make -j20
     make install -j20
     chmod u+w,go+r /sbin/mount.nfs
-    chown nobody.nogroup /var/lib/nfs
+    chown nobody:nogroup /var/lib/nfs
+    echo -e -n "${SHELL_YELLOW}------"
+    echo "DONE"
+
+)
+
+# install_cachefilesd() builds and installs cachefilesd 0.10.10 from source
+install_cachefilesd() (
+    echo -e "${SHELL_YELLOW}"
+    echo "Downloading cachefilesd..."
+    echo -e "------${SHELL_DEFAULT}"
+    pull-lp-source cachefilesd 0.10.10-0.2ubuntu1
+
+    echo -e "${SHELL_YELLOW}"
+    echo "Building cachefilesd..."
+    echo -e "------${SHELL_DEFAULT}"
+
+    cd cachefilesd-0.10.10
+    quilt import "${patches}"/cachefilesd/*.patch
+    quilt push -a
+    debchange --local +knfsd "Apply knfsd patches"
+    dpkg-buildpackage -b -us -uc
+
+    echo -e "${SHELL_YELLOW}"
+    echo "Installing cachefilesd..."
+    echo -e "------${SHELL_DEFAULT}"
+
+    cd ..
+    apt-get install -y ./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb
+    echo "RUN=yes" >> /etc/default/cachefilesd
+    systemctl disable cachefilesd
+
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"
 
@@ -143,6 +181,20 @@ install_knfsd_metrics_agent() (
     echo "DONE"
 )
 
+install_knfsd_cull() (
+    echo "Installing knfsd-cull...."
+    echo -e "------${SHELL_DEFAULT}"
+
+    cd knfsd-cull
+    go test ./...
+    go build -o /usr/local/bin/knfsd-cull
+    cp knfsd-cull.conf /etc/
+    cp knfsd-cull.service /etc/systemd/system/
+
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+)
+
 install_filter_exports() (
     echo "Installing netapp-exports...."
     echo -e "------${SHELL_DEFAULT}"
@@ -190,10 +242,12 @@ install_nfs_packages
 install_build_dependencies
 download_nfs-utils
 build_install_nfs-utils
+install_cachefilesd
 install_stackdriver_agent
 install_golang
 install_knfsd_agent
 install_knfsd_metrics_agent
+install_knfsd_cull
 install_filter_exports
 install_netapp_exports
 

@@ -176,6 +176,16 @@ function trim_slash() {
   sed '\|^/$| !s|/*$||'
 }
 
+# start-services() starts one or more services using systemctl.
+# If there is an error starting the services systemctl is used to check the
+# status and view the most recent log entries.
+function start-services() {
+	if ! systemctl start "$@"; then
+		systemctl status "$@"
+		exit 1
+	fi
+}
+
 function init() {
 	# Set any variables cleanup depends upon as blank before setting the trap.
 	# This prevents stray environment variables causing unexpected behaviour.
@@ -202,6 +212,12 @@ function init() {
 	VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
 	DISABLED_NFS_VERSIONS=$(get_attribute DISABLED_NFS_VERSIONS)
 	READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
+
+	CULLING="$(get_attribute CULLING)"
+	CULLING_LAST_ACCESS="$(get_attribute CULLING_LAST_ACCESS)"
+	CULLING_THRESHOLD="$(get_attribute CULLING_THRESHOLD)"
+	CULLING_INTERVAL="$(get_attribute CULLING_INTERVAL)"
+	CULLING_QUIET_PERIOD="$(get_attribute CULLING_QUIET_PERIOD)"
 
 	ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 	ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
@@ -385,7 +401,36 @@ function configure-nfs() {
 	echo "Setting number of NFS Threads to $NUM_NFS_THREADS..."
 	sed -i "s/^\(RPCNFSDCOUNT=\).*/\1\"${NUM_NFS_THREADS}${DISABLED_NFS_VERSIONS_FLAGS}\"/" /etc/default/nfs-kernel-server
 	echo "Finished setting number of NFS Threads."
+
 }
+
+function configure-culling() (
+	function fmt() {
+		if [[ -n "$2" ]]; then
+			printf '%s %s\n' "$1" "$2"
+		fi
+	}
+
+	sed -i '/^nocull/d' /etc/cachefilesd.conf
+
+	if [[ "$CULLING" == "none" ]] || [[ "$CULLING" == "custom" ]]; then
+		echo "nocull" >>/etc/cachefilesd.conf
+	fi
+
+	if [[ "$CULLING" == "custom" ]]; then
+		: >/etc/knfsd-cull.conf
+		fmt last-access "$CULLING_LAST_ACCESS" >>/etc/knfsd-cull.conf
+		fmt threshold "$CULLING_THRESHOLD" >>/etc/knfsd-cull.conf
+		fmt interval "$CULLING_INTERVAL" >>/etc/knfsd-cull.conf
+		fmt quiet-period "$CULLING_QUIET_PERIOD" >>/etc/knfsd-cull.conf
+
+		echo "Starting Custom Culling Agent..."
+		start-services knfsd-cull
+		echo "Finished starting Custom Culling Agent."
+	else
+		echo "Custom Culling Agent disabled. Skipping..."
+	fi
+)
 
 function configure-metrics() {
 
@@ -412,11 +457,11 @@ function configure-metrics() {
 	fi
 }
 
-function start-services() {
+function start-nfs() {
 	# Enable Knfsd Agent if Configured
 	if [[ "$ENABLE_KNFSD_AGENT" = "true" ]]; then
 		echo "Starting Knfsd Agent..."
-		systemctl start knfsd-agent
+		start-services knfsd-agent
 		echo "Finished Starting Knfsd Agent."
 	else
 		echo "Knfsd Agent disabled. Skipping..."
@@ -424,10 +469,7 @@ function start-services() {
 
 	# Start NFS Server
 	echo "Starting nfs-kernel-server..."
-	if ! systemctl start portmap nfs-kernel-server; then
-		systemctl status portmap nfs-kernel-server
-		exit 1
-	fi
+	start-services portmap nfs-kernel-server
 	echo "Finished starting nfs-kernel-server..."
 }
 
@@ -468,9 +510,10 @@ function main() {
 
 	configure-read-ahead
 	configure-nfs
+	configure-culling
 	configure-metrics
 
-	start-services
+	start-nfs
 	post-startup
 }
 

@@ -1,0 +1,4 @@
+last-access 4h
+threshold 30
+interval 30s
+quiet-period 1h

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Usage: ./run-tests.sh [test]
+#   test - Optional, name of a specific *.bats test file in the tests directory.
+#          For example "tests/configure-nfs.bats", defaults to "tests".
+
 if ! HASH="$(sha1sum tests/Dockerfile | cut -d ' ' -f 1)"; then
 	echo "ERROR: could not create sha1sum for tests/Dockerfile" >&2
 	exit 1
@@ -16,4 +20,4 @@ fi
 
 docker run --interactive --tty --rm \
 	--mount "type=bind,source=$PWD,target=/code,readonly" \
-	"${BATS_IMAGE}" tests
+	"${BATS_IMAGE}" "${1-tests}"
