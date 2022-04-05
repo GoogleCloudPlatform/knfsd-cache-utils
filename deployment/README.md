@@ -10,79 +10,15 @@ source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform
 
 ## Prerequisites
 
-Before deploying a Knfsd Cluster in Google Cloud, you should make sure the following prerequisites are met.
+Before continuing with the deployment and configuration of Knfsd you should review the deployment [prerequisites](prerequisites.md).
 
-| Prerequisite                                                                   | Details                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Knfsd Disk Image](https://cloud.google.com/compute/docs/images#custom_images) | You must have followed the steps in the [/image](/image) directory to build a Knfsd Image.                                                                                                                                                                                                                                                  |
-| [Firewall Rules](https://cloud.google.com/vpc/docs/firewalls)                  | This module only creates the firewall rules for [healthchecks](https://cloud.google.com/load-balancing/docs/health-check-concepts#ip-ranges) (this can be disabled). You must make sure you implement the firewall rules required for NFS Communication between:<br /><br /> - Knfsd --> Source NFS Server<br /> - Render Clients --> Knfsd |
-| [gcloud](https://cloud.google.com/sdk/install)                                 | You should have [gcloud](https://cloud.google.com/sdk/install) installed and configured                                                                                                                                                                                                                                                     |
-| [Terraform](https://www.terraform.io/downloads.html)                           | You should have Terraform 0.12 or above installed.                                                                                                                                                                                                                                                                                          |
+## Features
 
-If you **do not** currently use Terraform, follow [this guide](https://learn.hashicorp.com/tutorials/terraform/install-cli) to download and install it.
+There are a number of optional features that can be enabled and configured for Knfsd. If you are planning on using any of these features then please review the appropriate documentation section.
 
-## Metrics
-
-These deployment scripts can optionally configure the exporting a range of metrics from each Knfsd Node into [Google Cloud Operations](https://cloud.google.com/products/operations) (formerly Stackdriver). These are exported via the [Stackdriver Monitoring Agent](https://cloud.google.com/monitoring/agent) which is installed as part of the [build scripts](/image).
-
-These metrics can be enabled via the `ENABLE_STACKDRIVER_METRICS` Terraform Variable as detailed below. **If you wish to use auto-scaling then metrics must be enabled**.
-
-The following additional prerequisites must be met if you wish to enable metrics:
-
-| Prerequisite                                                                                                             | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Metric Descriptors and Dashboard Import](metrics)                                                                       | If this is the first time you are deploying Knfsd in a Google Cloud Project you need to setup the Metric Descriptors and import the Knfsd Monitoring Dashboard. This is achieved via a standalone Terraform configuration and the process is described in the [metrics](metrics) directory.                                                                                                                                                                                                                                                                                                                                                                      |
-| [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access)                               | You must have [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access) enabled on the subnet that you will be using for the Knfsd Nodes. This is required to allow connectivity to the Monitoring API for VM's without a Public IP.                                                                                                                                                                                                                                                                                                                                                                                            |
-| [Service Account Permissions](https://cloud.google.com/compute/docs/access/service-accounts#service_account_permissions) | A Service Account needs to be configured for the Knfsd Nodes with the `logging-write` and `monitoring-write` scopes. This is performed automatically by the Terraform Module when you have metrics enabled. By default, the [Compute Engine Default Service Account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) will be used. <br><br>You need to make sure the Service Account you create for Terraform has the `roles/iam.serviceAccountUser` role on the Compute Engine Default Service Account so that it can assign it to the Knfsd Nodes. This is covered in the "Generating a Service Account" section below. |
-
-The following custom metrics are exported currently:
-
-| Metric Name                                                    | Description                                                                                                     |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **custom.googleapis.com/knfsd/nfs_connections**                | The number of NFS Clients connected to the Knfsd filer (used for autoscaling).                                  |
-| **custom.googleapis.com/knfsd/nfs_inode_cache_active_objects** | The number of active objects in the Linux NFS inode Cache.                                                      |
-| **custom.googleapis.com/knfsd/dentry_cache_active_objects**    | The number of active objects in the Linux Dentry Cache.                                                         |
-| **custom.googleapis.com/knfsd/nfs_inode_cache_objsize**        | The total size of the objects in the Linux NFS inode Cache in bytes.                                            |
-| **custom.googleapis.com/knfsd/dentry_cache_objsize**           | The total size of the objects in the Linux Dentry Cache in bytes.                                               |
-| **custom.googleapis.com/knfsd/nfsiostat_mount_read_exe**       | The average read operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer).          |
-| **custom.googleapis.com/knfsd/nfsiostat_mount_read_rtt**       | The average read operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer).          |
-| **custom.googleapis.com/knfsd/nfsiostat_mount_write_exe**      | The average write operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer).         |
-| **custom.googleapis.com/knfsd/nfsiostat_mount_write_rtt**      | The average write operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)..        |
-| **custom.googleapis.com/knfsd/nfsiostat_ops_per_second**       | The number of NFS operations per second per NFS client mount over the past 60 seconds (Knfsd --> Source Filer). |
-| **custom.googleapis.com/knfsd/nfsiostat_rpc_backlog**          | The RPC Backlog per NFS client mount over the past 60 seconds (Knfsd --> Source Filer).                         |
-
-### Dashboards
-
-The Knfsd Monitoring Dashboard is created automatically by the metrics initialisation Terraform that is detailed in the [Metrics Prerequisites](#metrics).
-
-Once ran, you can then access the dashboard from [https://console.cloud.google.com/monitoring/dashboards/](https://console.cloud.google.com/monitoring/dashboards/)
-
-## Autoscaling
-
-**Important: To use Autoscaling you MUST have metrics enabled as they are used as a scaling metric**
-
-The Knfsd Deployment Scripts also support configuring AutoScaling for the Knfsd Managed Instance Group. Scaling based on the standard metric of CPU Usage is not optimal for the caching use case. Instead the custom metric `custom.googleapis.com/knfsd/nfs_connections` is used for triggering an autoscaling event.
-
-Autoscaling can be enabled by setting the `ENABLE_KNFSD_AUTOSCALING` environment variable to `true` (defaults to `false`). There are also some other configuration options detailed in the [Configuration Variables](#configuration-variables) section below such as how many NFS Connections a Knfsd node should be handling before a scale-up.
-
-To avoid interruptions to existing NFS client mounts, and by extension render operations the autoscaler behaviour is set to **SCALE UP ONLY**. When a Knfsd Client exceeds the number of connections defined in the `KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD` variable a new instance will be added to the Knfsd Managed Instance group. If the number of Knfsd Connections subsequently falls significantly the Knfsd cluster **will not** automatically scale down. This is not a GCP limitation but an intentional design consideration to avoid:
-
-- Loss of FS-Cache data that would need to be re-pulled on scale up
-- Interruption to existing NFS Client Connections
-
-You can change this behaviour if you wish, but it is not recommended.
-
-There is a slight delay for metric ingestion (1-2 mins) and then for a new node to spin up and initialise (~2 mins). When a scaling event occurs new traffic will continue to be sent to the existing healthy nodes in the cluster until there is a new node ready to handle the connections. It is therefore recommended that you set your `KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD` slightly lower than the maximum number of connections a single Knfsd node can handle. This will start the scaling event early and make sure a new node is ready before your existing nodes become overloaded.
-
-## Knfsd Agent
-
-By default, each Knfsd node will also run the [Knfsd Agent](../../image/knfsd-agent/README.md). This is a small Golang application that exposes a web server with some API Methods. Currently the Knfsd Agent only supports a basic informational API method (`/api/v1.0/nodeinfo`). This method provides basic information on the Knfsd node. It is useful for determining which backend node you are connected to when connecting to the Knfsd Cluster via the Internal Load Balancer.
-
-Over time this will API will be expanded with additional capabilities.
-
-This agent listens on port `80` and can be disabled by setting `ENABLE_KNFSD_AGENT` to `false` in the Terraform.
-
-For information on the API Methods, see the [Knfsd Agent README.md](../../image/knfsd-agent/README.md).
+* [Metrics](metrics.md) - System and proxy metrics for monitoring and observing Knfsd
+* [Autoscaling](autoscaling.md) - Automatic scale up of Knfsd in response to the number of clients
+* [Agent](agent.md) - A lightweight API that provides information on Knfsd nodes
 
 ## Usage
 
