@@ -84,7 +84,7 @@ zone    = "us-west1-a"
 ### Run Packer Build
 
 ```bash
-packer build -vars-file image.pkrvars.hcl image
+packer build -var-file image.pkrvars.hcl image
 ```
 
 ### Run Smoke Tests
