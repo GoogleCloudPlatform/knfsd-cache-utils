@@ -163,15 +163,15 @@ install_netapp_exports() (
     echo "DONE"
 )
 
-# install_kernel() installs the 5.13.0 kernel
+# install_kernel() installs the latest 5.13 kernel
 install_kernel() {
 
     # Install the new kernel using dpkg
     echo "Installing kernel...."
     echo -e "------${SHELL_DEFAULT}"
-    apt-get install -y linux-generic-hwe-20.04=5.13.0.39.44~20.04.24 \
-        linux-image-generic-hwe-20.04=5.13.0.39.44~20.04.24 \
-        linux-headers-generic-hwe-20.04=5.13.0.39.44~20.04.24
+    apt-get install -y 'linux-generic-hwe-20.04=5.13.*' \
+        'linux-image-generic-hwe-20.04=5.13.*' \
+        'linux-headers-generic-hwe-20.04=5.13.*'
 
     echo -e -n "${SHELL_YELLOW}------"
     echo "DONE"

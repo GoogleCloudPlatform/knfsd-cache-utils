@@ -18,7 +18,7 @@ For the image we are using a specific version for this packages:
 * rpcbind=1.2.5-8
 * nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
 * nfs-utils=2.5.3
-* kernel=5.13.0
+* kernel=5.13.*
 
 ## Customizing the image
 
@@ -195,7 +195,7 @@ Verify that the build machine booted using the new kernel version.
 uname -r
 ```
 
-**Output from above command should indicate kernel version `5.13.0-1023-gcp`.**
+**Output from above command should indicate kernel version `5.13.*-gcp`.**
 
 ### Customize the image
 

@@ -1,17 +1,15 @@
 # Next
 
-* Pin APT packages for the HWE kernel
+* Use latest 5.13 HWE kernel
 
-## Pin APT packages for the HWE kernel
+## Use latest 5.13 HWE kernel
 
 The image build script started failing with the error:
 
 ```text
-The following packages have unmet dependencies:
- linux-generic-hwe-20.04 : Depends: linux-image-generic-hwe-20.04 (= 5.13.0.39.44~20.04.24) but 5.13.0.40.45~20.04.25 is to be installed
-                           Depends: linux-headers-generic-hwe-20.04 (= 5.13.0.39.44~20.04.24) but 5.13.0.40.45~20.04.25 is to be installed
+E: Version '5.13.0.39.44~20.04.24' for 'linux-generic-hwe-20.04' was not found
+E: Version '5.13.0.39.44~20.04.24' for 'linux-image-generic-hwe-20.04' was not found
+E: Version '5.13.0.39.44~20.04.24' for 'linux-headers-generic-hwe-20.04' was not found
 ```
 
-Even though the `linux-image-hwe-20.04` package for `5.13.0.39.44~20.04.24` explicitly states the dependencies' versions, APT is trying to then install the latest version of the dependencies. This then fails because the newer versions do not meet the package constraints.
-
-To avoid this issue, the script now explicitly installs the dependant packages with the correct version.
+The `linux-image-hwe-20.04` package only keeps the binaries for the latest HWE kernel. As such the HWE kernels cannot be pinned to a specific kernel version.
