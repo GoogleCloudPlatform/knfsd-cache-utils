@@ -2,6 +2,7 @@
 
 * Use latest 5.13 HWE kernel
 * Use metric labels for mount stats
+* Update dashboard to use new metrics
 
 ## Use latest 5.13 HWE kernel
 
@@ -22,3 +23,12 @@ The mount stats were previously using resource labels for `server`, `path` and `
 However, GCP Cloud Monitoring does not support custom resource labels. This is likely to be a common issue with other reporting systems either handling resource labels differently, or ignoring them completely.
 
 To avoid issues the labels for `server`, `path` and `instance` are now reported as metric level labels.
+
+## Update dashboard to use new metrics
+
+This adds new graphs using the new metrics to show the total read/write throughput between:
+
+* KNFSD Proxy and Source.
+* Clients and KNFSD Proxy.
+
+The new dashboard also corrects an issue where the total number of operations from the KNFSD Proxy to the Source were being under reported. This is because the metric agent only parses a single `xprt` (transport) entry.
