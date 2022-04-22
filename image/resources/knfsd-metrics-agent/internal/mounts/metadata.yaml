@@ -21,6 +21,7 @@ metrics:
     description: nfsiostat Mount Read EXE
     extended_documentation: The average read operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: ms
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -29,6 +30,7 @@ metrics:
     description: nfsiostat Mount Read RTT
     extended_documentation: The average read operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: ms
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -37,6 +39,7 @@ metrics:
     description: nfsiostat Mount Write EXE
     extended_documentation: The average write operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: ms
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -45,6 +48,7 @@ metrics:
     description: nfsiostat Mount Write RTT
     extended_documentation: The average write operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: ms
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -53,6 +57,7 @@ metrics:
     description: nfsiostat Mount Operations Per Second
     extended_documentation: The number of NFS operations per second per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: 1
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -61,6 +66,7 @@ metrics:
     description: "nfsiostat Mount RPC Backlog"
     extended_documentation: The RPC Backlog per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)
     unit: 1
+    attributes: [server, path, instance]
     gauge:
       value_type: double
 
@@ -68,6 +74,7 @@ metrics:
     enabled: true
     description: Bytes read from remote NFS server
     unit: By
+    attributes: [server, path, instance]
     sum:
       value_type: int
       monotonic: true
@@ -77,6 +84,7 @@ metrics:
     enabled: true
     description: Bytes wrote to remote NFS server
     unit: By
+    attributes: [server, path, instance]
     sum:
       value_type: int
       monotonic: true
@@ -86,7 +94,7 @@ metrics:
     enabled: true
     description: Number of requests
     unit: '{requests}'
-    attributes: [operation]
+    attributes: [server, path, instance, operation]
     sum:
       value_type: int
       monotonic: true
@@ -96,7 +104,7 @@ metrics:
     enabled: true
     description: Total bytes sent for these operations, including RPC headers and payload
     unit: By
-    attributes: [operation]
+    attributes: [server, path, instance, operation]
     sum:
       value_type: int
       monotonic: true
@@ -106,7 +114,7 @@ metrics:
     enabled: true
     description: Total bytes received for these operations, including RPC headers and payload
     unit: By
-    attributes: [operation]
+    attributes: [server, path, instance, operation]
     sum:
       value_type: int
       monotonic: true
@@ -116,7 +124,7 @@ metrics:
     enabled: true
     description: Number of times a request has had a major timeout
     unit: '{timeouts}'
-    attributes: [operation]
+    attributes: [server, path, instance, operation]
     sum:
       value_type: int
       monotonic: true
@@ -126,7 +134,7 @@ metrics:
     enabled: true
     description: Number of requests that complete with tk_status < 0
     unit: '{errors}'
-    attributes: [operation]
+    attributes: [server, path, instance, operation]
     sum:
       value_type: int
       monotonic: true

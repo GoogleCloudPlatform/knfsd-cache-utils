@@ -101,7 +101,8 @@ func (s *mountScraper) scrape(context.Context) (pdata.Metrics, error) {
 	s.queryInstanceNames(mounts)
 
 	for _, mount := range mounts {
-		s.report(mount, now, rms)
+		metrics := rms.AppendEmpty().InstrumentationLibraryMetrics().AppendEmpty().Metrics()
+		s.report(mount, now, metrics)
 	}
 	s.track(mounts)
 
@@ -208,29 +209,21 @@ func (c *nodeInfoClient) queryInstanceName(addr string) (string, error) {
 	return info.Name, nil
 }
 
-func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, rms pdata.ResourceMetricsSlice) {
-	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.stats.Bytes.ReadTotal))
-	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.stats.Bytes.WriteTotal))
+func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, metrics pdata.MetricSlice) {
+	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.stats.Bytes.ReadTotal), mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.stats.Bytes.WriteTotal), mount.server, mount.path, mount.instance)
 
 	for _, op := range mount.stats.Operations {
-		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), op.Operation)
-		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), op.Operation)
-		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), op.Operation)
-		s.mb.RecordNfsMountOperationMajorTimeoutsDataPoint(now, convert.Int64(op.MajorTimeouts), op.Operation)
-		s.mb.RecordNfsMountOperationErrorsDataPoint(now, convert.Int64(op.Errors), op.Operation)
+		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), mount.server, mount.path, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), mount.server, mount.path, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), mount.server, mount.path, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationMajorTimeoutsDataPoint(now, convert.Int64(op.MajorTimeouts), mount.server, mount.path, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationErrorsDataPoint(now, convert.Int64(op.Errors), mount.server, mount.path, mount.instance, op.Operation)
 	}
 
 	// report original delta based metrics
 	s.reportDelta(mount, now)
 
-	resource := rms.AppendEmpty()
-	attributes := resource.Resource().Attributes()
-	attributes.InsertString(metadata.A.Server, mount.server)
-	attributes.InsertString(metadata.A.Path, mount.path)
-	if mount.instance != "" {
-		attributes.InsertString(metadata.A.Instance, mount.instance)
-	}
-	metrics := resource.InstrumentationLibraryMetrics().AppendEmpty().Metrics()
 	s.mb.Emit(metrics)
 }
 
@@ -277,12 +270,12 @@ func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 	read := calc(delta, diff.read)
 	write := calc(delta, diff.write)
 
-	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta)
-	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta)
-	s.mb.RecordNfsMountReadExeDataPoint(now, read.exePerOp)
-	s.mb.RecordNfsMountReadRttDataPoint(now, read.rttPerOp)
-	s.mb.RecordNfsMountWriteExeDataPoint(now, write.exePerOp)
-	s.mb.RecordNfsMountWriteRttDataPoint(now, write.rttPerOp)
+	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountReadExeDataPoint(now, read.exePerOp, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountReadRttDataPoint(now, read.rttPerOp, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountWriteExeDataPoint(now, write.exePerOp, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountWriteRttDataPoint(now, write.rttPerOp, mount.server, mount.path, mount.instance)
 }
 
 func calc(delta float64, diff procfs.NFSOperationStats) op {
