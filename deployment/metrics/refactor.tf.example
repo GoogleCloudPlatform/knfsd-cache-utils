@@ -1,0 +1,113 @@
+# Upgrade from the old deployment method to the new metrics.
+# This assumes you named the module "metrics", if you chose a different name
+# replace "module.metrics" with your module name, e.g. "module.knfsd_metrics".
+
+moved {
+  from = google_monitoring_dashboard.knfsd-monitoring-dashboard
+  to   = module.metrics.google_monitoring_dashboard.knfsd-monitoring-dashboard
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.dentry_cache_active_objects
+  to   = module.metrics.google_monitoring_metric_descriptor.dentry_cache_active_objects
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.dentry_cache_objsize
+  to   = module.metrics.google_monitoring_metric_descriptor.dentry_cache_objsize
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.exports_total_read_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.exports_total_read_bytes
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.exports_total_write_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.exports_total_write_bytes
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.fscache_oldest_file
+  to   = module.metrics.google_monitoring_metric_descriptor.fscache_oldest_file
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.mount_read_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.mount_read_bytes
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.mount_write_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.mount_write_bytes
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfs_connections
+  to   = module.metrics.google_monitoring_metric_descriptor.nfs_connections
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfs_inode_cache_active_objects
+  to   = module.metrics.google_monitoring_metric_descriptor.nfs_inode_cache_active_objects
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfs_inode_cache_objsize
+  to   = module.metrics.google_monitoring_metric_descriptor.nfs_inode_cache_objsize
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_mount_read_exe
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_mount_read_exe
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_mount_read_rtt
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_mount_read_rtt
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_mount_write_exe
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_mount_write_exe
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_mount_write_rtt
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_mount_write_rtt
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_ops_per_second
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_ops_per_second
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.nfsiostat_rpc_backlog
+  to   = module.metrics.google_monitoring_metric_descriptor.nfsiostat_rpc_backlog
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.operation_errors
+  to   = module.metrics.google_monitoring_metric_descriptor.operation_errors
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.operation_major_timeouts
+  to   = module.metrics.google_monitoring_metric_descriptor.operation_major_timeouts
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.operation_received_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.operation_received_bytes
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.operation_requests
+  to   = module.metrics.google_monitoring_metric_descriptor.operation_requests
+}
+
+moved {
+  from = google_monitoring_metric_descriptor.operation_sent_bytes
+  to   = module.metrics.google_monitoring_metric_descriptor.operation_sent_bytes
+}
