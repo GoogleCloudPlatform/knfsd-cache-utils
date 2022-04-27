@@ -176,6 +176,31 @@ variable "ENABLE_AUTOHEALING_HEALTHCHECKS" {
   type    = bool
 }
 
+variable "HEALTHCHECK_INITIAL_DELAY_SECONDS" {
+  type = number
+  default = 600
+}
+
+variable "HEALTHCHECK_INTERVAL_SECONDS" {
+  type    = number
+  default = 60
+}
+
+variable "HEALTHCHECK_TIMEOUT_SECONDS" {
+  type    = number
+  default = 2
+}
+
+variable "HEALTHCHECK_HEALTHY_THRESHOLD" {
+  type    = number
+  default = 3
+}
+
+variable "HEALTHCHECK_UNHEALTHY_THRESHOLD" {
+  type    = number
+  default = 3
+}
+
 variable "NUM_NFS_THREADS" {
   default = 512
   type    = number

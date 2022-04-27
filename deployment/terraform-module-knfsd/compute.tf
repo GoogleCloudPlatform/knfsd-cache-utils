@@ -126,10 +126,10 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 resource "google_compute_health_check" "autohealing" {
   project             = var.PROJECT
   name                = "${var.PROXY_BASENAME}-autohealing-health-check"
-  check_interval_sec  = 5
-  timeout_sec         = 2
-  healthy_threshold   = 3
-  unhealthy_threshold = 3
+  check_interval_sec  = var.HEALTHCHECK_INTERVAL_SECONDS
+  timeout_sec         = var.HEALTHCHECK_TIMEOUT_SECONDS
+  healthy_threshold   = var.HEALTHCHECK_HEALTHY_THRESHOLD
+  unhealthy_threshold = var.HEALTHCHECK_UNHEALTHY_THRESHOLD
 
   tcp_health_check {
     port = "2049"
@@ -163,7 +163,7 @@ resource "google_compute_instance_group_manager" "proxy-group" {
     for_each = var.ENABLE_AUTOHEALING_HEALTHCHECKS ? [1] : []
     content {
       health_check      = google_compute_health_check.autohealing.self_link
-      initial_delay_sec = 600
+      initial_delay_sec = var.HEALTHCHECK_INITIAL_DELAY_SECONDS
     }
   }
 
