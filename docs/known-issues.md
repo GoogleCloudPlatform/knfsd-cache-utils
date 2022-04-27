@@ -1,5 +1,11 @@
 # Known Issues
 
+## Knfsd proxy stops caching new data
+
+Sometimes the cachefilesd will stop culling old data from the cache. When this happens the cache will fill up and be unable to cache any new data.
+
+See [culling](./culling.md) for further details.
+
 ## knfsd-metrics-agent reports incorrect values for NFS transport metrics
 
 Transport level metrics, such as `nfs.mount.ops_per_second` (aka `custom.google.com/knfsd/nfsiostat_ops_per_second`) are reported a value that is too low.
