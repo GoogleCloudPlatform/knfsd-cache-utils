@@ -1,6 +1,7 @@
 package mounts
 
 import (
+	"math"
 	"time"
 
 	"github.com/prometheus/procfs"
@@ -25,6 +26,118 @@ func newSummary(new *procfs.MountStatsNFS) summary {
 		events:     new.Events,
 		transport:  new.Transport,
 		operations: operations,
+	}
+}
+
+func addSummary(new, old summary) summary {
+	age := new.age
+	if age < old.age {
+		age = old.age
+	}
+
+	return summary{
+		age:        age,
+		bytes:      addBytes(new.bytes, old.bytes),
+		events:     addEvents(new.events, old.events),
+		transport:  addTransport(new.transport, old.transport),
+		operations: addOperations(new.operations, old.operations),
+	}
+}
+
+func addBytes(new, old procfs.NFSBytesStats) procfs.NFSBytesStats {
+	return procfs.NFSBytesStats{
+		Read:        add(new.Read, old.Read),
+		Write:       add(new.Write, old.Write),
+		DirectRead:  add(new.DirectRead, old.DirectRead),
+		DirectWrite: add(new.DirectWrite, old.DirectWrite),
+		ReadTotal:   add(new.ReadTotal, old.ReadTotal),
+		WriteTotal:  add(new.WriteTotal, old.WriteTotal),
+		ReadPages:   add(new.ReadPages, old.ReadPages),
+		WritePages:  add(new.WritePages, old.WritePages),
+	}
+}
+
+func addEvents(new, old procfs.NFSEventsStats) procfs.NFSEventsStats {
+	return procfs.NFSEventsStats{
+		InodeRevalidate:     add(new.InodeRevalidate, old.InodeRevalidate),
+		DnodeRevalidate:     add(new.DnodeRevalidate, old.DnodeRevalidate),
+		DataInvalidate:      add(new.DataInvalidate, old.DataInvalidate),
+		AttributeInvalidate: add(new.AttributeInvalidate, old.AttributeInvalidate),
+		VFSOpen:             add(new.VFSOpen, old.VFSOpen),
+		VFSLookup:           add(new.VFSLookup, old.VFSLookup),
+		VFSAccess:           add(new.VFSAccess, old.VFSAccess),
+		VFSUpdatePage:       add(new.VFSUpdatePage, old.VFSUpdatePage),
+		VFSReadPage:         add(new.VFSReadPage, old.VFSReadPage),
+		VFSReadPages:        add(new.VFSReadPages, old.VFSReadPages),
+		VFSWritePage:        add(new.VFSWritePage, old.VFSWritePage),
+		VFSWritePages:       add(new.VFSWritePages, old.VFSWritePages),
+		VFSGetdents:         add(new.VFSGetdents, old.VFSGetdents),
+		VFSSetattr:          add(new.VFSSetattr, old.VFSSetattr),
+		VFSFlush:            add(new.VFSFlush, old.VFSFlush),
+		VFSFsync:            add(new.VFSFsync, old.VFSFsync),
+		VFSLock:             add(new.VFSLock, old.VFSLock),
+		VFSFileRelease:      add(new.VFSFileRelease, old.VFSFileRelease),
+		CongestionWait:      add(new.CongestionWait, old.CongestionWait),
+		Truncation:          add(new.Truncation, old.Truncation),
+		WriteExtension:      add(new.WriteExtension, old.WriteExtension),
+		SillyRename:         add(new.SillyRename, old.SillyRename),
+		ShortRead:           add(new.ShortRead, old.ShortRead),
+		ShortWrite:          add(new.ShortWrite, old.ShortWrite),
+		JukeboxDelay:        add(new.JukeboxDelay, old.JukeboxDelay),
+		PNFSRead:            add(new.PNFSRead, old.PNFSRead),
+		PNFSWrite:           add(new.PNFSWrite, old.PNFSWrite),
+	}
+}
+
+func addTransport(new, old procfs.NFSTransportStats) procfs.NFSTransportStats {
+	return procfs.NFSTransportStats{
+		Protocol:                 new.Protocol,
+		Port:                     new.Port,
+		Bind:                     add(new.Bind, old.Bind),
+		Connect:                  add(new.Connect, old.Connect),
+		ConnectIdleTime:          add(new.ConnectIdleTime, old.ConnectIdleTime),
+		IdleTimeSeconds:          add(new.IdleTimeSeconds, old.IdleTimeSeconds),
+		Sends:                    add(new.Sends, old.Sends),
+		Receives:                 add(new.Receives, old.Receives),
+		BadTransactionIDs:        add(new.BadTransactionIDs, old.BadTransactionIDs),
+		CumulativeActiveRequests: add(new.CumulativeActiveRequests, old.CumulativeActiveRequests),
+		CumulativeBacklog:        add(new.CumulativeBacklog, old.CumulativeBacklog),
+		MaximumRPCSlotsUsed:      add(new.MaximumRPCSlotsUsed, old.MaximumRPCSlotsUsed),
+		CumulativeSendingQueue:   add(new.CumulativeSendingQueue, old.CumulativeSendingQueue),
+		CumulativePendingQueue:   add(new.CumulativePendingQueue, old.CumulativePendingQueue),
+	}
+}
+
+func addOperations(new, old map[string]procfs.NFSOperationStats) map[string]procfs.NFSOperationStats {
+	cap := len(new)
+	if x := len(old); x > cap {
+		cap = x
+	}
+
+	sum := make(map[string]procfs.NFSOperationStats)
+	for key, value := range new {
+		sum[key] = value
+	}
+
+	for key, value := range old {
+		sum[key] = addOperation(key, sum[key], value)
+	}
+
+	return sum
+}
+
+func addOperation(operation string, new, old procfs.NFSOperationStats) procfs.NFSOperationStats {
+	return procfs.NFSOperationStats{
+		Operation:                           operation,
+		Requests:                            add(new.Requests, old.Requests),
+		Transmissions:                       add(new.Transmissions, old.Transmissions),
+		MajorTimeouts:                       add(new.MajorTimeouts, old.MajorTimeouts),
+		BytesSent:                           add(new.BytesSent, old.BytesSent),
+		BytesReceived:                       add(new.BytesReceived, old.BytesReceived),
+		CumulativeQueueMilliseconds:         add(new.CumulativeQueueMilliseconds, old.CumulativeQueueMilliseconds),
+		CumulativeTotalResponseMilliseconds: add(new.CumulativeTotalResponseMilliseconds, old.CumulativeTotalResponseMilliseconds),
+		CumulativeTotalRequestMilliseconds:  add(new.CumulativeTotalRequestMilliseconds, old.CumulativeTotalRequestMilliseconds),
+		Errors:                              add(new.Errors, old.Errors),
 	}
 }
 
@@ -132,8 +245,18 @@ func diffOperation(new, old procfs.NFSOperationStats) procfs.NFSOperationStats {
 	}
 }
 
+func add(x, y uint64) uint64 {
+	cap := math.MaxUint64 - x
+	if y >= cap {
+		// prevent overflow, clamp to MaxUint64
+		return math.MaxUint64
+	} else {
+		return x + y
+	}
+}
+
 func sub(x, y uint64) uint64 {
-	if x >= y {
+	if x > y {
 		return x - y
 	} else {
 		// prevent underflow, clamp to zero

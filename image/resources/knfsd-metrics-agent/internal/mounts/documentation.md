@@ -8,19 +8,19 @@ These are the metrics available for this scraper.
 
 | Name | Description | Unit | Type | Attributes |
 | ---- | ----------- | ---- | ---- | ---------- |
-| nfs.mount.operation.errors | Number of requests that complete with tk_status < 0 | {errors} | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> <li>operation</li> </ul> |
-| nfs.mount.operation.major_timeouts | Number of times a request has had a major timeout | {timeouts} | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> <li>operation</li> </ul> |
-| nfs.mount.operation.received_bytes | Total bytes received for these operations, including RPC headers and payload | By | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> <li>operation</li> </ul> |
-| nfs.mount.operation.requests | Number of requests | {requests} | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> <li>operation</li> </ul> |
-| nfs.mount.operation.sent_bytes | Total bytes sent for these operations, including RPC headers and payload | By | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> <li>operation</li> </ul> |
-| nfs.mount.ops_per_second | nfsiostat Mount Operations Per Second The number of NFS operations per second per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | 1 | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.read_bytes | Bytes read from remote NFS server | By | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.read_exe | nfsiostat Mount Read EXE The average read operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.read_rtt | nfsiostat Mount Read RTT The average read operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.rpc_backlog | nfsiostat Mount RPC Backlog The RPC Backlog per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | 1 | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.write_bytes | Bytes wrote to remote NFS server | By | Sum(Int) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.write_exe | nfsiostat Mount Write EXE The average write operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
-| nfs.mount.write_rtt | nfsiostat Mount Write RTT The average write operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>path</li> <li>instance</li> </ul> |
+| nfs.mount.operation.errors | Number of requests that complete with tk_status < 0 | {errors} | Sum(Int) | <ul> <li>server</li> <li>instance</li> <li>operation</li> </ul> |
+| nfs.mount.operation.major_timeouts | Number of times a request has had a major timeout | {timeouts} | Sum(Int) | <ul> <li>server</li> <li>instance</li> <li>operation</li> </ul> |
+| nfs.mount.operation.received_bytes | Total bytes received for these operations, including RPC headers and payload | By | Sum(Int) | <ul> <li>server</li> <li>instance</li> <li>operation</li> </ul> |
+| nfs.mount.operation.requests | Number of requests | {requests} | Sum(Int) | <ul> <li>server</li> <li>instance</li> <li>operation</li> </ul> |
+| nfs.mount.operation.sent_bytes | Total bytes sent for these operations, including RPC headers and payload | By | Sum(Int) | <ul> <li>server</li> <li>instance</li> <li>operation</li> </ul> |
+| nfs.mount.ops_per_second | nfsiostat Mount Operations Per Second The number of NFS operations per second per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | 1 | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.read_bytes | Bytes read from remote NFS server | By | Sum(Int) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.read_exe | nfsiostat Mount Read EXE The average read operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.read_rtt | nfsiostat Mount Read RTT The average read operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.rpc_backlog | nfsiostat Mount RPC Backlog The RPC Backlog per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | 1 | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.write_bytes | Bytes wrote to remote NFS server | By | Sum(Int) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.write_exe | nfsiostat Mount Write EXE The average write operation EXE per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
+| nfs.mount.write_rtt | nfsiostat Mount Write RTT The average write operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)  | ms | Gauge(Double) | <ul> <li>server</li> <li>instance</li> </ul> |
 
 ## Attributes
 

@@ -91,7 +91,7 @@ func (m *metricNfsMountOperationErrors) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOperationErrors) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+func (m *metricNfsMountOperationErrors) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -100,7 +100,6 @@ func (m *metricNfsMountOperationErrors) recordDataPoint(start pdata.Timestamp, t
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
 }
@@ -147,7 +146,7 @@ func (m *metricNfsMountOperationMajorTimeouts) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOperationMajorTimeouts) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+func (m *metricNfsMountOperationMajorTimeouts) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -156,7 +155,6 @@ func (m *metricNfsMountOperationMajorTimeouts) recordDataPoint(start pdata.Times
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
 }
@@ -203,7 +201,7 @@ func (m *metricNfsMountOperationReceivedBytes) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOperationReceivedBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+func (m *metricNfsMountOperationReceivedBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -212,7 +210,6 @@ func (m *metricNfsMountOperationReceivedBytes) recordDataPoint(start pdata.Times
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
 }
@@ -259,7 +256,7 @@ func (m *metricNfsMountOperationRequests) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOperationRequests) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+func (m *metricNfsMountOperationRequests) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -268,7 +265,6 @@ func (m *metricNfsMountOperationRequests) recordDataPoint(start pdata.Timestamp,
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
 }
@@ -315,7 +311,7 @@ func (m *metricNfsMountOperationSentBytes) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOperationSentBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+func (m *metricNfsMountOperationSentBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -324,7 +320,6 @@ func (m *metricNfsMountOperationSentBytes) recordDataPoint(start pdata.Timestamp
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 	dp.Attributes().Insert(A.Operation, pdata.NewAttributeValueString(operationAttributeValue))
 }
@@ -369,7 +364,7 @@ func (m *metricNfsMountOpsPerSecond) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountOpsPerSecond) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountOpsPerSecond) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -378,7 +373,6 @@ func (m *metricNfsMountOpsPerSecond) recordDataPoint(start pdata.Timestamp, ts p
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -424,7 +418,7 @@ func (m *metricNfsMountReadBytes) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountReadBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountReadBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -433,7 +427,6 @@ func (m *metricNfsMountReadBytes) recordDataPoint(start pdata.Timestamp, ts pdat
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -477,7 +470,7 @@ func (m *metricNfsMountReadExe) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountReadExe) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountReadExe) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -486,7 +479,6 @@ func (m *metricNfsMountReadExe) recordDataPoint(start pdata.Timestamp, ts pdata.
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -530,7 +522,7 @@ func (m *metricNfsMountReadRtt) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountReadRtt) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountReadRtt) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -539,7 +531,6 @@ func (m *metricNfsMountReadRtt) recordDataPoint(start pdata.Timestamp, ts pdata.
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -583,7 +574,7 @@ func (m *metricNfsMountRPCBacklog) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountRPCBacklog) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountRPCBacklog) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -592,7 +583,6 @@ func (m *metricNfsMountRPCBacklog) recordDataPoint(start pdata.Timestamp, ts pda
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -638,7 +628,7 @@ func (m *metricNfsMountWriteBytes) init() {
 	m.data.Sum().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountWriteBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountWriteBytes) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -647,7 +637,6 @@ func (m *metricNfsMountWriteBytes) recordDataPoint(start pdata.Timestamp, ts pda
 	dp.SetTimestamp(ts)
 	dp.SetIntVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -691,7 +680,7 @@ func (m *metricNfsMountWriteExe) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountWriteExe) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountWriteExe) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -700,7 +689,6 @@ func (m *metricNfsMountWriteExe) recordDataPoint(start pdata.Timestamp, ts pdata
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -744,7 +732,7 @@ func (m *metricNfsMountWriteRtt) init() {
 	m.data.Gauge().DataPoints().EnsureCapacity(m.capacity)
 }
 
-func (m *metricNfsMountWriteRtt) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
+func (m *metricNfsMountWriteRtt) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
 	if !m.settings.Enabled {
 		return
 	}
@@ -753,7 +741,6 @@ func (m *metricNfsMountWriteRtt) recordDataPoint(start pdata.Timestamp, ts pdata
 	dp.SetTimestamp(ts)
 	dp.SetDoubleVal(val)
 	dp.Attributes().Insert(A.Server, pdata.NewAttributeValueString(serverAttributeValue))
-	dp.Attributes().Insert(A.Path, pdata.NewAttributeValueString(pathAttributeValue))
 	dp.Attributes().Insert(A.Instance, pdata.NewAttributeValueString(instanceAttributeValue))
 }
 
@@ -854,68 +841,68 @@ func (mb *MetricsBuilder) Emit(metrics pdata.MetricSlice) {
 }
 
 // RecordNfsMountOperationErrorsDataPoint adds a data point to nfs.mount.operation.errors metric.
-func (mb *MetricsBuilder) RecordNfsMountOperationErrorsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
-	mb.metricNfsMountOperationErrors.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue, operationAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOperationErrorsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+	mb.metricNfsMountOperationErrors.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue, operationAttributeValue)
 }
 
 // RecordNfsMountOperationMajorTimeoutsDataPoint adds a data point to nfs.mount.operation.major_timeouts metric.
-func (mb *MetricsBuilder) RecordNfsMountOperationMajorTimeoutsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
-	mb.metricNfsMountOperationMajorTimeouts.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue, operationAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOperationMajorTimeoutsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+	mb.metricNfsMountOperationMajorTimeouts.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue, operationAttributeValue)
 }
 
 // RecordNfsMountOperationReceivedBytesDataPoint adds a data point to nfs.mount.operation.received_bytes metric.
-func (mb *MetricsBuilder) RecordNfsMountOperationReceivedBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
-	mb.metricNfsMountOperationReceivedBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue, operationAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOperationReceivedBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+	mb.metricNfsMountOperationReceivedBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue, operationAttributeValue)
 }
 
 // RecordNfsMountOperationRequestsDataPoint adds a data point to nfs.mount.operation.requests metric.
-func (mb *MetricsBuilder) RecordNfsMountOperationRequestsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
-	mb.metricNfsMountOperationRequests.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue, operationAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOperationRequestsDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+	mb.metricNfsMountOperationRequests.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue, operationAttributeValue)
 }
 
 // RecordNfsMountOperationSentBytesDataPoint adds a data point to nfs.mount.operation.sent_bytes metric.
-func (mb *MetricsBuilder) RecordNfsMountOperationSentBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
-	mb.metricNfsMountOperationSentBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue, operationAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOperationSentBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string, operationAttributeValue string) {
+	mb.metricNfsMountOperationSentBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue, operationAttributeValue)
 }
 
 // RecordNfsMountOpsPerSecondDataPoint adds a data point to nfs.mount.ops_per_second metric.
-func (mb *MetricsBuilder) RecordNfsMountOpsPerSecondDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountOpsPerSecond.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountOpsPerSecondDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountOpsPerSecond.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountReadBytesDataPoint adds a data point to nfs.mount.read_bytes metric.
-func (mb *MetricsBuilder) RecordNfsMountReadBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountReadBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountReadBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountReadBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountReadExeDataPoint adds a data point to nfs.mount.read_exe metric.
-func (mb *MetricsBuilder) RecordNfsMountReadExeDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountReadExe.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountReadExeDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountReadExe.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountReadRttDataPoint adds a data point to nfs.mount.read_rtt metric.
-func (mb *MetricsBuilder) RecordNfsMountReadRttDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountReadRtt.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountReadRttDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountReadRtt.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountRPCBacklogDataPoint adds a data point to nfs.mount.rpc_backlog metric.
-func (mb *MetricsBuilder) RecordNfsMountRPCBacklogDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountRPCBacklog.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountRPCBacklogDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountRPCBacklog.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountWriteBytesDataPoint adds a data point to nfs.mount.write_bytes metric.
-func (mb *MetricsBuilder) RecordNfsMountWriteBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountWriteBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountWriteBytesDataPoint(ts pdata.Timestamp, val int64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountWriteBytes.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountWriteExeDataPoint adds a data point to nfs.mount.write_exe metric.
-func (mb *MetricsBuilder) RecordNfsMountWriteExeDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountWriteExe.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountWriteExeDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountWriteExe.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // RecordNfsMountWriteRttDataPoint adds a data point to nfs.mount.write_rtt metric.
-func (mb *MetricsBuilder) RecordNfsMountWriteRttDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, pathAttributeValue string, instanceAttributeValue string) {
-	mb.metricNfsMountWriteRtt.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, pathAttributeValue, instanceAttributeValue)
+func (mb *MetricsBuilder) RecordNfsMountWriteRttDataPoint(ts pdata.Timestamp, val float64, serverAttributeValue string, instanceAttributeValue string) {
+	mb.metricNfsMountWriteRtt.recordDataPoint(mb.startTime, ts, val, serverAttributeValue, instanceAttributeValue)
 }
 
 // Reset resets metrics builder to its initial state. It should be used when external metrics source is restarted,

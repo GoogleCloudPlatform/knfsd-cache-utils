@@ -23,20 +23,14 @@ type mountScraper struct {
 	p        procfs.Proc
 	mb       *metadata.MetricsBuilder
 	nic      *nodeInfoClient
-	previous map[string]nfsMount
+	previous map[string]nfsStats
 }
 
-type nfsMount struct {
-	device string
-	mount  string
-
+type nfsStats struct {
 	server string
-	path   string
-
 	// included if QueryInstanceName is true
 	instance string
-
-	summary summary
+	summary  summary
 }
 
 type nodeInfoClient http.Client
@@ -93,25 +87,27 @@ func (s *mountScraper) scrape(context.Context) (pdata.Metrics, error) {
 	rms := md.ResourceMetrics()
 	now := pdata.NewTimestampFromTime(time.Now())
 
-	mounts, err := s.findNFSMounts()
+	stats, err := s.aggregateNFSStats()
 	if err != nil {
 		return md, err
 	}
-	s.queryInstanceNames(mounts)
+	s.queryInstanceNames(stats)
 
-	for _, mount := range mounts {
+	for _, mount := range stats {
 		metrics := rms.AppendEmpty().InstrumentationLibraryMetrics().AppendEmpty().Metrics()
 		s.report(mount, now, metrics)
 	}
-	s.track(mounts)
+	s.track(stats)
 
 	return md, nil
 }
 
-func (s *mountScraper) findNFSMounts() ([]nfsMount, error) {
+// aggregateNFSStats reads /proc/self/mountstats and aggregates the stats to
+// return a single total per source server.
+func (s *mountScraper) aggregateNFSStats() ([]nfsStats, error) {
 	mounts, err := s.p.MountStats()
 	if err != nil {
-		return []nfsMount{}, err
+		return []nfsStats{}, err
 	}
 
 	// estimate the capacity based on the previous run
@@ -119,27 +115,42 @@ func (s *mountScraper) findNFSMounts() ([]nfsMount, error) {
 	if cap < 20 {
 		cap = 20
 	}
-	nfsMounts := make([]nfsMount, 0, cap)
 
+	stats := make(nfsStatsAggregator, cap)
 	for _, mount := range mounts {
-		if mount.Type == "nfs" || mount.Type == "nfs4" {
-			if stats, ok := mount.Stats.(*procfs.MountStatsNFS); ok {
-				server, path := splitNFSDevice(mount.Device)
-				nfsMounts = append(nfsMounts, nfsMount{
-					device:  mount.Device,
-					mount:   mount.Mount,
-					server:  server,
-					path:    path,
-					summary: newSummary(stats),
-				})
-			}
-		}
+		stats.AddMount(mount)
 	}
-
-	return nfsMounts, nil
+	return stats.Totals(), nil
 }
 
-func (s *mountScraper) queryInstanceNames(mounts []nfsMount) {
+type nfsStatsAggregator map[string]summary
+
+func (agg nfsStatsAggregator) AddMount(mount *procfs.Mount) {
+	if nfs := mount.Type == "nfs" || mount.Type == "nfs4"; !nfs {
+		return
+	}
+
+	stats, ok := mount.Stats.(*procfs.MountStatsNFS)
+	if !ok {
+		return
+	}
+
+	server, _ := splitNFSDevice(mount.Device)
+	agg[server] = addSummary(agg[server], newSummary(stats))
+}
+
+func (agg nfsStatsAggregator) Totals() []nfsStats {
+	totals := make([]nfsStats, 0, len(agg))
+	for server, total := range agg {
+		totals = append(totals, nfsStats{
+			server:  server,
+			summary: total,
+		})
+	}
+	return totals
+}
+
+func (s *mountScraper) queryInstanceNames(stats []nfsStats) {
 	if !s.cfg.QueryProxyInstance.Enabled {
 		s.logger.Debug("not resolving instance names, QueryProxyInstance is disabled")
 		return
@@ -149,9 +160,9 @@ func (s *mountScraper) queryInstanceNames(mounts []nfsMount) {
 
 	// Emulate a set using a map, create a distinct list of servers
 	servers := make(map[string]struct{}, 10)
-	for _, mount := range mounts {
-		if mount.server != "" {
-			servers[mount.server] = struct{}{}
+	for _, stat := range stats {
+		if stat.server != "" {
+			servers[stat.server] = struct{}{}
 		}
 	}
 
@@ -170,11 +181,11 @@ func (s *mountScraper) queryInstanceNames(mounts []nfsMount) {
 		}
 	}
 
-	for idx := range mounts {
-		mount := &mounts[idx]
+	for idx := range stats {
+		mount := &stats[idx]
 		if instance, ok := instances[mount.server]; ok {
 			mount.instance = instance
-		} else if previous, ok := s.previous[mount.device]; ok {
+		} else if previous, ok := s.previous[mount.server]; ok {
 			// In case the lookup failed due to a transient error assume the
 			// instance name has not changed since the last scrape.
 			mount.instance = previous.instance
@@ -207,16 +218,16 @@ func (c *nodeInfoClient) queryInstanceName(addr string) (string, error) {
 	return info.Name, nil
 }
 
-func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, metrics pdata.MetricSlice) {
-	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.summary.bytes.ReadTotal), mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.summary.bytes.WriteTotal), mount.server, mount.path, mount.instance)
+func (s *mountScraper) report(mount nfsStats, now pdata.Timestamp, metrics pdata.MetricSlice) {
+	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.summary.bytes.ReadTotal), mount.server, mount.instance)
+	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.summary.bytes.WriteTotal), mount.server, mount.instance)
 
 	for _, op := range mount.summary.operations {
-		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), mount.server, mount.path, mount.instance, op.Operation)
-		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), mount.server, mount.path, mount.instance, op.Operation)
-		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), mount.server, mount.path, mount.instance, op.Operation)
-		s.mb.RecordNfsMountOperationMajorTimeoutsDataPoint(now, convert.Int64(op.MajorTimeouts), mount.server, mount.path, mount.instance, op.Operation)
-		s.mb.RecordNfsMountOperationErrorsDataPoint(now, convert.Int64(op.Errors), mount.server, mount.path, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), mount.server, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), mount.server, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), mount.server, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationMajorTimeoutsDataPoint(now, convert.Int64(op.MajorTimeouts), mount.server, mount.instance, op.Operation)
+		s.mb.RecordNfsMountOperationErrorsDataPoint(now, convert.Int64(op.Errors), mount.server, mount.instance, op.Operation)
 	}
 
 	// report original delta based metrics
@@ -225,7 +236,7 @@ func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, metrics pdata
 	s.mb.Emit(metrics)
 }
 
-func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
+func (s *mountScraper) reportDelta(stats nfsStats, now pdata.Timestamp) {
 	// TODO: Report counters instead of gauges
 
 	// This is a direct port of the original script that used
@@ -236,7 +247,7 @@ func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 
 	// This is a new mount, no previous metrics yet so cannot calculate a diff
 	// on this scrape.
-	prev, found := s.previous[mount.device]
+	prev, found := s.previous[stats.server]
 	if !found {
 		return
 	}
@@ -245,11 +256,11 @@ func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 	// i.e. the NFS share was re-mounted.
 	// If the counters have reset then we cannot derive any useful metrics
 	// on this scrape, so just treat this as if it were a new summary.
-	if mount.summary.age <= prev.summary.age {
+	if stats.summary.age <= prev.summary.age {
 		return
 	}
 
-	diff := diffSummary(mount.summary, prev.summary)
+	diff := diffSummary(stats.summary, prev.summary)
 
 	delta := diff.age.Seconds()
 	if delta <= 0 {
@@ -268,12 +279,12 @@ func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 	read := calc(delta, diff.operations["READ"])
 	write := calc(delta, diff.operations["WRITE"])
 
-	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta, mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta, mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountReadExeDataPoint(now, read.exePerOp, mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountReadRttDataPoint(now, read.rttPerOp, mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountWriteExeDataPoint(now, write.exePerOp, mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountWriteRttDataPoint(now, write.rttPerOp, mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta, stats.server, stats.instance)
+	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta, stats.server, stats.instance)
+	s.mb.RecordNfsMountReadExeDataPoint(now, read.exePerOp, stats.server, stats.instance)
+	s.mb.RecordNfsMountReadRttDataPoint(now, read.rttPerOp, stats.server, stats.instance)
+	s.mb.RecordNfsMountWriteExeDataPoint(now, write.exePerOp, stats.server, stats.instance)
+	s.mb.RecordNfsMountWriteRttDataPoint(now, write.rttPerOp, stats.server, stats.instance)
 }
 
 func calc(delta float64, diff procfs.NFSOperationStats) op {
@@ -299,10 +310,10 @@ func calc(delta float64, diff procfs.NFSOperationStats) op {
 	return op{rttPerOp, exePerOp}
 }
 
-func (s *mountScraper) track(mounts []nfsMount) {
-	previous := make(map[string]nfsMount, len(mounts))
-	for _, m := range mounts {
-		previous[m.device] = m
+func (s *mountScraper) track(stats []nfsStats) {
+	previous := make(map[string]nfsStats, len(stats))
+	for _, m := range stats {
+		previous[m.server] = m
 	}
 	s.previous = previous
 }

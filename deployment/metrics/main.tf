@@ -17,7 +17,6 @@
 locals {
   mount_labels = {
     "server" : "Source NFS server of the mount",
-    "path" : "Source NFS path of the mount",
     "instance" : "Proxy instance the client is connected to",
   }
   mount_operation_labels = merge(local.mount_labels, {

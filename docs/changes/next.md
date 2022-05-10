@@ -3,6 +3,7 @@
 * Increase health check interval to 60 seconds
 * Add parameters to configure health checks
 * Support deploying metrics as a Terraform module
+* Remove per-mount stats (aggregate by source server)
 
 ## Increase health check interval to 60 seconds
 
@@ -17,3 +18,11 @@ If you have a lot of volumes, or high latency between the source and the proxy c
 ## Support deploying metrics as a Terraform module
 
 Support deploying the metrics as a Terraform module so that the metrics can be deployed without needing to clone the Terraform configuration from git.
+
+## Remove per-mount stats (aggregate by source server)
+
+Reporting on the stats per-mount generates a lot of logging data when the source has 50 or more volumes.
+
+Secondly, the stats cannot be reliably aggregated later because multiple mounts can share the same NFS client. All mounts sharing the same NFS clients will have identical stats that are an aggregate of all the mounts sharing the NFS client. If these per-mount stats are then summed together on a dashboard it leads to the stats being multiplied by the number of mounts that share the same NFS client.
+
+However, because some mounts might have a separate NFS client, and thus separate stats, it becomes impossible to view an accurate total on a dashboard when the stats are reported per-mount.
