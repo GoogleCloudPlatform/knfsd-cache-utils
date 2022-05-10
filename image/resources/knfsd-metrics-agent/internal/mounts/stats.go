@@ -7,35 +7,34 @@ import (
 )
 
 type summary struct {
-	age       time.Duration
-	bytes     procfs.NFSBytesStats
-	events    procfs.NFSEventsStats
-	transport procfs.NFSTransportStats
-	read      procfs.NFSOperationStats
-	write     procfs.NFSOperationStats
+	age        time.Duration
+	bytes      procfs.NFSBytesStats
+	events     procfs.NFSEventsStats
+	transport  procfs.NFSTransportStats
+	operations map[string]procfs.NFSOperationStats
 }
 
 func newSummary(new *procfs.MountStatsNFS) summary {
-	read, _ := find(new.Operations, "READ")
-	write, _ := find(new.Operations, "WRITE")
+	operations := make(map[string]procfs.NFSOperationStats, len(new.Operations))
+	for _, op := range new.Operations {
+		operations[op.Operation] = op
+	}
 	return summary{
-		age:       new.Age,
-		bytes:     new.Bytes,
-		events:    new.Events,
-		transport: new.Transport,
-		read:      read,
-		write:     write,
+		age:        new.Age,
+		bytes:      new.Bytes,
+		events:     new.Events,
+		transport:  new.Transport,
+		operations: operations,
 	}
 }
 
 func diffSummary(new, old summary) summary {
 	return summary{
-		age:       new.age - old.age,
-		bytes:     diffBytes(new.bytes, old.bytes),
-		events:    diffEvents(new.events, old.events),
-		transport: diffTransport(new.transport, old.transport),
-		read:      diffOperation(new.read, old.read),
-		write:     diffOperation(new.write, old.write),
+		age:        new.age - old.age,
+		bytes:      diffBytes(new.bytes, old.bytes),
+		events:     diffEvents(new.events, old.events),
+		transport:  diffTransport(new.transport, old.transport),
+		operations: diffOperations(new.operations, old.operations),
 	}
 }
 
@@ -103,6 +102,21 @@ func diffTransport(new, old procfs.NFSTransportStats) procfs.NFSTransportStats {
 	}
 }
 
+func diffOperations(new, old map[string]procfs.NFSOperationStats) map[string]procfs.NFSOperationStats {
+	diff := make(map[string]procfs.NFSOperationStats, len(new))
+	for key, newOp := range new {
+		if oldOp, found := old[key]; found {
+			diff[key] = diffOperation(newOp, oldOp)
+		} else {
+			// Both maps should be identical as the mountstats always contain
+			// the same list of operations. In case they are different, we only
+			// care about the operations in the new list.
+			diff[key] = newOp
+		}
+	}
+	return diff
+}
+
 func diffOperation(new, old procfs.NFSOperationStats) procfs.NFSOperationStats {
 	return procfs.NFSOperationStats{
 		Operation:                           new.Operation,
@@ -116,15 +130,6 @@ func diffOperation(new, old procfs.NFSOperationStats) procfs.NFSOperationStats {
 		CumulativeTotalRequestMilliseconds:  sub(new.CumulativeTotalRequestMilliseconds, old.CumulativeTotalRequestMilliseconds),
 		Errors:                              sub(new.Errors, old.Errors),
 	}
-}
-
-func find(ops []procfs.NFSOperationStats, name string) (procfs.NFSOperationStats, bool) {
-	for _, o := range ops {
-		if o.Operation == name {
-			return o, true
-		}
-	}
-	return procfs.NFSOperationStats{}, false
 }
 
 func sub(x, y uint64) uint64 {

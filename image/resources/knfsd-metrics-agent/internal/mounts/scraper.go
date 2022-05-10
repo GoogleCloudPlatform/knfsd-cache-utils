@@ -36,7 +36,6 @@ type nfsMount struct {
 	// included if QueryInstanceName is true
 	instance string
 
-	stats   *procfs.MountStatsNFS
 	summary summary
 }
 
@@ -131,7 +130,6 @@ func (s *mountScraper) findNFSMounts() ([]nfsMount, error) {
 					mount:   mount.Mount,
 					server:  server,
 					path:    path,
-					stats:   stats,
 					summary: newSummary(stats),
 				})
 			}
@@ -210,10 +208,10 @@ func (c *nodeInfoClient) queryInstanceName(addr string) (string, error) {
 }
 
 func (s *mountScraper) report(mount nfsMount, now pdata.Timestamp, metrics pdata.MetricSlice) {
-	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.stats.Bytes.ReadTotal), mount.server, mount.path, mount.instance)
-	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.stats.Bytes.WriteTotal), mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountReadBytesDataPoint(now, convert.Int64(mount.summary.bytes.ReadTotal), mount.server, mount.path, mount.instance)
+	s.mb.RecordNfsMountWriteBytesDataPoint(now, convert.Int64(mount.summary.bytes.WriteTotal), mount.server, mount.path, mount.instance)
 
-	for _, op := range mount.stats.Operations {
+	for _, op := range mount.summary.operations {
 		s.mb.RecordNfsMountOperationRequestsDataPoint(now, convert.Int64(op.Requests), mount.server, mount.path, mount.instance, op.Operation)
 		s.mb.RecordNfsMountOperationSentBytesDataPoint(now, convert.Int64(op.BytesSent), mount.server, mount.path, mount.instance, op.Operation)
 		s.mb.RecordNfsMountOperationReceivedBytesDataPoint(now, convert.Int64(op.BytesReceived), mount.server, mount.path, mount.instance, op.Operation)
@@ -267,8 +265,8 @@ func (s *mountScraper) reportDelta(mount nfsMount, now pdata.Timestamp) {
 	if sends > 0 {
 		backlog = float64(diff.transport.CumulativeBacklog) / sends
 	}
-	read := calc(delta, diff.read)
-	write := calc(delta, diff.write)
+	read := calc(delta, diff.operations["READ"])
+	write := calc(delta, diff.operations["WRITE"])
 
 	s.mb.RecordNfsMountOpsPerSecondDataPoint(now, sends/delta, mount.server, mount.path, mount.instance)
 	s.mb.RecordNfsMountRPCBacklogDataPoint(now, backlog/delta, mount.server, mount.path, mount.instance)
