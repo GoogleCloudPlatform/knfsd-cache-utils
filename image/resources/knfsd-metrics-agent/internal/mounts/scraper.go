@@ -105,49 +105,128 @@ func (s *mountScraper) scrape(context.Context) (pdata.Metrics, error) {
 // aggregateNFSStats reads /proc/self/mountstats and aggregates the stats to
 // return a single total per source server.
 func (s *mountScraper) aggregateNFSStats() ([]nfsStats, error) {
+	ids, err := s.findNFSDeviceIDs()
+	if err != nil {
+		return []nfsStats{}, err
+	}
+
 	mounts, err := s.p.MountStats()
 	if err != nil {
 		return []nfsStats{}, err
 	}
 
-	// estimate the capacity based on the previous run
-	cap := len(s.previous) + 10
-	if cap < 20 {
-		cap = 20
-	}
+	stats := make(nfsStatsAggregator)
+	for _, m := range mounts {
+		if !isNFS(m.Type) {
+			continue
+		}
 
-	stats := make(nfsStatsAggregator, cap)
-	for _, mount := range mounts {
-		stats.AddMount(mount)
+		blkid := ids[m.Mount]
+		if blkid == "" {
+			// This can happen if the mounts change between scraping mountinfo
+			// and scraping mountstats. For example auto-mounting a nested
+			// mount.
+			//
+			// Ignore the mount for this scrape, the block device ID should be
+			// present on the next scrape. Without the block device ID it's not
+			// possible to de-duplicate the io_stats.
+			continue
+		}
+
+		stats.AddMount(blkid, m)
 	}
 	return stats.Totals(), nil
 }
 
-type nfsStatsAggregator map[string]summary
-
-func (agg nfsStatsAggregator) AddMount(mount *procfs.Mount) {
-	if nfs := mount.Type == "nfs" || mount.Type == "nfs4"; !nfs {
-		return
+// findNFSDeviceIDs reads /proc/self/mountinfo to create a mapping of NFS mount
+// points to their virtual block device IDs.
+func (s *mountScraper) findNFSDeviceIDs() (map[string]string, error) {
+	ids := make(map[string]string)
+	mounts, err := s.p.MountInfo()
+	if err != nil {
+		return ids, err
 	}
 
+	for _, m := range mounts {
+		if !isNFS(m.FSType) {
+			continue
+		}
+		ids[m.MountPoint] = m.MajorMinorVer
+	}
+	return ids, nil
+}
+
+type nfsStatsAggregator map[string]nfsStatsGroup
+type nfsStatsGroup map[string]summary
+
+func (agg nfsStatsAggregator) Group(server string) nfsStatsGroup {
+	grp, found := agg[server]
+	if !found {
+		grp = make(nfsStatsGroup)
+		agg[server] = grp
+	}
+	return grp
+}
+
+func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
 	stats, ok := mount.Stats.(*procfs.MountStatsNFS)
 	if !ok {
 		return
 	}
 
 	server, _ := splitNFSDevice(mount.Device)
-	agg[server] = addSummary(agg[server], newSummary(stats))
+	agg.Group(server).AddStats(blkid, stats)
+}
+
+func (grp nfsStatsGroup) AddStats(blkid string, stats *procfs.MountStatsNFS) {
+	// Although the NFS stats are reported per mount multiple mounts can share
+	// the same io_stats record in the kernel.
+	//
+	// When multiple mounts share the same io_stats record, the same stats will
+	// be reported multiple times, once for each mount sharing the io_stats
+	// record.
+	//
+	// If these duplicated stats are added together then the stats will
+	// effectively be multiplied by the number of mounts sharing the same
+	// io_stats record.
+	//
+	// In the kernel source, io_stats is a member of nfs_server, and nfs_server
+	// has a 1:1 correlation with super_block. Each NFS super_block is allocated
+	// a virtual block device ID using the get_anon_bdev function.
+	//
+	// NOTE: Multiple, nfs_server records can share the same RPC client, so its
+	// possible (and common) for multiple mounts to have separate io_stats but
+	// share the same RPC clients. The RPC clients are denoted by the xprt lines
+	// in mountstats (procfs.NFSTransportStats).
+
+	// shares the same io_stats as a previous mount
+	if _, exists := grp[blkid]; exists {
+		return
+	}
+	grp[blkid] = newSummary(stats)
 }
 
 func (agg nfsStatsAggregator) Totals() []nfsStats {
 	totals := make([]nfsStats, 0, len(agg))
-	for server, total := range agg {
+	for server, group := range agg {
 		totals = append(totals, nfsStats{
 			server:  server,
-			summary: total,
+			summary: group.Total(),
 		})
 	}
 	return totals
+}
+
+func (grp nfsStatsGroup) Total() summary {
+	if len(grp) == 0 {
+		return summary{}
+	}
+
+	total := summary{}
+	for _, stats := range grp {
+		total = addSummary(total, stats)
+	}
+	return total
 }
 
 func (s *mountScraper) queryInstanceNames(stats []nfsStats) {
@@ -316,6 +395,10 @@ func (s *mountScraper) track(stats []nfsStats) {
 		previous[m.server] = m
 	}
 	s.previous = previous
+}
+
+func isNFS(s string) bool {
+	return s == "nfs" || s == "nfs4"
 }
 
 func splitNFSDevice(s string) (server string, path string) {
