@@ -17,7 +17,7 @@
       "labelKey": "backend_name"
     }
   ],
-  "displayName": "Knfsd Monitoring Dashboard (v34)",
+  "displayName": "Knfsd Monitoring Dashboard (v35)",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
@@ -346,7 +346,7 @@
                     "filter": "metric.type=\"compute.googleapis.com/instance/disk/read_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
                     "secondaryAggregation": {
                       "alignmentPeriod": "60s",
-                      "crossSeriesReducer": "REDUCE_MEAN",
+                      "crossSeriesReducer": "REDUCE_SUM",
                       "groupByFields": [
                         "metric.label.\"instance_name\""
                       ],
@@ -390,7 +390,7 @@
                     "filter": "metric.type=\"compute.googleapis.com/instance/disk/write_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
                     "secondaryAggregation": {
                       "alignmentPeriod": "60s",
-                      "crossSeriesReducer": "REDUCE_MEAN",
+                      "crossSeriesReducer": "REDUCE_SUM",
                       "groupByFields": [
                         "metric.label.\"instance_name\""
                       ],
@@ -534,7 +534,10 @@
                       ],
                       "perSeriesAligner": "ALIGN_DELTA"
                     },
-                    "filter": "metric.type=\"loadbalancing.googleapis.com/l3/internal/rtt_latencies\" resource.type=\"internal_tcp_lb_rule\" resource.label.\"backend_name\"=monitoring.regex.full_match(\".*-proxy-group\")"
+                    "filter": "metric.type=\"loadbalancing.googleapis.com/l3/internal/rtt_latencies\" resource.type=\"internal_tcp_lb_rule\" resource.label.\"backend_name\"=monitoring.regex.full_match(\".*-group\")",
+                    "secondaryAggregation": {
+                      "alignmentPeriod": "60s"
+                    }
                   }
                 }
               }
@@ -1042,7 +1045,6 @@
                       "crossSeriesReducer": "REDUCE_SUM",
                       "groupByFields": [
                         "metric.label.\"server\"",
-                        "metric.label.\"path\"",
                         "metadata.system_labels.\"name\""
                       ],
                       "perSeriesAligner": "ALIGN_MEAN"
