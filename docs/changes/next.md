@@ -4,6 +4,7 @@
 * Add parameters to configure health checks
 * Support deploying metrics as a Terraform module
 * Remove per-mount stats (aggregate by source server)
+* Exclude support when resolving knfsd proxy instance name
 
 ## Increase health check interval to 60 seconds
 
@@ -26,3 +27,11 @@ Reporting on the stats per-mount generates a lot of logging data when the source
 Secondly, the stats cannot be reliably aggregated later because multiple mounts can share the same NFS client. All mounts sharing the same NFS clients will have identical stats that are an aggregate of all the mounts sharing the NFS client. If these per-mount stats are then summed together on a dashboard it leads to the stats being multiplied by the number of mounts that share the same NFS client.
 
 However, because some mounts might have a separate NFS client, and thus separate stats, it becomes impossible to view an accurate total on a dashboard when the stats are reported per-mount.
+
+## Exclude support when resolving knfsd proxy instance name
+
+Support a list of excluded servers and/or local paths when `query_proxy_instances` is enabled.
+
+When collecting metrics from clients with `query_proxy_instances` enabled by default the collector will probe every NFS server that is mounted by the client. This can cause issues if the client is mounting a mixture of knfsd proxies and other NFS servers.
+
+The metrics collector now has an `exclude` configuration section for `query_proxy_instances`.

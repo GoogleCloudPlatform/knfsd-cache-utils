@@ -42,6 +42,18 @@ See [mounts/metadata.yaml](internal/mounts/metadata.yaml).
 
   * `timeout` (default = `10s`): HTTP timeout per source server, this timeout is the full round trip time, so includes establishing the connection, and reading the response. Valid time units are ns, us, ms, s, m, h.
 
+  * `exclude`:
+
+    * `servers`: List of servers to be excluded from `query_proxy_instances`.
+
+      **NOTE:** The name or IP listed in the exclude *must* match the name used in the mount. For example, if the mount is `logs.example.com:/logs` you *must* specify the exclude as `logs.example.com`.
+
+    * `local_paths`: List of local paths to be excluded from `query_proxy_instances`.
+
+      If a client mounts multiple paths from the same NFS server, if *any* of the paths match this exclude list then the NFS server will be excluded.
+
+      It is advised if a client has multiple paths mounted from the same NFS server, as many paths should be included in the excludes as possible. This avoids issues if one or more of the paths are not mounted (due to autofs or errors) while scraping the metrics.
+
 ```yaml
 receivers:
   mounts:
@@ -49,6 +61,13 @@ receivers:
     query_proxy_instance:
       enabled: false
       timeout: 10s
+      exclude:
+        servers:
+          - 10.0.0.2
+          - logs.example.com
+        local_paths:
+          - /files/logs
+          - /files/home
 ```
 
 #### Oldest File

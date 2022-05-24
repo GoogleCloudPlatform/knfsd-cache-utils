@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -19,11 +20,17 @@ import (
 
 type mountScraper struct {
 	cfg      *Config
+	excludes queryProxyInstanceExcludes
 	logger   *zap.Logger
 	p        procfs.Proc
 	mb       *metadata.MetricsBuilder
 	nic      *nodeInfoClient
 	previous map[string]nfsStats
+}
+
+type queryProxyInstanceExcludes struct {
+	servers    stringSet
+	localPaths pathSet
 }
 
 type nfsStats struct {
@@ -46,7 +53,11 @@ type nodeInfo struct {
 
 func newScraper(cfg *Config, logger *zap.Logger) (scraperhelper.Scraper, error) {
 	s := &mountScraper{
-		cfg:    cfg,
+		cfg: cfg,
+		excludes: queryProxyInstanceExcludes{
+			servers:    newStringSet(cfg.QueryProxyInstance.Exclude.Servers),
+			localPaths: newPathSet(cfg.QueryProxyInstance.Exclude.LocalPaths),
+		},
 		mb:     metadata.NewMetricsBuilder(cfg.Metrics),
 		nic:    createNodeInfoClient(cfg),
 		logger: logger,
@@ -87,15 +98,16 @@ func (s *mountScraper) scrape(context.Context) (pdata.Metrics, error) {
 	rms := md.ResourceMetrics()
 	now := pdata.NewTimestampFromTime(time.Now())
 
-	stats, err := s.aggregateNFSStats()
+	agg, err := s.aggregateNFSStats()
 	if err != nil {
 		return md, err
 	}
-	s.queryInstanceNames(stats)
+	s.queryInstanceNames(agg)
 
-	for _, mount := range stats {
+	stats := agg.Totals()
+	for _, stat := range stats {
 		metrics := rms.AppendEmpty().InstrumentationLibraryMetrics().AppendEmpty().Metrics()
-		s.report(mount, now, metrics)
+		s.report(stat, now, metrics)
 	}
 	s.track(stats)
 
@@ -104,18 +116,18 @@ func (s *mountScraper) scrape(context.Context) (pdata.Metrics, error) {
 
 // aggregateNFSStats reads /proc/self/mountstats and aggregates the stats to
 // return a single total per source server.
-func (s *mountScraper) aggregateNFSStats() ([]nfsStats, error) {
+func (s *mountScraper) aggregateNFSStats() (nfsStatsAggregator, error) {
 	ids, err := s.findNFSDeviceIDs()
 	if err != nil {
-		return []nfsStats{}, err
+		return nil, err
 	}
 
 	mounts, err := s.p.MountStats()
 	if err != nil {
-		return []nfsStats{}, err
+		return nil, err
 	}
 
-	stats := make(nfsStatsAggregator)
+	agg := make(nfsStatsAggregator)
 	for _, m := range mounts {
 		if !isNFS(m.Type) {
 			continue
@@ -133,9 +145,9 @@ func (s *mountScraper) aggregateNFSStats() ([]nfsStats, error) {
 			continue
 		}
 
-		stats.AddMount(blkid, m)
+		agg.AddMount(blkid, m)
 	}
-	return stats.Totals(), nil
+	return agg, nil
 }
 
 // findNFSDeviceIDs reads /proc/self/mountinfo to create a mapping of NFS mount
@@ -157,12 +169,27 @@ func (s *mountScraper) findNFSDeviceIDs() (map[string]string, error) {
 }
 
 type nfsStatsAggregator map[string]nfsStatsGroup
-type nfsStatsGroup map[string]summary
+
+type nfsStatsGroup struct {
+	nfsStats
+
+	// track local paths included in this server group
+	localPaths stringSet
+
+	// track virtual block IDs that are already included in the stats
+	blockIDs stringSet
+}
 
 func (agg nfsStatsAggregator) Group(server string) nfsStatsGroup {
 	grp, found := agg[server]
 	if !found {
-		grp = make(nfsStatsGroup)
+		grp = nfsStatsGroup{
+			nfsStats: nfsStats{
+				server: server,
+			},
+			localPaths: make(stringSet),
+			blockIDs:   make(stringSet),
+		}
 		agg[server] = grp
 	}
 	return grp
@@ -175,10 +202,14 @@ func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
 	}
 
 	server, _ := splitNFSDevice(mount.Device)
-	agg.Group(server).AddStats(blkid, stats)
+	agg.Group(server).AddStats(blkid, mount, stats)
 }
 
-func (grp nfsStatsGroup) AddStats(blkid string, stats *procfs.MountStatsNFS) {
+func (grp nfsStatsGroup) AddStats(
+	blkid string,
+	mount *procfs.Mount,
+	stats *procfs.MountStatsNFS,
+) {
 	// Although the NFS stats are reported per mount multiple mounts can share
 	// the same io_stats record in the kernel.
 	//
@@ -199,37 +230,28 @@ func (grp nfsStatsGroup) AddStats(blkid string, stats *procfs.MountStatsNFS) {
 	// share the same RPC clients. The RPC clients are denoted by the xprt lines
 	// in mountstats (procfs.NFSTransportStats).
 
-	// shares the same io_stats as a previous mount
-	if _, exists := grp[blkid]; exists {
+	// Always track the local path in case the same remote export has multiple
+	// local mounts.
+	grp.localPaths.Add(mount.Mount)
+
+	// Check if this mount shares the same io_stats as a previous mount
+	if grp.blockIDs.Contains(blkid) {
 		return
 	}
-	grp[blkid] = newSummary(stats)
+
+	grp.blockIDs.Add(blkid)
+	grp.summary = addSummary(newSummary(stats), grp.summary)
 }
 
 func (agg nfsStatsAggregator) Totals() []nfsStats {
 	totals := make([]nfsStats, 0, len(agg))
-	for server, group := range agg {
-		totals = append(totals, nfsStats{
-			server:  server,
-			summary: group.Total(),
-		})
+	for _, grp := range agg {
+		totals = append(totals, grp.nfsStats)
 	}
 	return totals
 }
 
-func (grp nfsStatsGroup) Total() summary {
-	if len(grp) == 0 {
-		return summary{}
-	}
-
-	total := summary{}
-	for _, stats := range grp {
-		total = addSummary(total, stats)
-	}
-	return total
-}
-
-func (s *mountScraper) queryInstanceNames(stats []nfsStats) {
+func (s *mountScraper) queryInstanceNames(agg nfsStatsAggregator) {
 	if !s.cfg.QueryProxyInstance.Enabled {
 		s.logger.Debug("not resolving instance names, QueryProxyInstance is disabled")
 		return
@@ -237,39 +259,43 @@ func (s *mountScraper) queryInstanceNames(stats []nfsStats) {
 
 	s.logger.Debug("querying instance names")
 
-	// Emulate a set using a map, create a distinct list of servers
-	servers := make(map[string]struct{}, 10)
-	for _, stat := range stats {
-		if stat.server != "" {
-			servers[stat.server] = struct{}{}
-		}
-	}
-
 	// TODO: Consider optimising this by running queries in parallel.
 	// TODO: Exponential backoff (per server) if a query keeps failing.
-	instances := make(map[string]string, len(servers))
-	for server := range servers {
+	for key, grp := range agg {
+		server := grp.server
+
+		if s.excludes.servers.Contains(server) {
+			s.logger.Debug("skipped server, excluded by server", zap.String("server", server))
+			continue
+		}
+
+		if s.excludes.localPaths.ContainsAny(grp.localPaths) {
+			s.logger.Debug("skipped server, excluded by local path", zap.String("server", server))
+			continue
+		}
+
 		instance, err := s.nic.queryInstanceName(server)
+
 		if err != nil {
 			s.logger.Warn("failed to query instance name", zap.String("server", server))
-		} else if instance == "" {
-			s.logger.Warn("instance name resolved as empty string", zap.String("server", server))
-		} else {
-			s.logger.Debug("resolved proxy instance", zap.String("server", server), zap.String("instance", instance))
-			instances[server] = instance
-		}
-	}
-
-	for idx := range stats {
-		mount := &stats[idx]
-		if instance, ok := instances[mount.server]; ok {
-			mount.instance = instance
-		} else if previous, ok := s.previous[mount.server]; ok {
 			// In case the lookup failed due to a transient error assume the
 			// instance name has not changed since the last scrape.
-			mount.instance = previous.instance
+			grp.instance = s.previousInstanceName(server)
+		} else if instance == "" {
+			s.logger.Warn("instance name resolved as empty string", zap.String("server", server))
+			// Assume this is also due to some kind of transient error.
+			grp.instance = s.previousInstanceName(server)
+		} else {
+			s.logger.Debug("resolved proxy instance", zap.String("server", server), zap.String("instance", instance))
+			grp.instance = instance
 		}
+
+		agg[key] = grp
 	}
+}
+
+func (s *mountScraper) previousInstanceName(server string) string {
+	return s.previous[server].instance
 }
 
 func (c *nodeInfoClient) queryInstanceName(addr string) (string, error) {
@@ -412,4 +438,54 @@ func splitNFSDevice(s string) (server string, path string) {
 	default:
 		return parts[0], parts[1]
 	}
+}
+
+type pathSet map[string]struct{}
+type stringSet map[string]struct{}
+
+func newPathSet(paths []string) pathSet {
+	ps := make(pathSet, len(paths))
+	for _, p := range paths {
+		p = path.Clean(p)
+		ps[p] = struct{}{}
+	}
+	return ps
+}
+
+func (ps pathSet) ContainsAny(s stringSet) bool {
+	if len(ps) == 0 {
+		return false
+	}
+	for p := range s {
+		if ps.Contains(p) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ps pathSet) Contains(p string) bool {
+	if len(ps) == 0 {
+		return false
+	}
+	p = path.Clean(p)
+	_, found := ps[p]
+	return found
+}
+
+func newStringSet(items []string) stringSet {
+	set := make(stringSet, len(items))
+	for _, s := range items {
+		set[s] = struct{}{}
+	}
+	return set
+}
+
+func (set stringSet) Add(s string) {
+	set[s] = struct{}{}
+}
+
+func (set stringSet) Contains(s string) bool {
+	_, found := set[s]
+	return found
 }

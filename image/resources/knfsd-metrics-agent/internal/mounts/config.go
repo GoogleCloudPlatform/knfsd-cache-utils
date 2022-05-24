@@ -25,6 +25,12 @@ type Config struct {
 }
 
 type QueryProxyInstanceConfig struct {
-	Enabled bool          `mapstructure:"enabled"`
-	Timeout time.Duration `mapstructure:"timeout"`
+	Enabled bool                             `mapstructure:"enabled"`
+	Timeout time.Duration                    `mapstructure:"timeout"`
+	Exclude QueryProxyInstanceExcludesConfig `mapstructure:"exclude"`
+}
+
+type QueryProxyInstanceExcludesConfig struct {
+	Servers    []string `mapstructure:"servers"`
+	LocalPaths []string `mapstructure:"local_paths"`
 }

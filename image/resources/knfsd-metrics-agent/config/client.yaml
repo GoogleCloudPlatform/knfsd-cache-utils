@@ -1,8 +1,23 @@
 receivers:
   mounts:
     query_proxy_instance:
+      # When enabled the collector will query the /api/v1.0/nodeInfo endpoint
+      # for each NFS server that is mounted so that the client can report the
+      # instance name of the knfsd proxy that the client is connected to.
       enabled: true
       timeout: 10s
+      # # If the client is mounting some servers directly (i.e. not via a knfsd
+      # # proxy) list the servers or local mount paths to exclude from querying.
+      # exclude:
+      #   # Exclude specific servers. This must match the name or IP used when
+      #   # mounting the export.
+      #   servers:
+      #   - logs.example
+      #   # Exclude specific servers based upon the local path where the export
+      #   # is mounted. If the client mounts multiple exports from the same server
+      #   # then the server will be excluded if any path matches.
+      #   local_paths:
+      #   - /mnt/logs
 
 service:
   pipelines:
