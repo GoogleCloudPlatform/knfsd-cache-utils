@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 #
 # Copyright 2021 Google Inc.
 #
@@ -15,95 +15,116 @@
 # limitations under the License.
 #
 
-set -e
+# This script is a simplified version of the main proxy startup script from the
+# Terraform module for the purpose of the tutorial. This script has limited
+# features and does not support configuring the the source server.
 
-# Retrieves VM metadata given the key and default value
-# @param (str) key name
-# @param (str) default value
-function get_metadata {
-  local key=$1
-  local default=$2
-  local url="http://metadata.google.internal/computeMetadata/v1/instance/$key?alt=text"
-  local value=$(curl -s -H 'Metadata-Flavor: Google' $url)
-  [[ $value =~ .*Error\ 404.* ]] && value=$default
-  if [[ -n $value ]]; then
-    echo $value
-    return 0
-  else
-    echo ""
-    return 1
-  fi
+# Exit immediately if a command exits with a non-zero status
+set -o errexit
+set -o pipefail
+shopt -s lastpipe
+
+IP_MASK="10.0.0.0/8"
+NFS_SERVER="nfs-server"
+NFS_MOUNT_POINT="/data"
+
+function create-fs-cache() {
+	# List attatched NVME local SSDs
+	echo "Detecting local NVMe drives..."
+	DRIVESLIST=$(/bin/ls /dev/nvme0n*)
+	NUMDRIVES=$(/bin/ls /dev/nvme0n* | wc -w)
+	echo "Detected $NUMDRIVES drives. Names: $DRIVESLIST."
+
+	# If there are local NVMe drives attached, start the process of formatting and mounting
+	if [ $NUMDRIVES -gt 0 ]; then
+		echo "Found attached SSD device(s), initializing FS-Cache..."
+		if [ ! -e /dev/md127 ]; then
+			# Make RAID array of attatched Local SSDs
+			echo "Creating RAID array from Local SSDs..."
+			mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
+			echo "Finished creating RAID array from Local SSDs."
+		fi
+
+		# Check if the RAID array has already been formatted
+		echo "Checking if RAID array needs formatting..."
+		is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
+		if [[ $is_formatted == "" ]]; then
+			echo "RAID array is not formatted. Formatting..."
+			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
+			echo "Finished formatting RAID array."
+		else
+			echo "RAID array is already formatted."
+		fi
+
+		# Mount /dev/md127 to /var/cache/fscache
+		echo "Mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)..."
+		mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
+		echo "Finished /dev/md127 to FS-Cache directory (/var/cache/fscache)"
+
+		# Start FS-Cache
+		echo "Starting FS-Cache..."
+		if ! systemctl start cachefilesd; then
+			# Sometimes cachefilesd reports an error when starting but does
+			# start correctly. This is likely an error in the init script or
+			# with how systemd integrates with init scripts.
+			# Trying a second time normally works. If you check
+			# /proc/fs/fscache/caches the cache is actually active.
+			if ! systemctl start cachefilesd; then
+				# Second attempt failed, this is now a genuine error so report
+				# what went wrong and terminate.
+				systemctl status cachefilesd
+				exit 1
+			fi
+		fi
+
+		echo "FS-Cache started."
+	else
+		echo "No SSD devices(s) found, cannot initialize FS-Cache."
+    exit 1
+	fi
 }
 
-# Retrieves an attribute from VM metadata
-# @param (str) attribute name
-function get_attribute() {
-  sleep 1
-  curl "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
+function mount-nfs-server() {
+  local remote="$NFS_SERVER:$NFS_MOUNT_POINT"
+  local path="/srv/nfs/$NFS_MOUNT_POINT"
+
+  # Make the local export directory
+  mkdir -p "$path"
+
+  # In the main terraform script this only attempts 3 times, 60 seconds appart.
+  # For the demo, keep trying 15 seconds apart to get faster feedback.
+  # The demo is expected to be interactive so this will allow the user time
+  # to diagnose and fix the issue.
+  local -i attempt
+  while true; do
+    echo "(Attempt ${attempt}) Mouting NFS Share: $remote..."
+    if mount -t nfs -o "$MOUNT_OPTIONS" "$remote" "$path"; then
+      echo "NFS mount succeeded for $remote."
+      break
+    else
+      echo "NFS mount failed for $remote. Retrying after 15 seconds..."
+      sleep 15
+    fi
+  done
 }
 
-# Retrieves VM IP address from VM metadata
-function get_ip_address () {
-  curl "http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip" -H "Metadata-Flavor: Google"
+function export-nfs-share() {
+  echo "Creating NFS share export."
+  echo "$NFS_MOUNT_POINT   $IP_MASK(rw,wdelay,no_root_squash,no_subtree_check,fsid=10,sec=sys,rw,secure,no_root_squash,no_all_squash)" > /etc/exports
+  cat /etc/exports
 }
 
-IP_MASK=$(get_ip_address | sed -e 's|\([0-9]*\.[0-9]*\)\..*|\1.0.0/16|')
-NFS_SERVER=$(get_attribute NFS_SERVER)
-NFS_MOUNT_POINT=$(get_attribute NFS_MOUNT_POINT)
+function start-nfs() {
+	# Start NFS Server
+	echo "Starting nfs-kernel-server..."
+	if ! systemctl start portmap nfs-kernel-server; then
+		systemctl status portmap nfs-kernel-server
+		exit 1
+	fi
+	echo "Finished starting nfs-kernel-server..."
+}
 
-echo "Done reading metadata"
-
-# List attatched NVME local SSDs
-DRIVESLIST=`/bin/ls /dev/nvme0n*`
-NUMDRIVES=`/bin/ls /dev/nvme0n* | wc -w`
-
-if [ $NUMDRIVES -gt 0 ]
-then
-  echo "Found attached SSD device(s), initializing FS-Cache..."
-  if [ ! -e /dev/md127 ]
-  then
-    # Make raid array of attached local ssds
-    sudo mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
-  fi
-
-  # Check if disk needs formatting first
-  is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
-  if [[ $is_formatted == "" ]]
-  then
-    mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
-  fi
-
-  mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
-  service cachefilesd restart
-  FSC=,fsc
-  echo "FS-Cache initialized"
-else
-  echo "No SSD devices(s) found, disabling FS-Cache"
-  service cachefilesd stop
-  FSC=
-fi
-
-echo "Mounting NFS share..."
-mkdir -p $NFS_MOUNT_POINT
-set +e
-while true
-do
-  mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,sync$FSC $NFS_SERVER:$NFS_MOUNT_POINT $NFS_MOUNT_POINT
-  if [ $? = 0 ]
-  then
-    echo "NFS mount succeeded."
-    break
-  else
-    echo "NFS mount failed. Retrying after 15 seconds..."
-    sleep 15
-  fi
-done
-set -e
-
-echo "Creating NFS share export."
-echo "$NFS_MOUNT_POINT   $IP_MASK(rw,wdelay,no_root_squash,no_subtree_check,fsid=10,sec=sys,rw,secure,no_root_squash,no_all_squash)" > /etc/exports
-cat /etc/exports
-
-echo "Starting nfs-kernel-server."
-systemctl start portmap
-systemctl start nfs-kernel-server
+create-fs-cache
+mount-nfs-server
+export-nfs-share
+start-nfs

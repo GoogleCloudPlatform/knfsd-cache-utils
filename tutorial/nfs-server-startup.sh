@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Create a very simple NFS server to act as the source NFS server for the proxy.
 
 # Install NFS kernel server and portmap
 echo "Installing NFS kernel server and portmap..."
