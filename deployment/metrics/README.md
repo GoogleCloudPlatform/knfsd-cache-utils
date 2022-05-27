@@ -16,6 +16,7 @@ module "metrics" {
 ## Inputs
 
 | Variable | Description | Required | Default
+| -------- | ----------- | -------- | -------
 | project  | The Google Cloud Project that the Knfsd Metrics are being deployed to. If it is not provided, the provider project is used. | False
 
 ### Provider Default Values
