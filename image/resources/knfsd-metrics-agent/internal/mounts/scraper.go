@@ -142,6 +142,7 @@ func (s *mountScraper) aggregateNFSStats() (nfsStatsAggregator, error) {
 			// Ignore the mount for this scrape, the block device ID should be
 			// present on the next scrape. Without the block device ID it's not
 			// possible to de-duplicate the io_stats.
+			s.logger.Debug("Skipping mount, block device ID not found", zap.String("mount", m.Mount))
 			continue
 		}
 
@@ -180,7 +181,14 @@ type nfsStatsGroup struct {
 	blockIDs stringSet
 }
 
-func (agg nfsStatsAggregator) Group(server string) nfsStatsGroup {
+func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
+	stats, ok := mount.Stats.(*procfs.MountStatsNFS)
+	if !ok {
+		return
+	}
+
+	server, _ := splitNFSDevice(mount.Device)
+
 	grp, found := agg[server]
 	if !found {
 		grp = nfsStatsGroup{
@@ -192,24 +200,13 @@ func (agg nfsStatsAggregator) Group(server string) nfsStatsGroup {
 		}
 		agg[server] = grp
 	}
-	return grp
-}
 
-func (agg nfsStatsAggregator) AddMount(blkid string, mount *procfs.Mount) {
-	stats, ok := mount.Stats.(*procfs.MountStatsNFS)
-	if !ok {
-		return
-	}
+	// Always track the local path in case the same remote export has multiple
+	// local mounts.
+	grp.localPaths.Add(mount.Mount)
 
-	server, _ := splitNFSDevice(mount.Device)
-	agg.Group(server).AddStats(blkid, mount, stats)
-}
-
-func (grp nfsStatsGroup) AddStats(
-	blkid string,
-	mount *procfs.Mount,
-	stats *procfs.MountStatsNFS,
-) {
+	// Check if this mount shares the same io_stats as a previous mount
+	//
 	// Although the NFS stats are reported per mount multiple mounts can share
 	// the same io_stats record in the kernel.
 	//
@@ -229,18 +226,13 @@ func (grp nfsStatsGroup) AddStats(
 	// possible (and common) for multiple mounts to have separate io_stats but
 	// share the same RPC clients. The RPC clients are denoted by the xprt lines
 	// in mountstats (procfs.NFSTransportStats).
-
-	// Always track the local path in case the same remote export has multiple
-	// local mounts.
-	grp.localPaths.Add(mount.Mount)
-
-	// Check if this mount shares the same io_stats as a previous mount
 	if grp.blockIDs.Contains(blkid) {
 		return
 	}
 
 	grp.blockIDs.Add(blkid)
 	grp.summary = addSummary(newSummary(stats), grp.summary)
+	agg[server] = grp
 }
 
 func (agg nfsStatsAggregator) Totals() []nfsStats {
