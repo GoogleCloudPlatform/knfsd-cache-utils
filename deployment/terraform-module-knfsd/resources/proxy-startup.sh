@@ -205,6 +205,7 @@ function init() {
 
 	ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 	ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
+	ROUTE_METRICS_PRIVATE_GOOGLEAPIS=$(get_attribute ROUTE_METRICS_PRIVATE_GOOGLEAPIS)
 
 	CUSTOM_PRE_STARTUP_SCRIPT=$(get_attribute CUSTOM_PRE_STARTUP_SCRIPT)
 	CUSTOM_POST_STARTUP_SCRIPT=$(get_attribute CUSTOM_POST_STARTUP_SCRIPT)
@@ -387,6 +388,20 @@ function configure-nfs() {
 }
 
 function configure-metrics() {
+
+	# If needed, override the Monitoring API to use an IP address from private.googleapis.com
+	if [ "$ROUTE_METRICS_PRIVATE_GOOGLEAPIS" = "true" ]; then
+		echo "Enabling metrics.googleapis.com routing via private.googleapis.com..."
+		grep -qxF '199.36.153.11 monitoring.googleapis.com' /etc/hosts || echo '199.36.153.11 monitoring.googleapis.com' >> /etc/hosts
+		grep -qxF '199.36.153.11 cloudtrace.googleapis.com' /etc/hosts || echo '199.36.153.11 cloudtrace.googleapis.com' >> /etc/hosts
+		grep -qxF '199.36.153.11 logging.googleapis.com' /etc/hosts || echo '199.36.153.11 logging.googleapis.com' >> /etc/hosts
+		echo "Finished enabling metrics.googleapis.com routing via private.googleapis.com."
+	else
+		sed -i '/199.36.153.11 monitoring.googleapis.com/d' /etc/hosts
+		sed -i '/199.36.153.11 cloudtrace.googleapis.com/d' /etc/hosts
+		sed -i '/199.36.153.11 logging.googleapis.com/d' /etc/hosts
+	fi
+
 	# Enable Metrics if Configured
 	if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
 		echo "Starting Metrics Agents..."

@@ -211,6 +211,11 @@ variable "ENABLE_STACKDRIVER_METRICS" {
   type    = bool
 }
 
+variable "ROUTE_METRICS_PRIVATE_GOOGLEAPIS" {
+  default = false
+  type    = bool
+}
+
 variable "ENABLE_KNFSD_AUTOSCALING" {
   default = false
   type    = bool
