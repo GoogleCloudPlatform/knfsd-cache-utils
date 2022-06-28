@@ -140,7 +140,7 @@ gcloud compute instances delete "$VM_NAME" --project="$PROJECT" --zone="$ZONE"
 ```bash
 git clone https://github.com/GoogleCloudPlatform/knfsd-cache-utils.git
 cd knfsd-cache-utils
-git checkout v0.6.4
+git checkout v0.7.0
 ```
 
 ### (local) Copy KNFSD Metrics Agent source code to the VM
