@@ -44,6 +44,11 @@ variable "PROJECT" {
   default = ""
 }
 
+variable "SUBNETWORK_PROJECT" {
+  type    = string
+  default = ""
+}
+
 variable "REGION" {
   type    = string
   default = ""

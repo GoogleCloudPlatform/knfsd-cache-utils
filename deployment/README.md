@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 **Note:** The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
 
 ```
-source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.0"
+source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.1"
 ```
 
 ## Prerequisites
@@ -92,7 +92,7 @@ Basic usage of this module is as follows:
 
 ```terraform
 module "nfs_proxy" {
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.0"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.1"
 
     # Google Cloud Project Configuration
     PROJECT                        = "my-gcp-project"
@@ -137,7 +137,7 @@ provider "google" {
 }
 
 module "nfs_proxy" {
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.0"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.7.1"
 
     # Network Configuration
     NETWORK                        = "my-vpc"
@@ -208,12 +208,13 @@ terraform apply
 
 ### Network Configuration
 
-| Variable                   | Description                                                                                                                                                       | Required | Default   |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
-| NETWORK                    | The network name (VPC) to use for the deployment of the Knfsd Compute Engine Instances.                                                                           | False    | `default` |
-| SUBNETWORK                 | The subnetwork name (subnet) to use for the deployment of the Knfsd Compute Engine Instances.                                                                     | False    | `default` |
-| AUTO_CREATE_FIREWALL_RULES | Should firewall rules automatically be created to allow [healthcheck connectivity](https://cloud.google.com/load-balancing/docs/health-check-concepts#ip-ranges)? | False    | `true`    |
-| LOADBALANCER_IP            | The IP address to use for the Internal Load Balancer. If not specified, a random IP address will be assigned within the subnet.                                   | False    | null      |
+| Variable                   | Description                                                                                                                                                                                    | Required | Default   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| NETWORK                    | The network name (VPC) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                        | False    | `default` |
+| SUBNETWORK                 | The subnetwork name (subnet) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                  | False    | `default` |
+| SUBNETWORK_PROJECT         | The project that the subnetwork exists in. This only needs to be set if using a Shared VPC, where the subnetwork exists in a different project. Otherwise it defaults to the provider project. | False    | null      |
+| AUTO_CREATE_FIREWALL_RULES | Should firewall rules automatically be created to allow [healthcheck connectivity](https://cloud.google.com/load-balancing/docs/health-check-concepts#ip-ranges)?                              | False    | `true`    |
+| LOADBALANCER_IP            | The IP address to use for the Internal Load Balancer. If not specified, a random IP address will be assigned within the subnet.                                                                | False    | null      |
 
 ### Health Check Configuration
 

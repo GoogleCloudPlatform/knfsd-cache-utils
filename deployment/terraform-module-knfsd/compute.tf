@@ -52,7 +52,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   network_interface {
     network            = var.NETWORK
     subnetwork         = var.SUBNETWORK
-    subnetwork_project = var.PROJECT
+    subnetwork_project = var.SUBNETWORK_PROJECT != "" ? var.SUBNETWORK_PROJECT : null
   }
 
   metadata = {
