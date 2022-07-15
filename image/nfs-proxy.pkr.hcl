@@ -30,7 +30,7 @@ source "googlecompute" "nfs-proxy" {
   image_storage_locations = var.image_storage_location == "" ? null : [var.image_storage_location]
 
   # Source image
-  source_image_family     = "ubuntu-2004-lts"
+  source_image            = "ubuntu-2004-focal-v20220615"
   source_image_project_id = ["ubuntu-os-cloud"]
 
   # Communicator

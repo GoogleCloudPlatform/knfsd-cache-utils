@@ -122,7 +122,7 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=e2-standard-8 \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image-family=ubuntu-2004-lts \
+    --image=ubuntu-2004-focal-v20220615 \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \

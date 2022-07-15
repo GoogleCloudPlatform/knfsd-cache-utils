@@ -196,7 +196,11 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
-install_kernel
+
+# 5.13 HWE packages have been removed from the 20.04 distro.
+# Currently using a GCP image that comes with 5.13.
+# install_kernel
+
 copy_config
 
 echo

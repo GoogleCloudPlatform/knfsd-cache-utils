@@ -1,3 +1,15 @@
+# Next
+
+* Pin to last GCP image that includes 5.13 kernel
+
+## Pin to last GCP image that includes 5.13 kernel
+
+The 5.13 HWE kernel packages have been removed from the Ubuntu 20.04
+sources list.
+
+Use a GCP image that has the 5.13 kernel pre-installed until the 5.15
+kernel can be tested.
+
 # v0.7.1
 
 * Add new `SUBNETWORK_PROJECT` configuration option for explicitly defining which project the Knfsd subnet belongs to
