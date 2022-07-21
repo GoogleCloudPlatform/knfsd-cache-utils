@@ -1,5 +1,7 @@
 # Next
 
+# v0.8.0
+
 * Pin to last GCP image that includes 5.13 kernel
 * Custom KNFSD culling agent
 
