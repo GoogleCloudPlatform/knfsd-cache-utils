@@ -1,3 +1,13 @@
+resource "google_monitoring_metric_descriptor" "exports_total_operations" {
+  project      = var.project
+  description  = "Total NFS operations received from NFS clients"
+  display_name = "NFS Export Total Operations"
+  type         = "custom.googleapis.com/knfsd/exports/total_operations"
+  metric_kind  = "CUMULATIVE"
+  value_type   = "INT64"
+  unit         = "{operations}"
+}
+
 resource "google_monitoring_metric_descriptor" "exports_total_read_bytes" {
   project      = var.project
   description  = "Total bytes read by the NFS clients"

@@ -8,6 +8,7 @@ These are the metrics available for this scraper.
 
 | Name | Description | Unit | Type | Attributes |
 | ---- | ----------- | ---- | ---- | ---------- |
+| nfs.exports.total_operations | Total number of NFS operations received from clients | {operations} | Sum(Int) | <ul> </ul> |
 | nfs.exports.total_read_bytes | Total bytes read by the NFS clients | By | Sum(Int) | <ul> </ul> |
 | nfs.exports.total_write_bytes | Total bytes wrote by the NFS clients | By | Sum(Int) | <ul> </ul> |
 

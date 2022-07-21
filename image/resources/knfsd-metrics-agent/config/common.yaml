@@ -35,6 +35,8 @@ receivers:
   exports:
     collection_interval: 1m
     # metrics:
+    #   nfs.exports.total_operations:
+    #     enabled: false
     #   nfs.exports.total_read_bytes:
     #     enabled: false
     #   nfs.exports.total_write_bytes:
@@ -123,6 +125,10 @@ processors:
     - action: update
       include: nfs.mount.operation.errors
       new_name: mount/operation/errors
+
+    - action: update
+      include: nfs.exports.total_operations
+      new_name: exports/total_operations
 
     - action: update
       include: nfs.exports.total_read_bytes

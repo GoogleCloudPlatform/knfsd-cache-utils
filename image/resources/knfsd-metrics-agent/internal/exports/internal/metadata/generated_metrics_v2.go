@@ -15,12 +15,16 @@ type MetricSettings struct {
 
 // MetricsSettings provides settings for exports metrics.
 type MetricsSettings struct {
+	NfsExportsTotalOperations MetricSettings `mapstructure:"nfs.exports.total_operations"`
 	NfsExportsTotalReadBytes  MetricSettings `mapstructure:"nfs.exports.total_read_bytes"`
 	NfsExportsTotalWriteBytes MetricSettings `mapstructure:"nfs.exports.total_write_bytes"`
 }
 
 func DefaultMetricsSettings() MetricsSettings {
 	return MetricsSettings{
+		NfsExportsTotalOperations: MetricSettings{
+			Enabled: true,
+		},
 		NfsExportsTotalReadBytes: MetricSettings{
 			Enabled: true,
 		},
@@ -28,6 +32,57 @@ func DefaultMetricsSettings() MetricsSettings {
 			Enabled: true,
 		},
 	}
+}
+
+type metricNfsExportsTotalOperations struct {
+	data     pdata.Metric   // data buffer for generated metric.
+	settings MetricSettings // metric settings provided by user.
+	capacity int            // max observed number of data points added to the metric.
+}
+
+// init fills nfs.exports.total_operations metric with initial data.
+func (m *metricNfsExportsTotalOperations) init() {
+	m.data.SetName("nfs.exports.total_operations")
+	m.data.SetDescription("Total number of NFS operations received from clients")
+	m.data.SetUnit("{operations}")
+	m.data.SetDataType(pdata.MetricDataTypeSum)
+	m.data.Sum().SetIsMonotonic(true)
+	m.data.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
+}
+
+func (m *metricNfsExportsTotalOperations) recordDataPoint(start pdata.Timestamp, ts pdata.Timestamp, val int64) {
+	if !m.settings.Enabled {
+		return
+	}
+	dp := m.data.Sum().DataPoints().AppendEmpty()
+	dp.SetStartTimestamp(start)
+	dp.SetTimestamp(ts)
+	dp.SetIntVal(val)
+}
+
+// updateCapacity saves max length of data point slices that will be used for the slice capacity.
+func (m *metricNfsExportsTotalOperations) updateCapacity() {
+	if m.data.Sum().DataPoints().Len() > m.capacity {
+		m.capacity = m.data.Sum().DataPoints().Len()
+	}
+}
+
+// emit appends recorded metric data to a metrics slice and prepares it for recording another set of data points.
+func (m *metricNfsExportsTotalOperations) emit(metrics pdata.MetricSlice) {
+	if m.settings.Enabled && m.data.Sum().DataPoints().Len() > 0 {
+		m.updateCapacity()
+		m.data.MoveTo(metrics.AppendEmpty())
+		m.init()
+	}
+}
+
+func newMetricNfsExportsTotalOperations(settings MetricSettings) metricNfsExportsTotalOperations {
+	m := metricNfsExportsTotalOperations{settings: settings}
+	if settings.Enabled {
+		m.data = pdata.NewMetric()
+		m.init()
+	}
+	return m
 }
 
 type metricNfsExportsTotalReadBytes struct {
@@ -136,6 +191,7 @@ func newMetricNfsExportsTotalWriteBytes(settings MetricSettings) metricNfsExport
 // required to produce metric representation defined in metadata and user settings.
 type MetricsBuilder struct {
 	startTime                       pdata.Timestamp
+	metricNfsExportsTotalOperations metricNfsExportsTotalOperations
 	metricNfsExportsTotalReadBytes  metricNfsExportsTotalReadBytes
 	metricNfsExportsTotalWriteBytes metricNfsExportsTotalWriteBytes
 }
@@ -153,6 +209,7 @@ func WithStartTime(startTime pdata.Timestamp) metricBuilderOption {
 func NewMetricsBuilder(settings MetricsSettings, options ...metricBuilderOption) *MetricsBuilder {
 	mb := &MetricsBuilder{
 		startTime:                       pdata.NewTimestampFromTime(time.Now()),
+		metricNfsExportsTotalOperations: newMetricNfsExportsTotalOperations(settings.NfsExportsTotalOperations),
 		metricNfsExportsTotalReadBytes:  newMetricNfsExportsTotalReadBytes(settings.NfsExportsTotalReadBytes),
 		metricNfsExportsTotalWriteBytes: newMetricNfsExportsTotalWriteBytes(settings.NfsExportsTotalWriteBytes),
 	}
@@ -166,8 +223,14 @@ func NewMetricsBuilder(settings MetricsSettings, options ...metricBuilderOption)
 // another set of data points. This function will be doing all transformations required to produce metric representation
 // defined in metadata and user settings, e.g. delta/cumulative translation.
 func (mb *MetricsBuilder) Emit(metrics pdata.MetricSlice) {
+	mb.metricNfsExportsTotalOperations.emit(metrics)
 	mb.metricNfsExportsTotalReadBytes.emit(metrics)
 	mb.metricNfsExportsTotalWriteBytes.emit(metrics)
+}
+
+// RecordNfsExportsTotalOperationsDataPoint adds a data point to nfs.exports.total_operations metric.
+func (mb *MetricsBuilder) RecordNfsExportsTotalOperationsDataPoint(ts pdata.Timestamp, val int64) {
+	mb.metricNfsExportsTotalOperations.recordDataPoint(mb.startTime, ts, val)
 }
 
 // RecordNfsExportsTotalReadBytesDataPoint adds a data point to nfs.exports.total_read_bytes metric.

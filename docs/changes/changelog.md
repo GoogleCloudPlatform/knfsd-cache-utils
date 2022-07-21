@@ -4,6 +4,7 @@
 
 * Pin to last GCP image that includes 5.13 kernel
 * Custom KNFSD culling agent
+* Total client NFS operations metric
 
 ## Pin to last GCP image that includes 5.13 kernel
 
@@ -24,6 +25,13 @@ When custom culling is enabled culling is disabled in cachefilesd and the agent 
 While this is undefined behaviour in FS-Cache, in testing FS-Cache would drop its state and resume caching of files after dropping the dentries and inode cache (triggered writing 2 to /proc/sys/vm/drop_caches).
 
 The culling threshold *MUST* be greater than `bstop` and `fstop` in `/etc/cachefilesd.conf`, otherwise the cache can fill before the culling threshold is reached.
+
+## Total client NFS operations metric
+
+Added a metric for total NFS operations received by the proxy from clients.
+
+This can be used to see what kind of load the proxy is under, and compared with
+the total proxy to source operations.
 
 # v0.7.1
 
