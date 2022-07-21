@@ -7,9 +7,6 @@ attributes:
   server:
     description: NFS mount's server
 
-  path:
-    description: NFS mount's path
-
   operation:
     description: NFS operation name
 

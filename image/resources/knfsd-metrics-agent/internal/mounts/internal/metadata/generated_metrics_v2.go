@@ -920,14 +920,11 @@ var Attributes = struct {
 	Instance string
 	// Operation (NFS operation name)
 	Operation string
-	// Path (NFS mount's path)
-	Path string
 	// Server (NFS mount's server)
 	Server string
 }{
 	"instance",
 	"operation",
-	"path",
 	"server",
 }
 

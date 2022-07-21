@@ -28,5 +28,4 @@ These are the metrics available for this scraper.
 | ---- | ----------- |
 | instance | NFS Proxy instance |
 | operation | NFS operation name |
-| path | NFS mount's path |
 | server | NFS mount's server |
