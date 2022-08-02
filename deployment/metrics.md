@@ -13,6 +13,7 @@ The following additional prerequisites must be met if you wish to enable metrics
 | [Metric Descriptors and Dashboard Import](metrics)                                                                       | If this is the first time you are deploying Knfsd in a Google Cloud Project you need to setup the Metric Descriptors and import the Knfsd Monitoring Dashboard. This is achieved via a standalone Terraform configuration and the process is described in the [metrics](metrics) directory.                                                                                                                                                                                                                                                                                                                                          |
 | [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access)                               | You must have [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access) enabled on the subnet that you will be using for the Knfsd nodes. This is required to allow connectivity to the Monitoring API for VM's without a Public IP. You should also ensure you have the default `0.0.0.0/0` route configured and pointing to the default internet gateway with appropriate firewall rules to allow outbound connectivity to the Google Cloud API's. You can optionally force routing over the `private.googleapis.com` range by setting the `ROUTE_METRICS_PRIVATE_GOOGLEAPIS` variable to `true`. |
 | [Service Account Permissions](https://cloud.google.com/compute/docs/access/service-accounts#service_account_permissions) | A Service Account needs to be configured for the Knfsd Nodes with the `logging-write` and `monitoring-write` scopes. This is performed automatically by the Terraform Module when you have metrics enabled. By default, the [Compute Engine Default Service Account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) will be used.                                                                                                                                                                                                                                                            |
+
 ## Exported Metrics
 
 The following custom metrics are exported currently:
@@ -30,6 +31,17 @@ The following custom metrics are exported currently:
 | **custom.googleapis.com/knfsd/nfsiostat_mount_write_rtt**      | The average write operation RTT per NFS client mount over the past 60 seconds (Knfsd --> Source Filer)..        |
 | **custom.googleapis.com/knfsd/nfsiostat_ops_per_second**       | The number of NFS operations per second per NFS client mount over the past 60 seconds (Knfsd --> Source Filer). |
 | **custom.googleapis.com/knfsd/nfsiostat_rpc_backlog**          | The RPC Backlog per NFS client mount over the past 60 seconds (Knfsd --> Source Filer).                         |
+| **custom.googleapis.com/knfsd/mount/read_bytes**               | The total number of bytes read from the source NFS server.                                                      |
+| **custom.googleapis.com/knfsd/mount/write_bytes**              | The total number of bytes wrote to the source NFS server.                                                       |
+| **custom.googleapis.com/knfsd/mount/operation/requests**       | The total number of NFS requests sent to the source NFS server.                                                 |
+| **custom.googleapis.com/knfsd/mount/operation/sent_bytes**     | The total number of bytes sent to the source NFS server. This includes the RPC protocol headers.                |
+| **custom.googleapis.com/knfsd/mount/operation/received_bytes** | The total number of bytes received from the source NFS server. This includes the RPC protocol headers.          |
+| **custom.googleapis.com/knfsd/mount/operation/major_timeouts** | The total number of RPC major timeouts (`timeo`, default 60 seconds) between the proxy and source NFS servers.  |
+| **custom.googleapis.com/knfsd/mount/operation/errors**         | The total number of RPC errors between the proxy and the source NFS servers.                                    |
+| **custom.googleapis.com/knfsd/exports/total_operations**       | The total number of NFS operations received from NFS clients.                                                   |
+| **custom.googleapis.com/knfsd/exports/total_read_bytes**       | The total number of bytes read by NFS clients.                                                                  |
+| **custom.googleapis.com/knfsd/exports/total_write_bytes**      | The total number of bytes wrote by NFS clients.                                                                 |
+| **custom.googleapis.com/knfsd/fscache_oldest_file**            | The age of the oldest file in FS-Cache. This metric is not enabled by default.                                  |
 
 ## Dashboards
 
