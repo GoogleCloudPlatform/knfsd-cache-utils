@@ -196,3 +196,74 @@ service:
       exporters:
         - logging
 ```
+
+## Examples
+
+### Enabling/Disabling a metric
+
+If you're not using a particular metric, you can disable the metric to reduce the volume of data being collected.
+
+To enable or disable a metric, set `enabled: true` or `enabled: false` for the metric. Most of the metrics are enabled by default.
+
+If you do not want to any of the metrics collected by a receiver, you should disable the receiver completely instead of disabling the metrics within the receiver.
+
+Because the metrics are object keys, these will be merged with the existing values, so you do not need to specify the entire config for the receiver, only the config for the metrics you're changing.
+
+```yaml
+receivers:
+  mounts:
+    metrics:
+      nfs.mount.rpc_backlog:
+        enabled: false
+```
+
+See the [common.yaml](./config/common.yaml) config for a list of the receivers and metrics.
+
+### Enabling/Disabling a receiver
+
+To disable a receiver, remove the receiver from the pipeline. You do not need to disable the metrics in a receiver. Any unused receivers will be automatically disabled.
+
+Because the pipeline uses an array of receivers to add or remove a receiver from the pipeline you have to specify the complete list of receivers.
+
+To check the existing list, see the [proxy.yaml](./config/proxy.yaml) or [client.yaml](./config/client.yaml) files.
+
+For example, to remove the `slabinfo` receiver from the proxy:
+
+```yaml
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - connections
+        - mounts
+        - exports
+        # - slabinfo removed
+```
+
+Likewise, to enable the `oldestfile` collector (which is disabled by default):
+
+```yaml
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - connections
+        - mounts
+        - exports
+        - slabinfo
+        - oldestfile # added
+```
+
+## Change collection interval
+
+Increasing the collection interval will increase the resolution of metrics but will also increase the volume of the data. On platforms such as GCP this increased data volume can incur charges.
+
+Similarly, the collection interval can be reduced, this will reduce the resolution of the metrics but also reduce the volume of data.
+
+```yaml
+receivers:
+  mounts:
+    collection_interval: 5m
+```
+
+It is possible to change the collection interval for specific metrics, such as if you want to collect the read/write bytes every minute, but the rest of the mount metrics every ten minutes. See [multiple-intervals.yaml](./example/multiple-intervals.yaml).

@@ -103,6 +103,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
 
     # metrics
     ENABLE_STACKDRIVER_METRICS       = var.ENABLE_STACKDRIVER_METRICS
+    METRICS_AGENT_CONFIG             = var.METRICS_AGENT_CONFIG
     ROUTE_METRICS_PRIVATE_GOOGLEAPIS = var.ROUTE_METRICS_PRIVATE_GOOGLEAPIS
 
     # scripts / software

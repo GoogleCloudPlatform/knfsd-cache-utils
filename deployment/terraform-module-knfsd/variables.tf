@@ -216,6 +216,11 @@ variable "ENABLE_STACKDRIVER_METRICS" {
   type    = bool
 }
 
+variable "METRICS_AGENT_CONFIG" {
+  default = ""
+  type    = string
+}
+
 variable "ROUTE_METRICS_PRIVATE_GOOGLEAPIS" {
   default = false
   type    = bool

@@ -48,3 +48,35 @@ The following custom metrics are exported currently:
 The Knfsd Monitoring Dashboard is created automatically by the metrics initialisation Terraform that is detailed in the [Metrics Prerequisites](#metricsprerequisites).
 
 Once ran, you can then access the dashboard from [https://console.cloud.google.com/monitoring/dashboards/](https://console.cloud.google.com/monitoring/dashboards/)
+
+## Custom Configuration
+
+The metrics can be configured using the `METRICS_AGENT_CONFIG` variable in the Terraform module, or by customizing the metrics config when building the image.
+
+Configuring the metrics using Terraform is the simplest option. You can provide the metrics configuration using a file or directly inline using heredoc.
+
+Providing the metrics config from a file:
+
+```terraform
+module "nfs_proxy" {
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.8.0"
+
+  METRICS_AGENT_CONFIG = file("metrics-config.yaml")
+}
+```
+
+Providing the metrics config inline using heredoc syntax:
+
+```terraform
+module "nfs_proxy" {
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.8.0"
+
+  METRICS_AGENT_CONFIG = <<-EOT
+    receivers:
+      mounts:
+        collection_interval: 5m
+  EOT
+}
+```
+
+See the [knfsd-metrics-agent README](../image/resources/knfsd-metrics-agent/README.md) for details how to configure the metrics agent.

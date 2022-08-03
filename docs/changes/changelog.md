@@ -5,6 +5,7 @@
 * Pin to last GCP image that includes 5.13 kernel
 * Custom KNFSD culling agent
 * Total client NFS operations metric
+* Custom metrics configuration via Terraform
 
 ## Pin to last GCP image that includes 5.13 kernel
 
@@ -32,6 +33,10 @@ Added a metric for total NFS operations received by the proxy from clients.
 
 This can be used to see what kind of load the proxy is under, and compared with
 the total proxy to source operations.
+
+## Custom metrics configuration via Terraform
+
+Supply a custom YAML configuration for the metrics agent when deploying the module using Terraform. Previously this was only available by updating the configuration when building the image.
 
 # v0.7.1
 

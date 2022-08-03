@@ -220,6 +220,7 @@ function init() {
 	CULLING_QUIET_PERIOD="$(get_attribute CULLING_QUIET_PERIOD)"
 
 	ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
+	METRICS_AGENT_CONFIG=$(get_attribute METRICS_AGENT_CONFIG)
 	ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
 	ROUTE_METRICS_PRIVATE_GOOGLEAPIS=$(get_attribute ROUTE_METRICS_PRIVATE_GOOGLEAPIS)
 
@@ -450,6 +451,7 @@ function configure-metrics() {
 	# Enable Metrics if Configured
 	if [ "$ENABLE_STACKDRIVER_METRICS" = "true" ]; then
 		echo "Starting Metrics Agents..."
+		printf '%s' "$METRICS_AGENT_CONFIG" >/etc/knfsd-metrics-agent/custom.yaml
 		systemctl start google-cloud-ops-agent knfsd-metrics-agent
 		echo "Finished starting Metrics Agents."
 	else

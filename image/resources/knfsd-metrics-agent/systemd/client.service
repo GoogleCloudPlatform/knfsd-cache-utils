@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=10
-ExecStart=/usr/local/bin/knfsd-metrics-agent --config /etc/knfsd-metrics-agent/common.yaml --config /etc/knfsd-metrics-agent/client.yaml
+ExecStart=/usr/local/bin/knfsd-metrics-agent --config /etc/knfsd-metrics-agent/common.yaml --config /etc/knfsd-metrics-agent/client.yaml --config /etc/knfsd-metrics-agent/custom.yaml
 
 [Install]
 WantedBy=multi-user.target

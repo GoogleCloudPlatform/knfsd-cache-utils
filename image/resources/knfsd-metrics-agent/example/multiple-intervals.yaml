@@ -1,0 +1,55 @@
+# In this example, the mount read/write metrics will be configured to have an
+# interval of 1m, while the other mount metrics will be configured with an
+# interval of 5m.
+
+receivers:
+
+  # For the default mounts receiver, disable the read/write metrics and set the
+  # interval to 10m.
+  mounts:
+    collection_interval: 10m
+    metrics:
+      nfs.mount.write_bytes:
+        enabled: false
+      nfs.mount.read_bytes:
+        enabled: false
+
+  # Declare a second instance of the mounts receiver, disable all the metrics
+  # except read/write.
+  # <receiver type>/<name>, receiver type = mounts, name = rw
+  mounts/rw:
+    collection_interval: 1m
+    metrics:
+      nfs.mount.operation.requests:
+        enabled: false
+      nfs.mount.operation.errors:
+        enabled: false
+      nfs.mount.write_exe:
+        enabled: false
+      nfs.mount.write_rtt:
+        enabled: false
+      nfs.mount.ops_per_second:
+        enabled: false
+      nfs.mount.rpc_backlog:
+        enabled: false
+      nfs.mount.operation.sent_bytes:
+        enabled: false
+      nfs.mount.operation.received_bytes:
+        enabled: false
+      nfs.mount.operation.major_timeouts:
+        enabled: false
+      nfs.mount.read_exe:
+        enabled: false
+      nfs.mount.read_rtt:
+        enabled: false
+
+# Add both mount receivers to the pipeline
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - connections
+        - mounts
+        - mounts/rw
+        - exports
+        - slabinfo

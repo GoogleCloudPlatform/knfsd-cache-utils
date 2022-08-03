@@ -1,0 +1,9 @@
+# Intentionally empty, leave this file empty even if building custom images.
+#
+# For custom proxy images, modify one of the other files or add a new file.
+# If adding a new file, remember to add a new --config option to appropriate
+# systemd/*.service file.
+#
+# This file is intended to be replaced by custom start-up scripts so that the
+# metrics agent can be re-configured using metadata attributes without needing
+# to build a new image.
