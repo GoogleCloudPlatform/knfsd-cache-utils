@@ -2,6 +2,8 @@
 
 **Note:** This is not an officially supported Google product. NFS re-exporting is only suited for very limited use cases. You should be extremely familiar with NFS, FS-Cache and the other components used in this repository before deploying and/or using these utilities.
 
+For questions & comments, reach out to `knfsd-cache-utils@google.com`.
+
 ## Overview
 
 This repository contains a set of utilities for building, deploying and operating a high performance NFS cache in Google Cloud. It is designed to be used for certain HPC and burst compute use-cases where there is a requirement for a high performance NFS cache between a NFS server and its downstream NFS clients.
