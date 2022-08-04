@@ -1,11 +1,30 @@
 # Next
 
+* Custom metrics configuration via Terraform
+* Total client NFS operations metric
+* Support Persistent Disk instead of Local SSD for the Cachefilesd volume
+
+## Custom metrics configuration via Terraform
+
+Supply a custom YAML configuration for the metrics agent when deploying the module using Terraform. Previously this was only available by updating the configuration when building the image.
+
+## Total client NFS operations metric
+
+Added a metric for total NFS operations received by the proxy from clients.
+
+This can be used to see what kind of load the proxy is under, and compared with
+the total proxy to source operations.
+
+## Support Persistent Disk instead of Local SSD for the Cachefilesd volume
+
+Added the ability to use Persistent Disk instead of Local SSD for the Cachefilesd `/var/cache/fscache` volume.
+
+This may be slightly less performant than Local SSD, but allows for cache volumes up to 64TB.
+
 # v0.8.0
 
 * Pin to last GCP image that includes 5.13 kernel
 * Custom KNFSD culling agent
-* Total client NFS operations metric
-* Custom metrics configuration via Terraform
 
 ## Pin to last GCP image that includes 5.13 kernel
 
@@ -26,17 +45,6 @@ When custom culling is enabled culling is disabled in cachefilesd and the agent 
 While this is undefined behaviour in FS-Cache, in testing FS-Cache would drop its state and resume caching of files after dropping the dentries and inode cache (triggered writing 2 to /proc/sys/vm/drop_caches).
 
 The culling threshold *MUST* be greater than `bstop` and `fstop` in `/etc/cachefilesd.conf`, otherwise the cache can fill before the culling threshold is reached.
-
-## Total client NFS operations metric
-
-Added a metric for total NFS operations received by the proxy from clients.
-
-This can be used to see what kind of load the proxy is under, and compared with
-the total proxy to source operations.
-
-## Custom metrics configuration via Terraform
-
-Supply a custom YAML configuration for the metrics agent when deploying the module using Terraform. Previously this was only available by updating the configuration when building the image.
 
 # v0.7.1
 

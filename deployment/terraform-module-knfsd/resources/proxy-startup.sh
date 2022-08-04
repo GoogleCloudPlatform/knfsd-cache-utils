@@ -260,59 +260,96 @@ function init() {
 }
 
 function create-fs-cache() {
-	# List attatched NVME local SSDs
-	echo "Detecting local NVMe drives..."
-	DRIVESLIST=$(/bin/ls /dev/nvme0n*)
-	NUMDRIVES=$(/bin/ls /dev/nvme0n* | wc -w)
-	echo "Detected $NUMDRIVES drives. Names: $DRIVESLIST."
 
-	# If there are local NVMe drives attached, start the process of formatting and mounting
-	if [ $NUMDRIVES -gt 0 ]; then
-		echo "Found attached SSD device(s), initializing FS-Cache..."
-		if [ ! -e /dev/md127 ]; then
-			# Make RAID array of attatched Local SSDs
-			echo "Creating RAID array from Local SSDs..."
-			mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
-			echo "Finished creating RAID array from Local SSDs."
-		fi
+	# Check if we are setting up Local SSD's or Persistent Disks
+	if [[ -L "/dev/disk/by-id/google-pd-fscache" ]]; then
 
-		# Check if the RAID array has already been formatted
-		echo "Checking if RAID array needs formatting..."
-		is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
+		echo "Detected a Persistent Disk for FS-Cache..."
+
+		echo "Checking if Persistent Disk needs formatting..."
+		is_formatted=$(fsck -N /dev/disk/by-id/google-pd-fscache | grep ext4 || true)
 		if [[ $is_formatted == "" ]]; then
-			echo "RAID array is not formatted. Formatting..."
-			mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
-			echo "Finished formatting RAID array."
+			echo "Persistent Disk is not formatted. Formatting..."
+			mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/disk/by-id/google-pd-fscache
+			echo "Finished formatting Persistent Disk."
 		else
-			echo "RAID array is already formatted."
+			echo "Persistent Disk is already formatted."
 		fi
-
-		# Mount /dev/md127 to /var/cache/fscache
-		echo "Mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)..."
-		mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
-		echo "Finished /dev/md127 to FS-Cache directory (/var/cache/fscache)"
+		
+		echo "Mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)..."
+		mount -o discard,defaults /dev/disk/by-id/google-pd-fscache /var/cache/fscache
+		echo "Finished mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)"
 
 		# Start FS-Cache
-		echo "Starting FS-Cache..."
-		if ! systemctl start cachefilesd; then
-			# Sometimes cachefilesd reports an error when starting but does
-			# start correctly. This is likely an error in the init script or
-			# with how systemd integrates with init scripts.
-			# Trying a second time normally works. If you check
-			# /proc/fs/fscache/caches the cache is actually active.
-			if ! systemctl start cachefilesd; then
-				# Second attempt failed, this is now a genuine error so report
-				# what went wrong and terminate.
-				systemctl status cachefilesd
-				exit 1
+		start-fs-cache
+
+	else
+
+		echo "No Persistent Disk detected for FS-Cache, assuming Local SSDs are present..."
+
+		# List attatched NVME local SSDs
+		echo "Detecting local NVMe drives..."
+		DRIVESLIST=$(/bin/ls /dev/nvme0n*)
+		NUMDRIVES=$(/bin/ls /dev/nvme0n* | wc -w)
+		echo "Detected $NUMDRIVES drives. Names: $DRIVESLIST."
+
+		# If there are local NVMe drives attached, start the process of formatting and mounting
+		if [ $NUMDRIVES -gt 0 ]; then
+			echo "Found attached SSD device(s), initializing FS-Cache..."
+			if [ ! -e /dev/md127 ]; then
+				# Make RAID array of attatched Local SSDs
+				echo "Creating RAID array from Local SSDs..."
+				mdadm --create /dev/md127 --level=0 --force --quiet --raid-devices=$NUMDRIVES $DRIVESLIST --force
+				echo "Finished creating RAID array from Local SSDs."
 			fi
+
+			# Check if the RAID array has already been formatted
+			echo "Checking if RAID array needs formatting..."
+			is_formatted=$(fsck -N /dev/md127 | grep ext4 || true)
+			if [[ $is_formatted == "" ]]; then
+				echo "RAID array is not formatted. Formatting..."
+				mkfs.ext4 -m 0 -F -E lazy_itable_init=0,lazy_journal_init=0,discard /dev/md127
+				echo "Finished formatting RAID array."
+			else
+				echo "RAID array is already formatted."
+			fi
+
+			# Mount /dev/md127 to /var/cache/fscache
+			echo "Mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)..."
+			mount -o discard,defaults,nobarrier /dev/md127 /var/cache/fscache
+			echo "Finished mounting /dev/md127 to FS-Cache directory (/var/cache/fscache)"
+
+			# Start FS-Cache
+			start-fs-cache
+
+		else
+			echo "No SSD devices(s) found. FS-Cache will remain disabled."
 		fi
 
-		MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
-		echo "FS-Cache started."
-	else
-		echo "No SSD devices(s) found. FS-Cache will remain disabled."
 	fi
+
+}
+
+function start-fs-cache() {
+
+	echo "Starting FS-Cache..."
+	if ! systemctl start cachefilesd; then
+		# Sometimes cachefilesd reports an error when starting but does
+		# start correctly. This is likely an error in the init script or
+		# with how systemd integrates with init scripts.
+		# Trying a second time normally works. If you check
+		# /proc/fs/fscache/caches the cache is actually active.
+		if ! systemctl start cachefilesd; then
+			# Second attempt failed, this is now a genuine error so report
+			# what went wrong and terminate.
+			systemctl status cachefilesd
+			exit 1
+		fi
+	fi
+
+	MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
+	echo "FS-Cache started."
+	
 }
 
 function export-map() {

@@ -256,11 +256,6 @@ variable "CUSTOM_POST_STARTUP_SCRIPT" {
   type    = string
 }
 
-variable "LOCAL_SSDS" {
-  default = 4
-  type    = number
-}
-
 variable "MACHINE_TYPE" {
   default = "n1-highmem-16"
   type    = string
@@ -386,5 +381,35 @@ variable "CULLING_QUIET_PERIOD" {
     # This will also match the empty string, but in this case the empty string is allowed.
     condition     = can(regex("^(\\d+h)?(\\d+m)?(\\d+s)?$", var.CULLING_QUIET_PERIOD))
     error_message = "CULLING_QUIET_PERIOD must be a positive duration, e.g. '1h'. Valid time units are 'h' (hours), 'm' (minutes), 's' (seconds)."
+  }
+}
+
+variable "CACHEFILESD_DISK_TYPE" {
+  type    = string
+  default = "local-ssd"
+
+  validation {
+    condition     = contains(["local-ssd", "pd-ssd", "pd-balanced", "pd-standard"], var.CACHEFILESD_DISK_TYPE)
+    error_message = "Valid values for CACHEFILESD_DISK_TYPE are 'local-ssd', 'pd-ssd', 'pd-balanced, 'pd-standard'."
+  }
+}
+
+variable "LOCAL_SSDS" {
+  default = 4
+  type    = number
+
+  validation {
+    condition     = contains([0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24], var.LOCAL_SSDS)
+    error_message = "Valid values for LOCAL_SSDS are 0-8, 16 or 24."
+  }
+}
+
+variable "CACHEFILESD_PERSISTENT_DISK_SIZE_GB" {
+  type    = number
+  default = 1500
+
+  validation {
+    condition     = var.CACHEFILESD_PERSISTENT_DISK_SIZE_GB >= 10 && var.CACHEFILESD_PERSISTENT_DISK_SIZE_GB <= 64000
+    error_message = "CACHEFILESD_PERSISTENT_DISK_SIZE_GB must be between 10 and 6400."
   }
 }

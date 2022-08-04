@@ -33,11 +33,25 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     source_image = var.PROXY_IMAGENAME
     auto_delete  = true
     boot         = true
-    disk_size_gb = "100"
+    disk_size_gb = 100
   }
 
+  # Configuration for Persistent Disk for FS-Cache directory
   dynamic "disk" {
-    for_each = range(1, var.LOCAL_SSDS + 1)
+
+    for_each = var.CACHEFILESD_DISK_TYPE != "local-ssd" ? [1] : []
+    content {
+      disk_type    = var.CACHEFILESD_DISK_TYPE
+      type         = "PERSISTENT"
+      mode         = "READ_WRITE"
+      device_name  = "pd-fscache"
+      disk_size_gb = var.CACHEFILESD_PERSISTENT_DISK_SIZE_GB
+    }
+  }
+
+  # Configuration for Local SSDs for FS-Cache directory
+  dynamic "disk" {
+    for_each = var.CACHEFILESD_DISK_TYPE == "local-ssd" ? range(1, var.LOCAL_SSDS + 1) : []
     content {
       interface    = "NVME"
       disk_type    = "local-ssd"
@@ -86,8 +100,9 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     MOUNT_OPTIONS  = var.MOUNT_OPTIONS
     EXPORT_OPTIONS = var.EXPORT_OPTIONS
 
-    CULLING              = var.CULLING
-    CULLING_LAST_ACCESS  = coalesce(var.CULLING_LAST_ACCESS, "${var.LOCAL_SSDS}h")
+    CULLING = var.CULLING
+
+    CULLING_LAST_ACCESS  = coalesce(var.CULLING_LAST_ACCESS, local.CULLING_LAST_ACCESS_DEFAULT)
     CULLING_THRESHOLD    = var.CULLING_THRESHOLD
     CULLING_INTERVAL     = var.CULLING_INTERVAL
     CULLING_QUIET_PERIOD = var.CULLING_QUIET_PERIOD

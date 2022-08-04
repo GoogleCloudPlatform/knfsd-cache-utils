@@ -21,6 +21,7 @@ locals {
     var.ENABLE_STACKDRIVER_METRICS ? ["logging-write", "monitoring-write"] :
     []
   )
+  CULLING_LAST_ACCESS_DEFAULT = var.CACHEFILESD_DISK_TYPE == "local-ssd" ? "${var.LOCAL_SSDS}h" : "6h"
 }
 
 # Static IP used for the Load Balancer. This can be manually set via the LOADBALANCER_IP variable, otherwise it defaults to null which allocates a random IP address
