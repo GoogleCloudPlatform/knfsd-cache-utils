@@ -23,7 +23,7 @@ import (
 
 var (
 	debug = log.New(io.Discard, "DEBUG: ", 0)
-	info  = log.New(log.Wrxiter(), "INFO: ", 0)
+	info  = log.New(log.Writer(), "INFO: ", 0)
 	error = log.New(log.Writer(), "ERROR: ", 0)
 	fatal = log.New(log.Writer(), "ERROR: ", 0)
 )
