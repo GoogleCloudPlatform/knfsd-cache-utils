@@ -130,9 +130,12 @@ install_stackdriver_agent() {
     echo -e "${SHELL_YELLOW}"
     echo "Installing Cloud Ops Agent dependencies..."
     echo -e "------${SHELL_DEFAULT}"
+    cd ops-agent
     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
     bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.11.0
     systemctl disable google-cloud-ops-agent
+    cp google-cloud-ops-agent.conf /etc/logrotate.d/
+    cd ..
     echo -e -n "${SHELL_YELLOW}------ "
     echo "DONE"
 
