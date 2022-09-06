@@ -1,5 +1,13 @@
 # Next
 
+* MIG scaler workflow and command line tool
+
+## MIG scaler workflow and command line tool
+
+The MIG scaler workflow will scale up a MIG in increments over a period of time to avoid starting too many instances at the same time.
+
+The command line tool is used to submit jobs to the workflow and manage the jobs.
+
 # v0.9.0
 
 * Custom metrics configuration via Terraform

@@ -1,0 +1,38 @@
+NAME
+    mig-scaler help max-duration - supplementary help for the max duration
+        configuration option.
+
+DESCRIPTION
+    The --workflow-max-duration setting is used when searching the workflow
+    execution history for active and recent jobs.
+
+    This can be an issue when reducing the --workflow-max-duration, as this
+    could cause the scale and cancel commands to fail to find active jobs.
+
+    For example if a job was started 6 hours ago, and --workflow-max-duration
+    is set to "4h", the active job will not be cancelled when submitting a new
+    job, and will not show in the list command.
+
+    To avoid this issue, ensure all scaling jobs have finished before reducing
+    the --workflow-max-duration setting.
+
+    When a job is submitted, the job also has its own --duration setting. This
+    normally defaults to --workflow-max-duration, and cannot be greater than
+    --workflow-max-duration. If the job takes longer than --duration then the
+    job will cancel itself and mark the job as failed.
+
+USING THE GCP CONSOLE
+    If you are having issues and think that there might be an active job still
+    running that is not showing up you can use the GCP console.
+
+    * In the GCP console go to Workflows.
+
+    * Select the workflow used to run the scaling jobs.
+      This is normally mig-scaler.
+
+    * Select the EXECUTIONS tab.
+
+    * In the filter above the table enter: "state:Running"
+
+    This will show a list of all running jobs, to cancel a job click on the
+    Execution ID of the job, then click the CANCEL button in the top bar.

@@ -1,0 +1,139 @@
+NAME
+    mig-scaler help config - supplementary help for config files
+
+DESCRIPTION
+    The config file uses a standard linux ini format.
+
+    The config file is stored at:
+
+        $HOME/.config/mig-scaler.conf
+        /etc/mig-scaler.conf
+
+    The order in which variables are applied is:
+
+        * Config file
+        * Environment variables
+        * Command line arguments
+
+    Thus an environment variable will override a value set in a config file,
+    and command line arguments will override environment variables.
+
+EXAMPLE
+
+    This is an example config that sets all the properties available:
+
+        format   = table
+        detailed = false
+
+        [workflow]
+        project      = workflow-project
+        region       = us-central1
+        name         = mig-scaler
+        max-duration = 8h
+        max-size     = 100
+
+        [mig]
+        project   = client-project
+        region    = us-central2
+        zone      = us-central2-a
+        increment = 10
+        wait      = 1m
+        duration  = 8h
+
+DURATION FORMAT
+    --workflow-max-duration, --wait and --duration accept a duration string
+    in the format of a number, followed by a unit suffix. Valid time units are
+    "s", "m", and "h". For example "8h", or "2m30s".
+
+AVAILABLE PROPERTIES
+    format
+        Sets the --format option for use with the list command.
+
+    detailed
+        Sets the --detailed option for use with the list command. If this is
+        set to true, then you can use "--detailed=false" to override it. Note
+        that because this is a boolean flag the equals sign is mandatory, you
+        cannot use "--detailed false" as false will be interpreted as a
+        positional argument.
+
+    [workflow]
+        project
+            Sets the --workflow-project option.
+
+        region
+            Sets the --workflow-region option.
+
+        name
+            Sets the --workflow-name option.
+
+        max-duration
+            Sets the --workflow-max-duration option. This affects how all
+            commands search the history, see help max-duration.
+
+        max-size
+            Sets the maximum target size the client will allow when scaling
+            up a MIG.
+
+    [mig]
+        project
+            Sets the --project option. This sets the project for the client
+            MIGs.
+
+        region
+            Sets the --region option. This sets the region for the client
+            MIGs.
+
+        zone
+            Sets the --zone option. This sets the zone for the client MIGs.
+            You should only set region or zone, not both. If both are set then
+            region will be ignored.
+
+        increment
+            Sets the --increment option for the scale command. This sets how
+            many instances are created per batch.
+
+        wait
+            Sets the --wait option for the scale command. This sets how long
+            the job will wait between batches.
+
+        duration
+            Sets the --duration option for new jobs. If the job takes longer
+            than this duration then the job will be cancelled.
+            This cannot be greater than --workflow-max-duration.
+
+ENVIRONMENT VARIABLES
+    The following environment variables can also be used to set properties:
+
+    MIGSCALER_WORKFLOW_PROJECT
+        Sets --workflow-project.
+
+    MIGSCALER_WORKFLOW_REGION
+        Sets --workflow-region.
+
+    MIGSCALER_WORKFLOW_NAME
+        Sets --workflow-name.
+
+    MIGSCALER_MAX_DURATION
+        Sets --workflow-max-duration.
+
+    MIGSCALER_MAX_SIZE
+        Sets --workflow-max-size.
+
+    MIGSCALER_PROJECT
+        Sets --project.
+
+    MIGSCALER_REGION
+        Sets --region. Setting MIGSCALER_REGION will override any zone that has
+        been set in the config file.
+
+    MIGSCALER_ZONE
+        Sets --zone.
+
+    MIGSCALER_INCREMENT
+        Sets --increment.
+
+    MIGSCALER_WAIT
+        Sets --wait.
+
+    MIGSCALER_DURATION
+        Sets --duration.

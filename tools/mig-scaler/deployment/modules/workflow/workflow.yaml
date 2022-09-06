@@ -1,0 +1,160 @@
+#
+# Copyright 2020 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+main:
+  params: [args]
+  steps:
+  - init:
+      assign:
+      # Project containing the MIG. This does not have to be the same project
+      # as the workflow.
+      - project: ${args.project}
+
+      # Region or zone conatining the MIG. Only set one, use region for regional
+      # MIGs, or zone for zonal MIGs.
+      - region: ${map.get(args, "region")}
+      - region: ${if(region == "", null, region)}
+      - zone: ${map.get(args, "zone")}
+      - zone: ${if(zone == "", null, zone)}
+
+      # Name of the MIG
+      - name: ${args.name}
+
+      # Target size to scale the MIG up to (cannot scale the MIG down).
+      - target_size: ${args.target_size}
+
+      # Rate at which to add new instances, instances are added in batches.
+      # Adds <increment> instances every <wait> seconds.
+      - increment: ${args.increment}
+      - wait: ${args.wait}
+
+      # Terminate the workflow if goes beyond the deadline
+      - deadline: ${time.parse(args.deadline)}
+
+  - repeat:
+      switch:
+      # Check there is enough time remaining
+      - condition: ${sys.now() >= deadline}
+        next: deadline
+
+  - increment_size:
+      steps:
+      - get_current_size:
+          call: get_mig_size
+          args:
+            project: ${project}
+            region: ${region}
+            zone: ${zone}
+            name: ${name}
+          result: current_size
+
+      # Possible improvement in the future, take into account any operations
+      # in progress so that if the actual number of instances has not yet
+      # reached the target size, wait a bit longer to check everything starts.
+      - check_size:
+          switch:
+          - condition: ${current_size >= target_size}
+            next: end
+
+      # This doesn't take into account if instances are still starting. The
+      # expectation is that the wait will be set such that the previous batch
+      # will have finished starting.
+      - new_size:
+          assign:
+          - new_size: ${math.min(current_size + increment, target_size)}
+
+      - scale_mig:
+          call: set_mig_size
+          args:
+            project: ${project}
+            region: ${region}
+            zone: ${zone}
+            name: ${name}
+            size: ${new_size}
+
+  - check_deadline:
+      switch:
+      # Check there's enough time remaining for the wait
+      - condition: ${(sys.now() + wait) >= deadline}
+        next: deadline
+
+  # Not terminating early if size == target_size, if instances fail to start
+  # the MIG can reduce the target_size. So check the target_size on the next
+  # iteration and attempt to increase it.
+  - wait:
+      call: sys.sleep
+      args:
+        seconds: ${wait}
+      next: repeat
+
+  - deadline:
+      raise: "deadline reached"
+
+get_mig_size:
+  params: [project, region, zone, name]
+  steps:
+  - get_size:
+      switch:
+      - condition: ${zone == null}
+        next: get_size_region
+      next: get_size_zone
+
+  - get_size_region:
+      call: googleapis.compute.v1.regionInstanceGroupManagers.get
+      args:
+        instanceGroupManager: ${name}
+        project: ${project}
+        region: ${region}
+      result: group
+      next: return
+
+  - get_size_zone:
+      call: googleapis.compute.v1.instanceGroupManagers.get
+      args:
+        instanceGroupManager: ${name}
+        project: ${project}
+        zone: ${zone}
+      result: group
+      next: return
+
+  - return:
+      return: ${group.targetSize}
+
+set_mig_size:
+  params: [project, region, zone, name, size]
+  steps:
+  - set_size:
+      switch:
+      - condition: ${zone == null}
+        next: set_size_region
+      next: set_size_zone
+
+  - set_size_region:
+      call: googleapis.compute.v1.regionInstanceGroupManagers.resize
+      args:
+        instanceGroupManager: ${name}
+        project: ${project}
+        region: ${region}
+        size: ${size}
+      next: end
+
+  - set_size_zone:
+      call: googleapis.compute.v1.instanceGroupManagers.resize
+      args:
+        instanceGroupManager: ${name}
+        project: ${project}
+        zone: ${zone}
+        size: ${size}
+      next: end

@@ -1,0 +1,82 @@
+NAME
+    mig-scaler - submit and manage jobs to scale MIGs
+
+SYNOPSIS
+    mig-scaler COMMAND
+
+DESCRIPTION
+    mig-scaler submits jobs to the MIG scaler workflow.
+    Jobs are executed asynchronously by the workflow. mig-scaler does not
+    need to maintain a connection with GCP once the job has been submitted.
+
+    The workflow can be deployed to a separate project to the client MIG. To
+    facilitate this there are separate options for the workflow's location.
+
+    Most command line flags can also be set using a config file or environment
+    variables, see help config.
+
+COMMANDS
+    COMMAND is one of the following:
+
+    list
+        Lists active and recently completed jobs.
+
+    scale
+        Starts a new scale job for a MIG. This will cancel any existing jobs
+        for the MIG.
+
+    cancel
+        Cancels any existing jobs for a specific MIG.
+
+    help
+        Displays help for commands and topics. For example:
+
+            $ mig-scaler help list
+            $ mig-scaler list --help
+
+TOPICS
+    The help command also supports the following topics:
+
+    config
+        Configuration file to set default values.
+
+    max-duration
+        How setting --workflow-max-duration affects the system.
+
+GLOBAL FLAGS
+    --workflow-project=PROJECT
+        The project that contains the workflow.
+        Defaults to the value of --project.
+
+    --workflow-region=REGION
+        The region that contains the workflow.
+        Defaults to the value of --region.
+
+    --workflow-name=NAME
+        The name of the workflow. Defaults to mig-scaler.
+
+    --workflow-max-duration=DURATION
+        The maximum duration of a workflow. Defaults to 8h. This is used by
+        the list, scale and cancel commands when searching for jobs.
+        See help max-duration for more details.
+
+    --workflow-max-size=SIZE
+        The maximum size of a client MIG. Defaults to 100. This is to protect
+        against creating a MIG that is much larger than intended.
+        See help config on how to change the default value.
+
+    --project=PROJECT
+        The project that contains the client MIG to resize.
+
+    --region=REGION
+        The region that contains the client MIG to resize for regional MIGs.
+        Setting --region will override any zone that has been set in the
+        config file or environment variables.
+
+    --zone=ZONE
+        The zone that contains the client MIG to resize for zonal MIGs.
+        If both --region and --zone are set, then --zone will take precedence.
+
+    -h, --help
+        Shows the help for a command. For example, "mig-scaler list --help" is
+        equivalent to "mig-scaler help list".

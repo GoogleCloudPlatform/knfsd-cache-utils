@@ -1,0 +1,45 @@
+NAME
+    mig-scaler list - list active and recently completed jobs
+
+SYNOPSIS
+    mig-scaler list [FLAGS]
+
+DESCRIPTION
+    mig-scaler list displays a list of active and recently completed jobs.
+    The list will only display the most recent job for each MIG.
+
+    When searching the workflow execution history for active and recently
+    completed jobs list will stop searching when --workflow-max-duration is
+    reached. See help max-duration.
+
+EXAMPLES
+    To list all active and recently completed jobs:
+
+        $ mig-scaler list
+
+    To only list active jobs:
+
+        $ mig-scaler list --active
+
+    To show detailed output in a list format instead of table:
+
+        $ mig-scaler list --format=table --detailed
+
+FLAGS
+    --format=FORMAT
+        FORMAT can be one of "table" or "list".
+        default: "table"
+
+    --detailed
+        If provided, includes more details in the output.
+
+    --active
+        If provided, only shows jobs that are in the ACTIVE state.
+
+GLOBAL FLAGS
+    The following global flags are supported:
+    --workflow-project
+    --workflow-region
+    --workflow-name
+    --workflow-max-duration
+    --workflow-max-target

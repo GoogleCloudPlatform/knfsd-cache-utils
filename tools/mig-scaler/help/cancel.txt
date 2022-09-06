@@ -1,0 +1,40 @@
+NAME
+    mig-scaler cancel - cancel active jobs for a specific MIG
+
+SYNOPSIS
+    mig-scaler cancel [FLAGS] NAME
+
+DESCRIPTION
+    mig-scaler cancel will cancel any active jobs for a specific MIG.
+
+    When searching the workflow execution history for active jobs cancel will
+    stop searching when --workflow-max-duration is reached.
+    See help max-duration.
+
+EXAMPLES
+
+    To cancel a job for a client MIG:
+
+        $ mig-scaler cancel example-instance-group
+
+    To cancel a job for a regional MIG:
+
+        $ mig-scaler cancel example-instance-group --region=us-central1
+
+    To cancel a job for a zonal MIG:
+
+        $ mig-scaler cancel example-instance-group --zone=us-central1-a
+
+POSITIONAL ARGUMENTS
+    NAME
+        The name of the client MIG.
+
+GLOBAL FLAGS
+    The following global flags are supported:
+    --workflow-project
+    --workflow-region
+    --workflow-name
+    --workflow-max-duration
+    --project
+    --region
+    --zone

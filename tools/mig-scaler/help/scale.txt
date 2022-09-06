@@ -1,0 +1,68 @@
+NAME
+    mig-scaler scale - scale up a client MIG
+
+SYNOPSIS
+    mig-scaler scale [FLAGS] NAME TARGET
+
+DESCRIPTION
+    mig-scaler scale will start a job to scale a MIG up to the requested
+    target. Any existing active jobs for the MIG will be automatically
+    cancelled and replaced by the new job.
+
+    When searching the workflow execution history for active jobs to cancel,
+    scale will stop searching when --workflow-max-duration is reached.
+    See help max-duration.
+
+    Once launched the job runs asynchronously, mig-scaler does not wait for
+    the job to finish.
+
+EXAMPLES
+
+    To scale up a client MIG:
+
+        $ mig-scaler scale example-instance-group 50
+
+    To scale up a MIG at a different rate:
+
+        $ mig-scaler scale example-instance-group 50 \
+        --increment=20 --wait=5m
+
+    To scale up a regional MIG:
+
+        $ mig-scaler scale example-instance-group 50 --region=us-central1
+
+    To scale up a zonal MIG:
+
+        $ mig-scaler scale example-instance-group 50 --zone=us-central1-a
+
+POSITIONAL ARGUMENTS
+    NAME
+        The name of the client MIG to scale up.
+
+    TARGET
+        The target size to scale the client MIG up to.
+
+FLAGS
+    --increment=INCREMENT
+        How many instances to start per batch. The default is 10. This cannot
+        be greater than --workflow-max-size. --workflow-max-size should be set
+        to an appropriate value in the config file, see help config.
+
+    --wait=WAIT
+        The duration to wait between each batch. The default is 1m.
+
+    --duration=DURATION
+        The maximum duration of the job. If the job takes longer than
+        DURATION then the job will be cancelled.
+        Defaults to the value of --workflow-max-duration.
+
+GLOBAL FLAGS
+    The following global flags are supported:
+    --workflow-project
+    --workflow-region
+    --workflow-name
+    --workflow-max-duration
+    --workflow-max-size
+    --project
+    --region
+    --zone
