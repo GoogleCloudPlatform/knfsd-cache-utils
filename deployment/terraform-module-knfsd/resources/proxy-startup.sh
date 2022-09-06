@@ -33,10 +33,8 @@ function get_attribute() {
 function build_mount_options() {
   local -a OPTIONS=(
     rw noatime nocto async hard ac
-    vers=3
+    vers="$(get_attribute NFS_MOUNT_VERSION)"
     proto=tcp
-    mountvers=3
-    mountproto=tcp
     timeo=600
     retrans=2
     lookupcache=all
@@ -49,6 +47,11 @@ function build_mount_options() {
     rsize="$(get_attribute RSIZE)"
     wsize="$(get_attribute WSIZE)"
   )
+
+  # NFSv4 does not use mountproto, only add this option if using NFSv3
+  if [[ "$(get_attribute NFS_MOUNT_VERSION)" == "3" ]]; then
+	OPTIONS+=("mountproto=tcp")
+  fi
 
   local EXTRA_OPTIONS="$(get_attribute MOUNT_OPTIONS)"
   if [[ -n "$EXTRA_OPTIONS" ]]; then
@@ -406,9 +409,9 @@ function configure-read-ahead() {
 	# a 15 MiB read ahead was too large. Newer versions of Ubuntu changed the
 	# default to a fixed value of 128 KiB which is now too small.
 	# Currently we're assuming the max read size of 1 MiB and using rsize * 8.
-	echo "Setting read ahead for NFS mounts"
+	echo "Setting read ahead for NFS mounts..."
 
-	findmnt -rnu -t nfs -o MAJ:MIN,TARGET |
+	findmnt -rnu -t nfs,nfs4 -o MAJ:MIN,TARGET |
 	while read -r MOUNT; do
 		DEVICE="$(cut -d ' ' -f 1 <<< "$MOUNT")"
 		MOUNT_PATH="$(cut -d ' ' -f 2- <<< "$MOUNT")"

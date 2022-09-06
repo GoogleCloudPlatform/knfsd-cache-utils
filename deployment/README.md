@@ -12,13 +12,14 @@ source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform
 
 Before continuing with the deployment and configuration of Knfsd you should review the deployment [prerequisites](prerequisites.md).
 
-## Features
+## Features / Special Configurations
 
-There are a number of optional features that can be enabled and configured for Knfsd. If you are planning on using any of these features then please review the appropriate documentation section.
+There are a number of optional features and special configurations that can be enabled and configured for Knfsd. If you are planning on using any of these features/configurations then please review the appropriate documentation section.
 
 * [Metrics](metrics.md) - System and proxy metrics for monitoring and observing Knfsd
 * [Autoscaling](autoscaling.md) - Automatic scale up of Knfsd in response to the number of connected clients
 * [Agent](agent.md) - A lightweight API that provides information on Knfsd nodes
+* [Fanout Architecture](fanout.md) - Documentation on how to deploy Knfsd in the fanout approach
 
 ## Usage
 
@@ -204,16 +205,17 @@ The `none` option supports special cases where the cache rarely fills up.
 
 These mount options are for the proxy to the source server.
 
-| Variable       | Description                                                                                                                                                                                                                            | Required | Default   |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
-| NCONNECT_VALUE | The number of TCP connections to use when connecting to the source.                                                                                                                                                                    | False    | `16`      |
-| ACREGMIN       | The minimum time (in seconds) that the NFS client caches attributes of a regular file.                                                                                                                                                 | False    | `600`     |
-| ACREGMAX       | The maximum time (in seconds) that the NFS client caches attributes of a regular file.                                                                                                                                                 | False    | `600`     |
-| ACDIRMIN       | The minimum time (in seconds) that the NFS client caches attributes of a directory.                                                                                                                                                    | False    | `600`     |
-| ACDIRMAX       | The maximum time (in seconds) that the NFS client caches attributes of a directory. This can be reduced to improve the cache coherency for `readdir` operationns (e.g `ls`) at the cost of increasing metadata requests to the source. | False    | `600`     |
-| RSIZE          | The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                               | False    | `1048576` |
-| WSIZE          | The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                                | False    | `1048576` |
-| MOUNT_OPTIONS  | Any additional NFS mount options not covered by existing variables. These options will be applied to all NFS mounts.                                                                                                                   | False    | `""`      |
+| Variable          | Description                                                                                                                                                                                                                            | Required | Default   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| NCONNECT_VALUE    | The number of TCP connections to use when connecting to the source.                                                                                                                                                                    | False    | `16`      |
+| ACREGMIN          | The minimum time (in seconds) that the NFS client caches attributes of a regular file.                                                                                                                                                 | False    | `600`     |
+| ACREGMAX          | The maximum time (in seconds) that the NFS client caches attributes of a regular file.                                                                                                                                                 | False    | `600`     |
+| ACDIRMIN          | The minimum time (in seconds) that the NFS client caches attributes of a directory.                                                                                                                                                    | False    | `600`     |
+| ACDIRMAX          | The maximum time (in seconds) that the NFS client caches attributes of a directory. This can be reduced to improve the cache coherency for `readdir` operationns (e.g `ls`) at the cost of increasing metadata requests to the source. | False    | `600`     |
+| RSIZE             | The maximum number of bytes the proxy will read from the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                               | False    | `1048576` |
+| WSIZE             | The maximum number of bytes the proxy will write to the source in a single request. The actual value will be negotiated with the source server to determine the maximum value support by both machines.                                | False    | `1048576` |
+| MOUNT_OPTIONS     | Any additional NFS mount options not covered by existing variables. These options will be applied to all NFS mounts.                                                                                                                   | False    | `""`      |
+| NFS_MOUNT_VERSION | The mount version to use for NFS client mounts (`vers` option). Acceptable values are `3`, `4`, `4.0`, `4.1`, `4.2`.                                                                                                                   | False    | `3`       |
 
 ### NFS Kernel Server Options
 

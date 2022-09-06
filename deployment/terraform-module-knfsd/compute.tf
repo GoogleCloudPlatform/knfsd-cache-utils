@@ -89,16 +89,17 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     NETAPP_ALLOW_COMMON_NAME  = var.NETAPP_ALLOW_COMMON_NAME
 
     # mount options
-    NCONNECT       = var.NCONNECT_VALUE
-    ACDIRMIN       = var.ACDIRMIN
-    ACDIRMAX       = var.ACDIRMAX
-    ACREGMIN       = var.ACREGMIN
-    ACREGMAX       = var.ACREGMAX
-    RSIZE          = var.RSIZE
-    WSIZE          = var.WSIZE
-    NOHIDE         = var.NOHIDE
-    MOUNT_OPTIONS  = var.MOUNT_OPTIONS
-    EXPORT_OPTIONS = var.EXPORT_OPTIONS
+    NCONNECT          = var.NCONNECT_VALUE
+    ACDIRMIN          = var.ACDIRMIN
+    ACDIRMAX          = var.ACDIRMAX
+    ACREGMIN          = var.ACREGMIN
+    ACREGMAX          = var.ACREGMAX
+    RSIZE             = var.RSIZE
+    WSIZE             = var.WSIZE
+    NOHIDE            = var.NOHIDE
+    MOUNT_OPTIONS     = var.MOUNT_OPTIONS
+    EXPORT_OPTIONS    = var.EXPORT_OPTIONS
+    NFS_MOUNT_VERSION = var.NFS_MOUNT_VERSION
 
     CULLING = var.CULLING
 

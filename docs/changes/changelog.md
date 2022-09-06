@@ -3,6 +3,7 @@
 * Custom metrics configuration via Terraform
 * Total client NFS operations metric
 * Support Persistent Disk instead of Local SSD for the Cachefilesd volume
+* Support fanout architecture deployment
 
 ## Custom metrics configuration via Terraform
 
@@ -20,6 +21,12 @@ the total proxy to source operations.
 Added the ability to use Persistent Disk instead of Local SSD for the Cachefilesd `/var/cache/fscache` volume.
 
 This may be slightly less performant than Local SSD, but allows for cache volumes up to 64TB.
+
+## Support fanout architecture deployment
+
+Adds minor tweaks to the deployment scripts to support NFSv4 `Knfsfd-->Source` mounts which is required for the fanout architecutre.
+
+Adds documentation and example configuration for deploying Knfsd in a fanout architecture.
 
 # v0.8.0
 

@@ -413,3 +413,15 @@ variable "CACHEFILESD_PERSISTENT_DISK_SIZE_GB" {
     error_message = "CACHEFILESD_PERSISTENT_DISK_SIZE_GB must be between 10 and 6400."
   }
 }
+
+variable "NFS_MOUNT_VERSION" {
+  type    = string
+  default = "3"
+
+  validation {
+    condition     = contains(["3", "4", "4.0", "4.1", "4.2"], var.NFS_MOUNT_VERSION)
+    error_message = "Valid values for NFS_MOUNT_VERSION are '3', '4', '4.0', '4.1', '4.2'."
+  }
+
+
+}
