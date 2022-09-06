@@ -37,7 +37,7 @@ There is no special logic in the Knfsd Terraform Module to handle the fanout arc
 ```terraform
 module "nfs_proxy_fanout" {
 
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.8.0"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
 
   # Google Cloud Project Configuration
   PROJECT = "my-gcp-project"
@@ -66,7 +66,7 @@ module "nfs_proxy_fanout" {
 
 module "nfs_proxy_cluster" {
 
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.8.0"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
 
   # Google Cloud Project Configuration
   PROJECT = "my-gcp-project"

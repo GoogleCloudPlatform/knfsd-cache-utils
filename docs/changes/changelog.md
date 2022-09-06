@@ -1,5 +1,7 @@
 # Next
 
+# v0.9.0
+
 * Custom metrics configuration via Terraform
 * Total client NFS operations metric
 * Support Persistent Disk instead of Local SSD for the Cachefilesd volume
