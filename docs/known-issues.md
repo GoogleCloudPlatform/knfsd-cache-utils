@@ -1,5 +1,37 @@
 # Known Issues
 
+## Nested mounts (aka crossmnt)
+
+When the source server has nested mounts, each nested mount must be explicitly re-exported by the proxy so that the mount is assigned a unique `fsid`.
+
+If the nested mount is not explicitly re-exported you will see one of two issues on the client:
+
+* An empty directory.
+* An I/O error trying to access the nested mount.
+
+If this occurs, consider using auto-discovery to automatically find and mount all the exports from the source server.
+
+If you're already using `EXPORT_HOST_AUTO_DETECT`, check that `showmount -e SOURCE-SERVER` lists all the nested mounts. If the source server does not reply with all the nested mounts then you might have to list the exports explicitly using `EXPORT_MAP`.
+
+## filehandle limits
+
+When a filehandle is too large, the client will receive general I/O errors or permission errors when trying to list, read or write files via the proxy.
+
+NFSv3 only supports up to 64 bytes for a filehandle, and the proxy server adds up to an additional 25 bytes (22 bytes, rounded up to the nearest multiple of 4).
+
+The largest filehandle that can be re-exported by NFSv3 is 42 bytes, for a total of 64 bytes. Some NFS servers such as NetApp (especially when using qtrees) use filehandles greater than 42 bytes, these filehandles cannot be re-exported using NFSv3.
+
+To fix the issue, re-export using NFSv4 (the proxy can still mount the source using NFSv3). NFSv3 should be disabled on the proxy to avoid clients attempting to mount using a protocol that will fail.
+
+```terraform
+# Only enable NFS 4.1 on re-export
+DISABLED_NFS_VERSIONS = "3,4.0,4.2"
+```
+
+For further details see:
+* [Reexporting NFS filesystems - Filehandle limits](https://www.kernel.org/doc/html/latest/filesystems/nfs/reexport.html#filehandle-limits)
+* [NFS wiki - filehandle limits](https://linux-nfs.org/wiki/index.php/NFS_re-export#filehandle_limits)
+
 ## Knfsd proxy stops caching new data
 
 Sometimes the cachefilesd will stop culling old data from the cache. When this happens the cache will fill up and be unable to cache any new data.

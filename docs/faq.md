@@ -1,5 +1,22 @@
 # FAQ
 
+## Every file shows an I/O error in ls, or when trying to read/write
+
+This could have one of two causes:
+
+* The filehandle is too large to be re-exported.
+* The directory is a nested mount (aka crossmnt).
+
+If this happens for every file it is likely an issue with the filehandle. See "filehandle limits" in [known issues](known-issues.md).
+
+If this only happens on some directories then it's likely an issue with nested mounts. See "Nested mounts (aka crossmnt)" in [known issues](known-issues.md).
+
+## Some directories are empty
+
+Check if the directory is a nested mount on the source server (some NFS servers might refer to this by another name such as junction).
+
+See "Nested mounts (aka crossmnt)" in [known issues](known-issues.md).
+
 ## What if the source server's IP address changes
 
 NFS resolves the IP address from the DNS or host name when the remote is mounted.

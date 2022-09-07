@@ -1,6 +1,8 @@
 # Next
 
 * MIG scaler workflow and command line tool
+* Added nested mounts to known issues
+* Added filehandle limits to known issues
 
 ## MIG scaler workflow and command line tool
 

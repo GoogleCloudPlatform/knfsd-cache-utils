@@ -25,7 +25,7 @@ While this architecture can provide performance benefits for certain use-cases, 
 1. The Knfsd fanout node has the potential to act as a performance botleneck.
 2. First time reads, and writes back to on-premise will be less performant as there is an additional hop involved.
 3. The cost of running the Knfsd infrastructure will increase due to additional nodes (however this may be offset by enabling a smaller interconnect link).
-4. Adding an additional re-export layer adds an additional 24 bytes to the file handle, this means that NFSv4 must be used for the re-exports as NFSv3 has a 64-byte filehandle size limit.
+4. Adding an additional re-export layer adds up to an additional 25 bytes to the filehandle. This means that NFSv4 must be used for the re-exports as NFSv3 has a 64-byte filehandle size limit.
 
 ## Example Deployment of Fanout Architecture
 
