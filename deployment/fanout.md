@@ -37,7 +37,7 @@ There is no special logic in the Knfsd Terraform Module to handle the fanout arc
 ```terraform
 module "nfs_proxy_fanout" {
 
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
 
   # Google Cloud Project Configuration
   PROJECT = "my-gcp-project"
@@ -55,7 +55,8 @@ module "nfs_proxy_fanout" {
   # Fanout Specific Configuration
   CACHEFILESD_DISK_TYPE               = "pd-balanced"                          // Use a Persistent Disk as we want the fanout node to have a larger cache
   CACHEFILESD_PERSISTENT_DISK_SIZE_GB = 5120                                   // Use a large PD to maximise cache hits
-  MACHINE_TYPE                        = "n1-highmem-32"                        // Use a higher CPU and Memory machine type to increase fanout performance
+  MACHINE_TYPE                        = "n2-highmem-32"                        // Use a higher CPU and Memory machine type to increase fanout performance
+  ENABLE_HIGH_BANDWIDTH_CONFIGURATION = true                                   // Use a higher bandwidth configuration
   KNFSD_NODES                         = 1                                      // Only deploy 1 node in the cluster because we want a single fanout node
   EXPORT_MAP                          = "10.0.5.5;/remoteexport;/remoteexport" // Define the exports in the standard way
   PROXY_BASENAME                      = "rendercluster1-fanout"                // Give this proxy a unique base name
@@ -66,7 +67,7 @@ module "nfs_proxy_fanout" {
 
 module "nfs_proxy_cluster" {
 
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
 
   # Google Cloud Project Configuration
   PROJECT = "my-gcp-project"

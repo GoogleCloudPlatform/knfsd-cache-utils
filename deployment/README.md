@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
 
 ```
-source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
+source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
 ```
 
 ## Prerequisites
@@ -28,7 +28,7 @@ Basic usage of this module is as follows:
 ```terraform
 module "nfs_proxy" {
 
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.9.0"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
 
     # Google Cloud Project Configuration
     PROJECT                        = "my-gcp-project"
@@ -83,13 +83,14 @@ terraform apply
 
 ### Network Configuration
 
-| Variable                   | Description                                                                                                                                                                                    | Required | Default   |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
-| NETWORK                    | The network name (VPC) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                        | False    | `default` |
-| SUBNETWORK                 | The subnetwork name (subnet) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                  | False    | `default` |
-| SUBNETWORK_PROJECT         | The project that the subnetwork exists in. This only needs to be set if using a Shared VPC, where the subnetwork exists in a different project. Otherwise it defaults to the provider project. | False    | null      |
-| AUTO_CREATE_FIREWALL_RULES | Should firewall rules automatically be created to allow [healthcheck connectivity](https://cloud.google.com/load-balancing/docs/health-check-concepts#ip-ranges)?                              | False    | `true`    |
-| LOADBALANCER_IP            | The IP address to use for the Internal Load Balancer. If not specified, a random IP address will be assigned within the subnet.                                                                | False    | null      |
+| Variable                           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Required | Default   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| NETWORK                            | The network name (VPC) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                                                                                                                                                                                                                                                                                                                                           | False    | `default` |
+| SUBNETWORK                         | The subnetwork name (subnet) to use for the deployment of the Knfsd Compute Engine Instances.                                                                                                                                                                                                                                                                                                                                                                                                                     | False    | `default` |
+| SUBNETWORK_PROJECT                 | The project that the subnetwork exists in. This only needs to be set if using a Shared VPC, where the subnetwork exists in a different project. Otherwise it defaults to the provider project.                                                                                                                                                                                                                                                                                                                    | False    | null      |
+| AUTO_CREATE_FIREWALL_RULES         | Should firewall rules automatically be created to allow [healthcheck connectivity](https://cloud.google.com/load-balancing/docs/health-check-concepts#ip-ranges)?                                                                                                                                                                                                                                                                                                                                                 | False    | `true`    |
+| LOADBALANCER_IP                    | The IP address to use for the Internal Load Balancer. If not specified, a random IP address will be assigned within the subnet.                                                                                                                                                                                                                                                                                                                                                                                   | False    | null      |
+| ENABLE_HIGH_BANDWIDTH_CONFIGURATION | If set to `true` enables [gVNIC](https://cloud.google.com/compute/docs/networking/using-gvnic) and [Tier 1 Bandwidth](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration) for higher egress. When enabled, only N2, N2D, C2 or C2D VM's are supported. You should also make sure you [assign enough vCPU's](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration#bandwidth-tiers) to take advantage of this configuration. | False    | null      |
 
 ### Health Check Configuration
 

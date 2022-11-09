@@ -425,3 +425,8 @@ variable "NFS_MOUNT_VERSION" {
 
 
 }
+
+variable "ENABLE_HIGH_BANDWIDTH_CONFIGURATION" {
+  type    = bool
+  default = false
+}

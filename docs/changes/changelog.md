@@ -1,14 +1,25 @@
 # Next
 
+# v0.10.0
+
 * MIG scaler workflow and command line tool
 * Added nested mounts to known issues
 * Added filehandle limits to known issues
+* Added support for higher bandwidth configurations
 
 ## MIG scaler workflow and command line tool
 
 The MIG scaler workflow will scale up a MIG in increments over a period of time to avoid starting too many instances at the same time.
 
 The command line tool is used to submit jobs to the workflow and manage the jobs.
+
+## Added support for higher bandwidth configurations
+
+Added new `ENABLE_HIGH_BANDWIDTH_CONFIGURATION` variable. When set to `true` instances will be configured with [gVNIC](https://cloud.google.com/compute/docs/networking/using-gvnic) network adapters and [Tier 1](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration) bandwidth.
+
+To fully take advantage of this higher bandwidth, you need to ensure you are using `N2`, `N2D`, `C2` or `C2D` instances. You should also make sure your VM has [enough CPU's allocated](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration#bandwidth-tiers) to benefit from the new configuration.
+
+The `network_performance_config` configuration block in the `google_compute_instance_template` Terraform resource is still in beta, so this version also requires the `google-beta` provider for this resource.
 
 # v0.9.0
 

@@ -16,11 +16,14 @@
 
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
+
+  provider = "google-beta" // Required due to network_performance_config being in beta provider only
+
   project          = var.PROJECT
   region           = var.REGION
   name_prefix      = var.PROXY_BASENAME
   machine_type     = var.MACHINE_TYPE
-  min_cpu_platform = "Intel Skylake"
+  min_cpu_platform = lower(split(var.MACHINE_TYPE, "-")[0]) == "n1" ? "Intel Skylake" : null // Set Skylake only if N1
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
   labels           = var.PROXY_LABELS
@@ -62,11 +65,15 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     }
   }
 
+  network_performance_config {
+    total_egress_bandwidth_tier = var.ENABLE_HIGH_BANDWIDTH_CONFIGURATION ? "TIER_1" : "DEFAULT"
+  }
 
   network_interface {
     network            = var.NETWORK
     subnetwork         = var.SUBNETWORK
     subnetwork_project = var.SUBNETWORK_PROJECT != "" ? var.SUBNETWORK_PROJECT : null
+    nic_type           = var.ENABLE_HIGH_BANDWIDTH_CONFIGURATION ? "GVNIC" : "VIRTIO_NET"
   }
 
   metadata = {
