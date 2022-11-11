@@ -1,5 +1,11 @@
 # Next
 
+* Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
+
+## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
+
+Updated the monitoring dashboard to corretly show FS-Cache usage, and read write throughput when using Persistent Disk for the FS-Cache volume.
+
 # v0.10.0
 
 * MIG scaler workflow and command line tool

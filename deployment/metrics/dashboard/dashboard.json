@@ -17,7 +17,7 @@
       "labelKey": "backend_name"
     }
   ],
-  "displayName": "Knfsd Monitoring Dashboard (v35)",
+  "displayName": "Knfsd Monitoring Dashboard (v36)",
   "mosaicLayout": {
     "columns": 12,
     "tiles": [
@@ -84,7 +84,7 @@
                       ],
                       "perSeriesAligner": "ALIGN_MEAN"
                     },
-                    "filter": "metric.type=\"agent.googleapis.com/disk/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"device\"=\"/dev/md127\" metric.label.\"state\"=\"free\""
+                    "filter": "metric.type=\"agent.googleapis.com/disk/percent_used\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\" metric.label.\"device\"=monitoring.regex.full_match(\"/dev/md127|/dev/sdb\") metric.label.\"state\"=\"free\""
                   }
                 }
               }
@@ -343,7 +343,7 @@
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
                     },
-                    "filter": "metric.type=\"compute.googleapis.com/instance/disk/read_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                    "filter": "metric.type=\"compute.googleapis.com/instance/disk/read_bytes_count\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
                     "secondaryAggregation": {
                       "alignmentPeriod": "60s",
                       "crossSeriesReducer": "REDUCE_SUM",
@@ -387,7 +387,7 @@
                       "alignmentPeriod": "60s",
                       "perSeriesAligner": "ALIGN_RATE"
                     },
-                    "filter": "metric.type=\"compute.googleapis.com/instance/disk/write_bytes_count\" resource.type=\"gce_instance\" metric.label.\"storage_type\"=\"local-ssd\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
+                    "filter": "metric.type=\"compute.googleapis.com/instance/disk/write_bytes_count\" resource.type=\"gce_instance\" metadata.user_labels.\"vm-type\"=\"nfs-proxy\"",
                     "secondaryAggregation": {
                       "alignmentPeriod": "60s",
                       "crossSeriesReducer": "REDUCE_SUM",
