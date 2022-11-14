@@ -5,7 +5,7 @@ This directory contains a [Terraform Module](https://www.terraform.io/docs/modul
 The `main` branch may be updated at any time with the latest changes which could be breaking. You should always configure your module to use a release. This can be configured in the modules Terraform Configuration block.
 
 ```
-source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
+source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta1"
 ```
 
 ## Prerequisites
@@ -28,7 +28,7 @@ Basic usage of this module is as follows:
 ```terraform
 module "nfs_proxy" {
 
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta1"
 
     # Google Cloud Project Configuration
     PROJECT                        = "my-gcp-project"
@@ -182,26 +182,6 @@ The service account will need the following project level IAM permissions:
 | LOCAL_SSDS                          | (Only used if `CACHEFILESD_DISK_TYPE` = `local-ssd`) The number of Local SSDs to assign to each cache instance. This can be either 0 to 8, 16, or 24 local SSDs for up to 9TB of capacity ([see here](https://cloud.google.com/compute/docs/disks/local-ssd#choosing_a_valid_number_of_local_ssds)). If you are setting this to 24 Local SSDs you should also change the `MACHINE_TYPE` variable to an instance with 32 CPU's, for example `n1-highmem-32`. | False    | `4`         |
 | CACHEFILESD_PERSISTENT_DISK_SIZE_GB | (Only used if `CACHEFILESD_DISK_TYPE` = `pd-standard`, `pd-balanced` or `pd-ssd`), what size should the persistent disk be in GB? Can be set between `100` and `64000`. For large volumes, consider larger instance types (see [here](https://cloud.google.com/compute/docs/disks/performance)).                                                                                                                                                            | False    | `1500`      |
 
-### Culling Options
-
-| Variable             | Description                                                                                                  | Required | Default                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------ |
-| CULLING              | Culling method to use (`default`, `custom`, or `none`).                                                      | False    | `custom`                                                                                   |
-| CULLING_LAST_ACCESS  | (custom only) Remove files from the cache that were last accessed over `CULLING_LAST_ACCESS` ago.            | False    | If using Local SSD: 1 hour for each `LOCAL_SSD`.<br><br>If using Persistent Disk, 6 hours. |
-| CULLING_THRESHOLD    | (custom only) Cull when the percentage of remaining disk space (or inodes) is less than `CULLING_THRESHOLD`. | False    | `20`                                                                                       |
-| CULLING_INTERVAL     | (custom only) How often to check if the remaining disk space is less than the `CULLING_THRESHOLD`            | False    | `1m`                                                                                       |
-| CULLING_QUIET_PERIOD | (custom only) After culling, how long to wait before resuming checks.                                        | False    | `CULLING_LAST_ACCESS / 4`                                                                  |
-
-The culling `CULLING` mode supports the following options:
-
-* `default` - This uses the standard cachefilesd to perform culling.
-* `custom` - This uses the custom knfsd-cull service to perform culling.
-* `none` - Disables culling completely
-
-The purpose of the custom culling agent is to workaround a known issue where cachefilesd may stop culling files in the cache. See [culling](../docs/culling.md) for more information on how to configure cachefilesd, and the known issue where cachefilesd may stop culling.
-
-The `none` option supports special cases where the cache rarely fills up.
-
 ### Mount Options
 
 These mount options are for the proxy to the source server.
@@ -232,51 +212,6 @@ These mount options are for the proxy to the source server.
 | NOHIDE         | When `true`, adds the `nohide` option to all the exports.                         | False    | `true`  |
 | EXPORT_OPTIONS | Any custom NFS exports options. These options will be applied to all NFS exports. | False    | `""`    |
 
-#### Custom culling options
-
-The durations, `CULLING_LAST_ACCESS`, `CULLING_INTERVAL`, and
-`CULLING_QUIET_PERIOD` support `h`, `m`, and `s` (hours, minutes, seconds)
-For example `5m`, `2.5h`, or `1h30m`.
-
-To avoid deleting files unnecessarily the culling process will wait until the
-remaining percentage of free space is less than `CULLING_THRESHOLD`. The
-remaining free space will be checked every `CULLING_INTERVAL`.
-
-Any file with a last access time older than `CULLING_LAST_ACCESS` will be
-deleted. Because files are deleted based on their last access, this might not
-remove enough files (or any files) to bring the free space above the threshold
-if most of the files in the cache have been used within the last access period.
-It can also remove more files than required (possibly even all the files).
-
-Once a culling attempt has been completed (even if no files were culled),
-culling will wait for `CULLING_QUIET_PERIOD` before resuming culling checks.
-This avoids repeatedly scanning the full file tree (costing IOPS) while most
-files are in use.
-
-**IMPORTANT:** `CULLING_THRESHOLD` *MUST* be greater than `bstop` and `fstop` in
-`/etc/cachefilesd.conf`. Otherwise cachefilesd will stop caching data before the
-custom culling threshold is reached so culling will never run.
-
-#### Example
-
-```terraform
-CULLING              = "custom"
-CULLING_LAST_ACCESS  = "4h"
-CULLING_THRESHOLD    = 20
-CULLING_INTERVAL     = "1m"
-CULLING_QUIET_PERIOD = "1h"
-```
-
-The culling agent will check every minute (`CULLING_INTERVAL`) to see if the
-remaining disk space (or inodes) is less than 20% (`CULLING_THRESHOLD`) of the
-total disk space.
-
-When the remaining disk space is below the 20% threshold the culling agent will
-then remove any files that were last accessed over four hours ago (`CULLING_LAST_ACCESS`)
-from the cache.
-
-The culling agent will then wait for at least one hour (`CULLING_QUIET_PERIOD`)
-before resuming culling checks.
 
 ### Autoscaling Configuration
 

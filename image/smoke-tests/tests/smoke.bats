@@ -4,8 +4,8 @@ setup() {
 
 @test "Proxy is running the correct kernel" {
 	local KERNEL="$(exec-remote proxy -- uname -r)"
-	if [[ "${KERNEL}" != '5.13.'*'-gcp' ]]; then
-		>&2 echo "Expected kernel version to match '5.13.*-gcp' but was '${KERNEL}'"
+	if [[ "${KERNEL}" != '6.1.0-rc5+' ]]; then
+		>&2 echo "Expected kernel version to match '6.1.0-rc5+' but was '${KERNEL}'"
 		return 1
 	fi
 }

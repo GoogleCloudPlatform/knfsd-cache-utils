@@ -14,7 +14,7 @@ source "googlecompute" "nfs-proxy" {
   # Build machine
   instance_name                   = "packer-nfs-proxy-{{uuid}}"
   machine_type                    = var.machine_type
-  disk_size                       = 20
+  disk_size                       = 50
   disk_type                       = "pd-ssd"
   disable_default_service_account = true
 
@@ -30,7 +30,7 @@ source "googlecompute" "nfs-proxy" {
   image_storage_locations = var.image_storage_location == "" ? null : [var.image_storage_location]
 
   # Source image
-  source_image            = "ubuntu-2004-focal-v20220615"
+  source_image            = "ubuntu-2204-jammy-v20221101a"
   source_image_project_id = ["ubuntu-os-cloud"]
 
   # Communicator

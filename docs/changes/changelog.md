@@ -1,6 +1,21 @@
-# Next
+# v1.0.0-beta1
 
 * Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
+* Upgrade to Ubuntu 22.04 LTS
+* Build and use custom kernel with FS-Cache performance patches
+* Remove custom culling agent and custom cachefilesd package
+
+## Remove custom culling agent and custom cachefilesd package
+
+Version `5.17`+ of the kernel does not contain the FS-Cache culling bug, therefore the custom culling agent and custom cachefilesd package is no longer required.
+
+## Build and use custom kernel with FS-Cache performance patches
+
+Builds a custom version of the kernel based on `6.1.0-rc5`. This custom version contains additional patches that resolve the FS-Cache single page caching performance issue. See [here](https://github.com/benjamin-maynard/kernel/commits/nfs-fscache-netfs) for more details.
+
+## Upgrade to Ubuntu 22.04 LTS
+
+Upgrades the Ubuntu image to 22.04.1 LTS (Jammy Jellyfish).
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 

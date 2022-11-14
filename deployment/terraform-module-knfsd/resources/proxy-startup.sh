@@ -216,12 +216,6 @@ function init() {
 	DISABLED_NFS_VERSIONS=$(get_attribute DISABLED_NFS_VERSIONS)
 	READ_AHEAD_KB=$(get_attribute READ_AHEAD_KB)
 
-	CULLING="$(get_attribute CULLING)"
-	CULLING_LAST_ACCESS="$(get_attribute CULLING_LAST_ACCESS)"
-	CULLING_THRESHOLD="$(get_attribute CULLING_THRESHOLD)"
-	CULLING_INTERVAL="$(get_attribute CULLING_INTERVAL)"
-	CULLING_QUIET_PERIOD="$(get_attribute CULLING_QUIET_PERIOD)"
-
 	ENABLE_STACKDRIVER_METRICS=$(get_attribute ENABLE_STACKDRIVER_METRICS)
 	METRICS_AGENT_CONFIG=$(get_attribute METRICS_AGENT_CONFIG)
 	ENABLE_KNFSD_AGENT=$(get_attribute ENABLE_KNFSD_AGENT)
@@ -445,34 +439,6 @@ function configure-nfs() {
 
 }
 
-function configure-culling() (
-	function fmt() {
-		if [[ -n "$2" ]]; then
-			printf '%s %s\n' "$1" "$2"
-		fi
-	}
-
-	sed -i '/^nocull/d' /etc/cachefilesd.conf
-
-	if [[ "$CULLING" == "none" ]] || [[ "$CULLING" == "custom" ]]; then
-		echo "nocull" >>/etc/cachefilesd.conf
-	fi
-
-	if [[ "$CULLING" == "custom" ]]; then
-		: >/etc/knfsd-cull.conf
-		fmt last-access "$CULLING_LAST_ACCESS" >>/etc/knfsd-cull.conf
-		fmt threshold "$CULLING_THRESHOLD" >>/etc/knfsd-cull.conf
-		fmt interval "$CULLING_INTERVAL" >>/etc/knfsd-cull.conf
-		fmt quiet-period "$CULLING_QUIET_PERIOD" >>/etc/knfsd-cull.conf
-
-		echo "Starting Custom Culling Agent..."
-		start-services knfsd-cull
-		echo "Finished starting Custom Culling Agent."
-	else
-		echo "Custom Culling Agent disabled. Skipping..."
-	fi
-)
-
 function configure-metrics() {
 
 	# If needed, override the Monitoring API to use an IP address from private.googleapis.com
@@ -552,7 +518,6 @@ function main() {
 
 	configure-read-ahead
 	configure-nfs
-	configure-culling
 	configure-metrics
 
 	start-nfs

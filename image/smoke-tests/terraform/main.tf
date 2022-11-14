@@ -43,7 +43,7 @@ resource "google_filestore_instance" "source" {
 }
 
 module "proxy" {
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta1"
 
   PROJECT = var.project
   REGION  = var.region

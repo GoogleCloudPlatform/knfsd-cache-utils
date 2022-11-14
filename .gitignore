@@ -19,6 +19,9 @@
 *.pkrvars.json
 *.auto.pkrvars.json
 
+# Exclude Specific Packer Variables File
+!image/internal-build/image.pkrvars.hcl
+
 # Service Account
 service-account-key.json
 

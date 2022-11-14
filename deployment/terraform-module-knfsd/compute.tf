@@ -108,13 +108,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     EXPORT_OPTIONS    = var.EXPORT_OPTIONS
     NFS_MOUNT_VERSION = var.NFS_MOUNT_VERSION
 
-    CULLING = var.CULLING
-
-    CULLING_LAST_ACCESS  = coalesce(var.CULLING_LAST_ACCESS, local.CULLING_LAST_ACCESS_DEFAULT)
-    CULLING_THRESHOLD    = var.CULLING_THRESHOLD
-    CULLING_INTERVAL     = var.CULLING_INTERVAL
-    CULLING_QUIET_PERIOD = var.CULLING_QUIET_PERIOD
-
     # system
     NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server.conf")
     NUM_NFS_THREADS        = var.NUM_NFS_THREADS
