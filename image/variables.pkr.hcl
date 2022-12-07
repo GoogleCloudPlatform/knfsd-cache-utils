@@ -39,7 +39,7 @@ variable "image_family" {
 }
 
 variable "image_storage_location" {
-  type = string
+  type    = string
   default = ""
 }
 

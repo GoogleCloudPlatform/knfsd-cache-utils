@@ -1,12 +1,17 @@
 # Next
 
 * Stop pinning to specific package versions
+* Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
 
 ## Stop pinning to specific package versions
 
 Pinning is causing issues with maintaining the repository and building images because the apt repository only keeps the latest version for many of these packages. This causes the image for release tags to stop building when the package they depend upon is removed from the apt repository.
 
 Most of the packages are already unpinned and install the latest version. The only components where the version really matters is the kernel and nfs-tools, which are both installed separately from apt.
+
+## Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
+
+The older `ssh-rsa` (RSA with SHA1) key algorithm is no longer secure and is not supported by the latest versions of OpenSSH or Ubuntu Jammy. The google computer packer plugin needs to be a minimum of 1.0.13 to support the newer `rsa-ssh2-256` and `rsa-ssh2-512` key algorithms.
 
 # v1.0.0-beta1
 
