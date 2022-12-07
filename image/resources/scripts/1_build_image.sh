@@ -48,7 +48,7 @@ install_nfs_packages() {
 
     begin_command "Installing rpcbind, nfs-kernel-server and cachefilesd"
     apt-get update
-    apt-get install -y rpcbind=1.2.6-2build1 nfs-kernel-server=1:2.6.1-1ubuntu1.1 cachefilesd=0.10.10-0.2ubuntu1
+    apt-get install -y rpcbind nfs-kernel-server cachefilesd
     systemctl disable nfs-kernel-server
     systemctl disable nfs-idmapd.service
     systemctl disable cachefilesd
