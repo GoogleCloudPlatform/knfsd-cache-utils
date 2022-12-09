@@ -1,4 +1,4 @@
-# Next
+# v1.0.0-beta2
 
 * Stop pinning to specific package versions
 * Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
