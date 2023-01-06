@@ -22,9 +22,11 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
+	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/jackc/pgx/v4"
 	"github.com/spf13/pflag"
 )
@@ -87,7 +89,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	err = run(ctx, cfg)
@@ -99,14 +101,6 @@ func main() {
 
 func run(ctx context.Context, cfg *Config) error {
 	var err error
-
-	err = os.Remove(cfg.SocketPath)
-	if errors.Is(err, os.ErrNotExist) {
-		err = nil
-	}
-	if err != nil {
-		return err
-	}
 
 	db, err := connect(ctx, cfg.Database)
 	if err != nil {
@@ -133,7 +127,7 @@ func run(ctx context.Context, cfg *Config) error {
 		f = source
 	}
 
-	s, err := newServer(cfg.SocketPath)
+	s, err := resolveSocket(cfg.SocketPath)
 	if err != nil {
 		return err
 	}
@@ -217,12 +211,23 @@ func run(ctx context.Context, cfg *Config) error {
 
 	go func() {
 		<-ctx.Done()
+		_, err := daemon.SdNotify(false, daemon.SdNotifyStopping)
+		if err != nil {
+			log.Error.Print(err)
+		}
+
 		deadline, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
 		s.Shutdown(deadline)
 		s.Close()
 	}()
+
+	_, err = daemon.SdNotify(false, daemon.SdNotifyReady)
+	if err != nil {
+		return err
+	}
+	log.Info.Print("fsidd service started")
 
 	err = s.Serve()
 	if errors.Is(err, ErrServerClosed) {

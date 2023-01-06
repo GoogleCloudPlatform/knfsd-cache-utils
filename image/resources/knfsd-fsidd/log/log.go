@@ -25,6 +25,7 @@ import (
 
 var (
 	Debug = log.New(io.Discard, "DEBUG: ", 0)
+	Info  = log.New(os.Stderr, "INFO: ", 0)
 	Warn  = log.New(os.Stderr, "WARN: ", 0)
 	Error = log.New(os.Stderr, "ERROR: ", 0)
 )

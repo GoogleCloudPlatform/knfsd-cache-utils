@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	cloud.google.com/go/cloudsqlconn v1.0.1
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/go-ini/ini v1.67.0
 	github.com/googleapis/gax-go/v2 v2.6.0
 	github.com/jackc/pgconn v1.13.0
