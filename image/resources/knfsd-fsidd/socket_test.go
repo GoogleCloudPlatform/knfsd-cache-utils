@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,4 +59,35 @@ func TestServer(t *testing.T) {
 	err = s.Close()
 	assert.NoError(t, err, "s.Close()")
 	<-done
+}
+
+func TestNewServerFromFile(t *testing.T) {
+	l, err := net.Listen("unixpacket", "")
+	require.NoError(t, err)
+	defer l.Close()
+
+	f, err := l.(*net.UnixListener).File()
+	require.NoError(t, err)
+	defer f.Close()
+
+	s, err := newServerFromFile(f)
+	require.NoError(t, err)
+	defer s.Close()
+	go s.Serve()
+
+	c, err := dial(l.Addr().String())
+	require.NoError(t, err)
+	defer c.Close()
+
+	s.Handle("TEST", func(ctx context.Context, arg string) (string, error) {
+		return arg, nil
+	})
+	_, err = c.Write([]byte("TEST 123"))
+	require.NoError(t, err)
+
+	buf := make([]byte, 20)
+	n, err := c.Read(buf)
+	require.NoError(t, err)
+
+	assert.Equal(t, "+ 123", string(buf[0:n]))
 }

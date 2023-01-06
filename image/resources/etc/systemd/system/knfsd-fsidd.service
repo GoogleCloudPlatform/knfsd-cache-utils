@@ -1,0 +1,13 @@
+[Unit]
+Description=knfsd FSID Daemon
+After=local-fs.target
+Before=nfs-mountd.service nfs-server.service
+Requires=knfsd-fsidd.socket
+BindsTo=nfs-server.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/sbin/knfsd-fsidd
+
+[Install]
+RequiredBy=nfs-mountd.service nfs-server.service

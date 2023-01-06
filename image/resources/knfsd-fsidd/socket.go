@@ -6,20 +6,25 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/atomic"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
+	"github.com/coreos/go-systemd/v22/activation"
 
 	"go.uber.org/multierr"
 	"golang.org/x/sys/unix"
 )
 
 var (
-	ErrUnknownCommand  = errors.New("unknown command")
-	ErrInvalidArgument = errors.New("invalid argument")
-	ErrServerClosed    = net.ErrClosed
+	ErrUnknownCommand        = errors.New("unknown command")
+	ErrInvalidArgument       = errors.New("invalid argument")
+	ErrInvalidNetwork        = errors.New("invalid network: socket must be unixpacket")
+	ErrInvalidFileDescriptor = errors.New("invalid file descriptor")
+	ErrTooManySockets        = errors.New("too many of socket activations from systemd")
+	ErrServerClosed          = net.ErrClosed
 )
 
 const PacketMaxLength = unix.PathMax * 2
@@ -39,12 +44,73 @@ type server struct {
 	inShutdown    atomic.Bool
 }
 
+// resolveSocket will first check for a systemd socket activation. If found
+// the socket provided by systemd will be used, otherwise a new socket will
+// be created at socketPath.
+func resolveSocket(socketPath string) (*server, error) {
+	files := activation.Files(true)
+	defer func() {
+		for _, f := range files {
+			// We have to close the files when we have finished with them.
+			// This will not affect any listeners, as the listener will create
+			// a new file descriptor.
+			f.Close()
+		}
+	}()
+
+	switch len(files) {
+	case 0:
+		// Delete the old socket file if it already exists in case a previous
+		// process was not gracefully terminated.
+		err := os.Remove(socketPath)
+		if errors.Is(err, os.ErrNotExist) {
+			err = nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		return newServer(socketPath)
+	case 1:
+		if files[0] == nil {
+			return nil, ErrInvalidFileDescriptor
+		}
+		return newServerFromFile(files[0])
+	default:
+		return nil, ErrTooManySockets
+	}
+}
+
 func newServer(socketPath string) (*server, error) {
 	addr := &net.UnixAddr{Net: "unixpacket", Name: socketPath}
 	l, err := net.ListenUnix(addr.Network(), addr)
 	if err != nil {
 		return nil, err
 	}
+	return &server{
+		listener: l,
+		handlers: make(map[string]Handler),
+	}, nil
+}
+
+func newServerFromFile(f *os.File) (*server, error) {
+	// no need to check if f is a socket, FileListener will handle that.
+	fl, err := net.FileListener(f)
+	if err != nil {
+		return nil, err
+	}
+
+	l, ok := fl.(*net.UnixListener)
+	if !ok {
+		l.Close()
+		return nil, ErrInvalidNetwork
+	}
+
+	// verify
+	if l.Addr().Network() != "unixpacket" {
+		l.Close()
+		return nil, ErrInvalidNetwork
+	}
+
 	return &server{
 		listener: l,
 		handlers: make(map[string]Handler),
