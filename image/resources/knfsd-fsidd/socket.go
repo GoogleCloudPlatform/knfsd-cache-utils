@@ -8,7 +8,6 @@ import (
 	"net"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/atomic"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
@@ -20,7 +19,6 @@ import (
 var (
 	ErrUnknownCommand  = errors.New("unknown command")
 	ErrInvalidArgument = errors.New("invalid argument")
-	ErrMsgTruncated    = errors.New("message truncated")
 	ErrServerClosed    = net.ErrClosed
 )
 
@@ -87,7 +85,7 @@ func (s *server) Serve() error {
 		c := &connection{
 			id:       s.connectionID.Add(1),
 			s:        s,
-			rw:       &conn{rw},
+			rw:       rw,
 			handlers: s.handlers,
 		}
 
@@ -191,7 +189,7 @@ func (s *server) stop() error {
 type connection struct {
 	id         uint64
 	s          *server
-	rw         *conn
+	rw         *net.UnixConn
 	handlers   map[string]Handler
 	inShutdown atomic.Bool
 	cancel     context.CancelFunc
@@ -213,7 +211,11 @@ func (c *connection) Serve() {
 
 	log.Debug.Printf("[%d] received connection", c.id)
 
-	buf := make([]byte, PacketMaxLength)
+	// Make the buffer 1 byte larger than the max allowed packet length to
+	// detect truncated packets. If we read > PacketMaxLength bytes then the
+	// packet would have been truncated if the buffer was PacketMaxLength.
+	buf := make([]byte, PacketMaxLength+1)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	ctx = log.WithID(ctx, c.id)
 	c.cancel = cancel
@@ -224,7 +226,7 @@ func (c *connection) Serve() {
 	// the command will have the grace period to complete its work before being
 	// terminated.
 	for !c.shuttingDown() {
-		n, err := c.rw.ReadMsg(buf)
+		n, err := c.rw.Read(buf)
 		if err != nil {
 			switch {
 			case isClosed(err):
@@ -232,17 +234,18 @@ func (c *connection) Serve() {
 				log.Debug.Printf("[%d] received EOF", c.id)
 				return
 
-			case errors.Is(err, ErrMsgTruncated):
-				// message was truncated, return an error to the client
-				log.Warn.Printf("[%d] message truncated, ignoring", c.id)
-				c.writeError("message truncated")
-				continue
-
 			default:
 				// Non-recoverable error, reset the connection.
 				log.Error.Printf("[%d] read error: %s", c.id, err)
 				return
 			}
+		}
+
+		if n > PacketMaxLength {
+			// message was truncated, return an error to the client
+			log.Warn.Printf("[%d] message truncated, ignoring", c.id)
+			c.writeError("message truncated")
+			continue
 		}
 
 		line := string(buf[0:n])
@@ -318,29 +321,14 @@ func (c *connection) Close() error {
 	return err
 }
 
-type conn struct {
-	*net.UnixConn
-}
-
-func dial(socketPath string) (*conn, error) {
+func dial(socketPath string) (*net.UnixConn, error) {
 	addr := &net.UnixAddr{Net: "unixpacket", Name: socketPath}
 	c, err := net.DialUnix(addr.Network(), nil, addr)
 	if err != nil {
 		return nil, err
 	} else {
-		return &conn{c}, nil
+		return c, nil
 	}
-}
-
-func (c *conn) ReadMsg(buf []byte) (int, error) {
-	n, _, f, _, err := c.ReadMsgUnix(buf, nil)
-	if err != nil {
-		return n, err
-	}
-	if (f & syscall.MSG_TRUNC) == syscall.MSG_TRUNC {
-		return n, ErrMsgTruncated
-	}
-	return n, nil
 }
 
 func isClosed(err error) bool {
