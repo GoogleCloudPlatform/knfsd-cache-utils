@@ -51,7 +51,7 @@ func TestServer(t *testing.T) {
 	execute := func(t *testing.T, msg string) string {
 		_, err = c.Write([]byte(msg))
 		require.NoError(t, err, "c.Write(%q)", msg)
-		n, err := c.ReadMsg(buf)
+		n, err := c.Read(buf)
 		require.NoError(t, err)
 		return string(buf[0:n])
 	}
