@@ -197,7 +197,7 @@ func run(ctx context.Context, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	log.Info.Print("fsidd service started")
+	log.Info.Print("service ready")
 
 	err = s.Serve()
 	if errors.Is(err, ErrServerClosed) {
