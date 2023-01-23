@@ -1,3 +1,10 @@
+# next
+
+* Change the default build machine type to c2-standard-16
+
+## Change the default build machine type to c2-standard-16
+
+This improves the build times for the custom kernel. These are generally available and tend to offer the best build speed to price. Some additional speed may be gained by using a c2-standard-30.
 
 # v1.0.0-beta3
 

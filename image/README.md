@@ -47,7 +47,7 @@ Create a packer variables file (e.g. `image.pkrvars.hcl`).
 
 #### Optional
 
-* machine_type (string) - The machine type used to build the image. This can be increased to improve build speeds. Defaults to `"e2-standard-8"`.
+* machine_type (string) - The machine type used to build the image. This can be increased to improve build speeds. Defaults to `"c2-standard-16"`.
 * network_project (string) - Project hosting the network when using shared VPC. Defaults to `project`.
 * subnetwork (string) - The subnetwork the compute instance will use. Defaults to `"default"`.
 * omit_external_ip (bool) - Use a private (internal) IP only. Defaults to `true`.
@@ -89,6 +89,7 @@ cd image
 
 ```bash
 export BUILD_MACHINE_NAME=knfsd-build-machine
+export BUILD_MACHINE_TYPE=c2-standard-16
 export BUILD_MACHINE_ZONE=<europe-west2-a>
 export GOOGLE_CLOUD_PROJECT=<knfsd-deployment-test>
 export BUILD_MACHINE_NETWORK=<knfsd-test>
@@ -99,14 +100,14 @@ export IMAGE_NAME="${IMAGE_FAMILY}-$(date -u +%F-%H%M%S)"
 
 ### Create Build Machine
 
-The standard machine type is e2-standard-8, you can use a higher one if you want to improve build speed.
+The default machine type is a c2-standard-16, if this is unavailable try changing the `BUILD_MACHINE_TYPE` to `c2-standard-8` or `e2-standard-16`.
 
 **IMPORTANT:** It is recommended not to change the disk boot-disk-size. The performance can increase but the image size will be larger and this will force any VMs to use the larger size drive.
 
 ```bash
 gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
-    --machine-type=e2-standard-8 \
+    --machine-type=$BUILD_MACHINE_TYPE \
     --project=$GOOGLE_CLOUD_PROJECT \
     --image=ubuntu-2204-jammy-v20221101a \
     --image-project=ubuntu-os-cloud \

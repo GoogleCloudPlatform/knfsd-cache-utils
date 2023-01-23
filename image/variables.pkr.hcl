@@ -10,7 +10,7 @@ variable "zone" {
 
 variable "machine_type" {
   type    = string
-  default = "e2-standard-8"
+  default = "c2-standard-16"
 }
 
 variable "network_project" {
