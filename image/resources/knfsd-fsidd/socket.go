@@ -297,19 +297,21 @@ func (c *connection) write(msg string) error {
 }
 
 func (c *connection) Shutdown() error {
-	// Close the underlying connection to stop the scanner from reading any
-	// more commands, but do not interrupt any command already in progress.
+	// Close the read side of the connection to stop reading any more commands,
+	// but do not interrupt any command already in progress.
+	// Keep the write open to allow for a final response.
 	log.Debug.Printf("[%d] shutdown", c.id)
 	c.inShutdown.Store(true)
-	return c.rw.Close()
+	return c.rw.CloseRead()
 }
 
 func (c *connection) Close() error {
-	// Shutdown, and also cancel the context to interrupt any command in
-	// progress. Normally commands complete quickly, so it's most likely any
-	// command in progress is stuck in a retry loop.
-	err := c.Shutdown()
+	// Close the connection and cancel any commands that is in progress.
+	// Normally commands complete quickly, so it's most likely any command in
+	// progress is stuck in a retry loop.
 	log.Debug.Printf("[%d] close", c.id)
+	c.inShutdown.Store(true)
+	err := c.rw.CloseRead()
 	if c.cancel != nil {
 		c.cancel()
 	}
