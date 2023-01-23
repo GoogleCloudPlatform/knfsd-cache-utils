@@ -129,25 +129,37 @@ function mount_nfs_server() {
 
 # add_nfs_export() adds an entry to /etc/exports
 # @param (str) Local Directory
-NEXT_FSID=10 # Set Initial FSID
+NEXT_FSID=1
 function add_nfs_export() {
-  local FSID="${NEXT_FSID}"
+  local FSID
 
   if [[ $1 == / ]]; then
     # Special handling when re-exporting root exports.
     # For NFS v4 the FSID of the root should be set to 0.
-    FSID=0
+    FSID="fsid=0"
+  elif [[ $FSID_MODE == "static" ]]; then
+    # Statically assign fsid numbers to exports without using the fsidd service.
+    # This doesn't really have any advantage over FSID_MODE=local, but can be
+    # useful for testing, debugging or troubleshooting.
+    FSID="fsid=${NEXT_FSID}"
+    NEXT_FSID=$((NEXT_FSID+1))
   else
-    NEXT_FSID=$((FSID + 10))
+    # For FSID_MODE local or external use reexport=auto-fsidnum to automatically
+	# assign fsid numbers using the fsidd service.
+    # When FSID_MODE is set to external this will ensure that all the knfsd
+	# instances in a cluster have the same fsid for each export.
+    # This is less useful when FSID_MODE is set to local, but it will still
+    # ensure the knfsd instance uses the same fsids after a reboot.
+    FSID="reexport=auto-fsidnum"
   fi
 
   echo "Creating NFS share export for $1..."
-  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},fsid=${FSID})" >>/etc/exports
+  echo "$1   $EXPORT_CIDR(${EXPORT_OPTIONS},${FSID})" >>/etc/exports
   echo "Finished creating NFS share export for $1."
 }
 
 # rexport() mounts and reexports an NFS share from another NFS server
-# @param (str) NFS Sever IP
+# @param (str) NFS Server IP
 # @param (str) NFS Server Export Path
 # @param (str) Local Mount Path
 function reexport() {
@@ -207,6 +219,10 @@ function init() {
 	EXPORT_MAP=$(get_attribute EXPORT_MAP)
 	EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 	EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
+
+	FSID_MODE="$(get_attribute FSID_MODE)"
+	get_attribute FSID_DATABASE_CONFIG >/etc/knfsd-fsidd.conf
+
 	MOUNT_OPTIONS="$(build_mount_options)"
 	EXPORT_OPTIONS="$(build_export_options)"
 
@@ -272,7 +288,7 @@ function create-fs-cache() {
 		else
 			echo "Persistent Disk is already formatted."
 		fi
-		
+
 		echo "Mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)..."
 		mount -o discard,defaults /dev/disk/by-id/google-pd-fscache /var/cache/fscache
 		echo "Finished mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)"
@@ -346,7 +362,29 @@ function start-fs-cache() {
 
 	MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
 	echo "FS-Cache started."
-	
+
+}
+
+function start-fsidd() {
+	case "$FSID_MODE" in
+	static)
+		echo "Skipping fsidd service"
+		;;
+	local)
+		echo "Starting nfs-fsidd..."
+		start-services nfs-fsidd.service
+		echo "Finished Starting nfs-fsidd."
+		;;
+	external)
+		echo "Starting knfsd-fsidd..."
+		start-services knfsd-fsidd.socket knfsd-fsidd.service
+		echo "Finished Starting knfsd-fsidd."
+		;;
+	*)
+		echo "Unknown FSID_MODE \"$FSID_MODE\"."
+		exit 1
+		;;
+	esac
 }
 
 function export-map() {
@@ -520,6 +558,7 @@ function main() {
 	configure-nfs
 	configure-metrics
 
+	start-fsidd
 	start-nfs
 	post-startup
 }

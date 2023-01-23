@@ -41,3 +41,16 @@ resource "google_compute_address" "nfsproxy_static" {
     ignore_changes = [purpose]
   }
 }
+
+module "fsid_database" {
+  source          = "../database"
+  count           = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY ? 1 : 0
+  project         = var.PROJECT
+  region          = var.REGION
+  zone            = var.ZONE
+  name_prefix     = "${var.PROXY_BASENAME}-fsids"
+  proxy_service_account = var.SERVICE_ACCOUNT
+
+  # Simplify creating and destroying proxy cluster instances.
+  deletion_protection = false
+}

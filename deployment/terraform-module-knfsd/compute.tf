@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+locals {
+  FSID_DATABASE_CONFIG = (
+    var.FSID_MODE != "external" ? "" :
+    var.FSID_DATABASE_DEPLOY == false ? var.FSID_DATABASE_CONFIG :
+    templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", module.fsid_database.0)
+  )
+}
+
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
 
@@ -107,6 +115,9 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     MOUNT_OPTIONS     = var.MOUNT_OPTIONS
     EXPORT_OPTIONS    = var.EXPORT_OPTIONS
     NFS_MOUNT_VERSION = var.NFS_MOUNT_VERSION
+
+    FSID_MODE                = var.FSID_MODE
+    FSID_DATABASE_CONFIG     = local.FSID_DATABASE_CONFIG
 
     # system
     NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server.conf")

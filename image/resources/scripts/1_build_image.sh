@@ -161,6 +161,14 @@ install_golang() {
 
 }
 
+install_fsidd_service() {
+    begin_command "Installing knfsd-fsidd service"
+    cd knfsd-fsidd
+    go build -o /usr/local/sbin/knfsd-fsidd
+    cd ..
+    complete_command
+}
+
 # install_knfsd_agent() installs the knfsd-agent (see https://github.com/GoogleCloudPlatform/knfsd-cache-utils/tree/main/image/knfsd-agent)
 install_knfsd_agent() (
 
@@ -257,6 +265,7 @@ download_nfs-utils
 build_install_nfs-utils
 install_stackdriver_agent
 install_golang
+install_fsidd_service
 install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
