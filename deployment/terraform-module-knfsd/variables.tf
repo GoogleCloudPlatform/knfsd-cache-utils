@@ -183,6 +183,24 @@ variable "EXPORT_OPTIONS" {
   type    = string
 }
 
+variable "FSID_MODE" {
+  default = "static"
+  type    = string
+  validation {
+    condition     = contains(["static", "local", "external"], var.FSID_MODE)
+    error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
+  }
+}
+
+variable "FSID_DATABASE_DEPLOY" {
+  default = true
+  type    = bool
+}
+
+variable "FSID_DATABASE_CONFIG" {
+  default = ""
+  type    = string
+}
 
 variable "VFS_CACHE_PRESSURE" {
   default = "100"
@@ -360,7 +378,7 @@ variable "CACHEFILESD_DISK_TYPE" {
 
   validation {
     condition     = contains(["local-ssd", "pd-ssd", "pd-balanced", "pd-standard"], var.CACHEFILESD_DISK_TYPE)
-    error_message = "Valid values for CACHEFILESD_DISK_TYPE are 'local-ssd', 'pd-ssd', 'pd-balanced, 'pd-standard'."
+    error_message = "Valid values for CACHEFILESD_DISK_TYPE are 'local-ssd', 'pd-ssd', 'pd-balanced', or 'pd-standard'."
   }
 }
 
