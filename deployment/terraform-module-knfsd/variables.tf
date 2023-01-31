@@ -69,6 +69,11 @@ variable "SUBNETWORK" {
   type    = string
 }
 
+variable "ASSIGN_STATIC_IPS" {
+  default = false
+  type    = bool
+}
+
 variable "PROXY_BASENAME" {
   default = "nfsproxy"
   type    = string
@@ -272,7 +277,7 @@ variable "MIG_MAX_UNAVAILABLE_PERCENT" {
 }
 
 variable "MIG_REPLACEMENT_METHOD" {
-  default = "SUBSTITUTE"
+  default = ""
   type    = string
 }
 

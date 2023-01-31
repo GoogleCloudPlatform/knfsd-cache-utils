@@ -2,6 +2,7 @@
 
 * Change the default build machine type to c2-standard-16
 * Update to the latest FS-Cache performance patches (v11)
+* Assign static IPs to proxy instances
 
 ## Change the default build machine type to c2-standard-16
 
@@ -21,6 +22,14 @@ This includes the following patch sets:
   <https://lore.kernel.org/linux-nfs/20230216150701.3654894-1-dhowells@redhat.com/>
 * vfs, security: Fix automount superblock LSM init problem, preventing NFS sb sharing (v5)
   <https://lore.kernel.org/linux-kernel/217595.1662033775@warthog.procyon.org.uk/>
+
+## Assign static IPs to proxy instances
+
+Added a new configuration option, `ASSIGN_STATIC_IPS`. This configures the MIG to use [stateful IP addresses](https://cloud.google.com/compute/docs/instance-groups/configuring-stateful-ip-addresses-in-migs).
+
+When using stateful IP addresses, if an instance needs to be replaced due to an update, or auto-healing the new instance will have the same IP as the original instance.
+
+This allows using the cluster without a load balancer, where the clients connected directly to a specific proxy instance via the instances internal IP address.
 
 # v1.0.0-beta3
 

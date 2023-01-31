@@ -25,3 +25,18 @@ output "nfsproxy_loadbalancer_dnsaddress" {
   description = "The internal dns entry address for the nfsProxy load balancer:"
   value       = one(module.loadbalancer.*.dns_name)
 }
+
+output "instance_group" {
+  description = "Full URL of the KNFSD proxy instance group."
+  value       = google_compute_instance_group_manager.proxy-group.instance_group
+}
+
+output "instance_group_manager" {
+  description = "Full URL of the KNFSD proxy instance group manager."
+  value       = google_compute_instance_group_manager.proxy-group.self_link
+}
+
+output "instance_group_name" {
+  description = "Name of the KNFSD proxy instance group."
+  value       = google_compute_instance_group_manager.proxy-group.name
+}

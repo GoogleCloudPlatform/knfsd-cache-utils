@@ -25,4 +25,5 @@ locals {
     var.ENABLE_STACKDRIVER_METRICS ? ["logging-write", "monitoring-write"] :
     []
   )
+  MIG_REPLACEMENT_METHOD_DEFAULT = var.ASSIGN_STATIC_IPS ? "RECREATE" : "SUBSTITUTE"
 }
