@@ -4,6 +4,7 @@
 * Stop pinning to specific package versions
 * Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
 * Temporary fix for cachefilesd intermittently terminating
+* Assign static IPs to proxy instances
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 
@@ -24,6 +25,14 @@ The older `ssh-rsa` (RSA with SHA1) key algorithm is no longer secure and is not
 The cachefilesd service keeps terminating causing the cache to be withdrawn. This results in the proxy no longer caching any data and just acting as a pass-through server.
 
 This patch provides a temporary fix while the linux-cachefs maintainers decide the best way to solve the issue.
+
+## Assign static IPs to proxy instances
+
+Added a new configuration option, `ASSIGN_STATIC_IPS`. This configures the MIG to use [stateful IP addresses](https://cloud.google.com/compute/docs/instance-groups/configuring-stateful-ip-addresses-in-migs).
+
+When using stateful IP addresses, if an instance needs to be replaced due to an update, or auto-healing the new instance will have the same IP as the original instance.
+
+This allows using the cluster without a load balancer, where the clients connected directly to a specific proxy instance via the instances internal IP address.
 
 # v0.10.0
 

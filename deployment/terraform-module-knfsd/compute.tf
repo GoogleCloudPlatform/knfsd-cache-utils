@@ -166,10 +166,20 @@ resource "google_compute_health_check" "autohealing" {
     port = "2049"
   }
 
+  depends_on = [
+    # Ensure that the firewall rules are not deleted while the health check
+    # still exists. Otherwise when removing clusters, Terraform may delete the
+    # firewall rule causing the proxy group to start replacing instances.
+    # Terraform will then get stuck waiting for the instance group to complete
+    # the changes before removing the instance group.
+    google_compute_firewall.allow-tcp-healthcheck
+  ]
 }
 
 # Instance Group Manager for the Knfsd Nodes
 resource "google_compute_instance_group_manager" "proxy-group" {
+  provider = google-beta # required to support stateful_internal_ip
+
   project            = var.PROJECT
   name               = "${var.PROXY_BASENAME}-group"
   base_instance_name = var.PROXY_BASENAME
@@ -177,11 +187,16 @@ resource "google_compute_instance_group_manager" "proxy-group" {
   // Set the Target Size to null if autoscaling is enabled
   target_size = (var.ENABLE_KNFSD_AUTOSCALING == true ? null : var.KNFSD_NODES)
 
+  # when using static IPs, wait for all the instances to be updated so that the
+  # IPs of the Compute Instances can be fetched using the instance_ips module.
+  wait_for_instances        = var.ASSIGN_STATIC_IPS
+  wait_for_instances_status = "UPDATED"
+
   update_policy {
     type                    = "PROACTIVE"
     minimal_action          = var.MIG_MINIMAL_ACTION
     max_unavailable_percent = var.MIG_MAX_UNAVAILABLE_PERCENT
-    replacement_method      = var.MIG_REPLACEMENT_METHOD
+    replacement_method      = coalesce(var.MIG_REPLACEMENT_METHOD, local.MIG_REPLACEMENT_METHOD_DEFAULT)
   }
 
   version {
@@ -198,6 +213,13 @@ resource "google_compute_instance_group_manager" "proxy-group" {
     }
   }
 
+  dynamic "stateful_internal_ip" {
+    for_each = toset(var.ASSIGN_STATIC_IPS ? ["nic0"] : [])
+    content {
+      interface_name = stateful_internal_ip.value
+      delete_rule    = "ON_PERMANENT_INSTANCE_DELETION"
+    }
+  }
 }
 
 # Firewall rule to allow healthchecks from the GCP Healthcheck ranges
