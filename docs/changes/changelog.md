@@ -1,3 +1,13 @@
+# next
+
+* Temporary fix for cachefilesd intermittently terminating
+
+## Temporary fix for cachefilesd intermittently terminating
+
+The cachefilesd service keeps terminating causing the cache to be withdrawn. This results in the proxy no longer caching any data and just acting as a pass-through server.
+
+This patch provides a temporary fix while the linux-cachefs maintainers decide the best way to solve the issue.
+
 # v1.0.0-beta2
 
 * Stop pinning to specific package versions

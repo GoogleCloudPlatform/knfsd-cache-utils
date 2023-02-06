@@ -28,6 +28,8 @@ export DEBIAN_PRIORITY=critical
 export QUILT_PATCHES=debian/patches
 export NAME=build EMAIL=build
 
+patches="$(pwd)/patches/"
+
 # begin_command() formats the terminal for a command output
 begin_command() {
     echo -e "${SHELL_YELLOW}"
@@ -46,13 +48,11 @@ complete_command() {
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
 
-    begin_command "Installing rpcbind, nfs-kernel-server and cachefilesd"
+    begin_command "Installing rpcbind and nfs-kernel-server"
     apt-get update
-    apt-get install -y rpcbind nfs-kernel-server cachefilesd
+    apt-get install -y rpcbind nfs-kernel-server
     systemctl disable nfs-kernel-server
     systemctl disable nfs-idmapd.service
-    systemctl disable cachefilesd
-    echo "RUN=yes" >> /etc/default/cachefilesd
     complete_command
 
 }
@@ -71,6 +71,28 @@ install_build_dependencies() {
     complete_command
 
 }
+
+install_cachefilesd() (
+    begin_command "Building and installing cachefilesd"
+    echo -e "------${SHELL_DEFAULT}"
+
+    pull-lp-source cachefilesd 0.10.10-0.2ubuntu1
+    cd cachefilesd-0.10.10/
+
+    quilt import "$patches"/cachefilesd/*.patch
+    quilt push -a
+
+    debchange --local +knfsd "Applying custom patches"
+    debuild -i -uc -us -b
+
+    cd ..
+    apt-get install -y \
+        ./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb \
+        ./cachefilesd-dbgsym_0.10.10-0.2ubuntu1+knfsd1_amd64.ddeb
+
+    systemctl disable cachefilesd
+    echo "RUN=yes" >> /etc/default/cachefilesd
+)
 
 # download_nfs-utils() downloads version 2.5.3 of nfs-utils
 download_nfs-utils() (
@@ -203,6 +225,7 @@ copy_config() {
 # Run Build
 install_nfs_packages
 install_build_dependencies
+install_cachefilesd
 download_nfs-utils
 build_install_nfs-utils
 install_stackdriver_agent
