@@ -1,0 +1,417 @@
+From 749ffc38b8e084a84b5071db6d46d5e5977180cb Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Wed, 23 Mar 2022 22:51:45 +0100
+Subject: [PATCH 1/8] Implement reexport helper library
+
+This internal library contains code that will be used by various
+tools within the nfs-utils package to deal better with NFS re-export,
+especially cross mounts.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ configure.ac                 |  12 ++
+ support/Makefile.am          |   4 +
+ support/reexport/Makefile.am |   6 +
+ support/reexport/reexport.c  | 285 +++++++++++++++++++++++++++++++++++
+ support/reexport/reexport.h  |  39 +++++
+ 5 files changed, 346 insertions(+)
+ create mode 100644 support/reexport/Makefile.am
+ create mode 100644 support/reexport/reexport.c
+ create mode 100644 support/reexport/reexport.h
+
+diff --git a/configure.ac b/configure.ac
+index 5d9cbf31..a52d1994 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -274,6 +274,17 @@ AC_ARG_ENABLE(nfsv4server,
+ 	fi
+ 	AM_CONDITIONAL(CONFIG_NFSV4SERVER, [test "$enable_nfsv4server" = "yes" ])
+ 
++AC_ARG_ENABLE(reexport,
++	[AC_HELP_STRING([--enable-reexport],
++			[enable support for re-exporting NFS mounts  @<:@default=no@:>@])],
++	enable_reexport=$enableval,
++	enable_reexport="no")
++	if test "$enable_reexport" = yes; then
++		AC_DEFINE(HAVE_REEXPORT_SUPPORT, 1,
++                          [Define this if you want NFS re-export support compiled in])
++	fi
++	AM_CONDITIONAL(CONFIG_REEXPORT, [test "$enable_reexport" = "yes" ])
++
+ dnl Check for TI-RPC library and headers
+ AC_LIBTIRPC
+ 
+@@ -729,6 +740,7 @@ AC_CONFIG_FILES([
+ 	support/nsm/Makefile
+ 	support/nfsidmap/Makefile
+ 	support/nfsidmap/libnfsidmap.pc
++	support/reexport/Makefile
+ 	tools/Makefile
+ 	tools/locktest/Makefile
+ 	tools/nlmtest/Makefile
+diff --git a/support/Makefile.am b/support/Makefile.am
+index c962d4d4..986e9b5f 100644
+--- a/support/Makefile.am
++++ b/support/Makefile.am
+@@ -10,6 +10,10 @@ if CONFIG_JUNCTION
+ OPTDIRS += junction
+ endif
+ 
++if CONFIG_REEXPORT
++OPTDIRS += reexport
++endif
++
+ SUBDIRS = export include misc nfs nsm $(OPTDIRS)
+ 
+ MAINTAINERCLEANFILES = Makefile.in
+diff --git a/support/reexport/Makefile.am b/support/reexport/Makefile.am
+new file mode 100644
+index 00000000..9d544a8f
+--- /dev/null
++++ b/support/reexport/Makefile.am
+@@ -0,0 +1,6 @@
++## Process this file with automake to produce Makefile.in
++
++noinst_LIBRARIES = libreexport.a
++libreexport_a_SOURCES = reexport.c
++
++MAINTAINERCLEANFILES = Makefile.in
+diff --git a/support/reexport/reexport.c b/support/reexport/reexport.c
+new file mode 100644
+index 00000000..5474a21f
+--- /dev/null
++++ b/support/reexport/reexport.c
+@@ -0,0 +1,285 @@
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <sqlite3.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <sys/random.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <sys/vfs.h>
++#include <unistd.h>
++
++#include "nfsd_path.h"
++#include "nfslib.h"
++#include "reexport.h"
++#include "xcommon.h"
++#include "xlog.h"
++
++#define REEXPDB_DBFILE NFS_STATEDIR "/reexpdb.sqlite3"
++#define REEXPDB_DBFILE_WAIT_USEC (5000)
++
++static sqlite3 *db;
++static int init_done;
++
++static int prng_init(void)
++{
++	int seed;
++
++	if (getrandom(&seed, sizeof(seed), 0) != sizeof(seed)) {
++		xlog(L_ERROR, "Unable to obtain seed for PRNG via getrandom()");
++		return -1;
++	}
++
++	srand(seed);
++	return 0;
++}
++
++static void wait_for_dbaccess(void)
++{
++	usleep(REEXPDB_DBFILE_WAIT_USEC + (rand() % REEXPDB_DBFILE_WAIT_USEC));
++}
++
++/*
++ * reexpdb_init - Initialize reexport database
++ */
++int reexpdb_init(void)
++{
++	char *sqlerr;
++	int ret;
++
++	if (init_done)
++		return 0;
++
++	if (prng_init() != 0)
++		return -1;
++
++	ret = sqlite3_open_v2(REEXPDB_DBFILE, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_ERROR, "Unable to open reexport database: %s", sqlite3_errstr(ret));
++		return -1;
++	}
++
++again:
++	ret = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS fsidnums (num INTEGER PRIMARY KEY CHECK (num > 0 AND num < 4294967296), path TEXT UNIQUE); CREATE INDEX IF NOT EXISTS idx_ids_path ON fsidnums (path);", NULL, NULL, &sqlerr);
++	switch (ret) {
++	case SQLITE_OK:
++		init_done = 1;
++		ret = 0;
++		break;
++	case SQLITE_BUSY:
++	case SQLITE_LOCKED:
++		wait_for_dbaccess();
++		goto again;
++	default:
++		xlog(L_ERROR, "Unable to init reexport database: %s", sqlite3_errstr(ret));
++		sqlite3_free(sqlerr);
++		sqlite3_close_v2(db);
++		ret = -1;
++	}
++
++	return ret;
++}
++
++/*
++ * reexpdb_destroy - Undo reexpdb_init().
++ */
++void reexpdb_destroy(void)
++{
++	if (!init_done)
++		return;
++
++	sqlite3_close_v2(db);
++}
++
++static int get_fsidnum_by_path(char *path, uint32_t *fsidnum)
++{
++	static const char fsidnum_by_path_sql[] = "SELECT num FROM fsidnums WHERE path = ?1;";
++	sqlite3_stmt *stmt = NULL;
++	int found = 0;
++	int ret;
++
++	ret = sqlite3_prepare_v2(db, fsidnum_by_path_sql, sizeof(fsidnum_by_path_sql), &stmt, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to prepare SQL query '%s': %s", fsidnum_by_path_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++	ret = sqlite3_bind_text(stmt, 1, path, -1, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to bind SQL query '%s': %s", fsidnum_by_path_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++again:
++	ret = sqlite3_step(stmt);
++	switch (ret) {
++	case SQLITE_ROW:
++		*fsidnum = sqlite3_column_int(stmt, 0);
++		found = 1;
++		break;
++	case SQLITE_DONE:
++		/* No hit */
++		found = 0;
++		break;
++	case SQLITE_BUSY:
++	case SQLITE_LOCKED:
++		wait_for_dbaccess();
++		goto again;
++	default:
++		xlog(L_WARNING, "Error while looking up '%s' in database: %s", path, sqlite3_errstr(ret));
++	}
++
++out:
++	sqlite3_finalize(stmt);
++	return found;
++}
++
++static int get_path_by_fsidnum(uint32_t fsidnum, char **path)
++{
++	static const char path_by_fsidnum_sql[] = "SELECT path FROM fsidnums WHERE num = ?1;";
++	sqlite3_stmt *stmt = NULL;
++	int found = 0;
++	int ret;
++
++	ret = sqlite3_prepare_v2(db, path_by_fsidnum_sql, sizeof(path_by_fsidnum_sql), &stmt, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to prepare SQL query '%s': %s", path_by_fsidnum_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++	ret = sqlite3_bind_int(stmt, 1, fsidnum);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to bind SQL query '%s': %s", path_by_fsidnum_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++again:
++	ret = sqlite3_step(stmt);
++	switch (ret) {
++	case SQLITE_ROW:
++		*path = xstrdup((char *)sqlite3_column_text(stmt, 0));
++		found = 1;
++		break;
++	case SQLITE_DONE:
++		/* No hit */
++		found = 0;
++		break;
++	case SQLITE_BUSY:
++	case SQLITE_LOCKED:
++		wait_for_dbaccess();
++		goto again;
++	default:
++		xlog(L_WARNING, "Error while looking up '%i' in database: %s", fsidnum, sqlite3_errstr(ret));
++	}
++
++out:
++	sqlite3_finalize(stmt);
++	return found;
++}
++
++static int new_fsidnum_by_path(char *path, uint32_t *fsidnum)
++{
++	/*
++	 * This query is a little tricky. We use SQL to find and claim the smallest free fsid number.
++	 * To find a free fsid the fsidnums is left joined to itself but with an offset of 1.
++	 * Everything after the UNION statement is to handle the corner case where fsidnums
++	 * is empty. In this case we want 1 as first fsid number.
++	 */
++	static const char new_fsidnum_by_path_sql[] = "INSERT INTO fsidnums VALUES ((SELECT ids1.num + 1 FROM fsidnums AS ids1 LEFT JOIN fsidnums AS ids2 ON ids2.num = ids1.num + 1 WHERE ids2.num IS NULL UNION SELECT 1 WHERE NOT EXISTS (SELECT NULL FROM fsidnums WHERE num = 1) LIMIT 1), ?1) RETURNING num;";
++
++	sqlite3_stmt *stmt = NULL;
++	int found = 0, check = 0;
++	int ret;
++
++	ret = sqlite3_prepare_v2(db, new_fsidnum_by_path_sql, sizeof(new_fsidnum_by_path_sql), &stmt, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to prepare SQL query '%s': %s", new_fsidnum_by_path_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++	ret = sqlite3_bind_text(stmt, 1, path, -1, NULL);
++	if (ret != SQLITE_OK) {
++		xlog(L_WARNING, "Unable to bind SQL query '%s': %s", new_fsidnum_by_path_sql, sqlite3_errstr(ret));
++		goto out;
++	}
++
++again:
++	ret = sqlite3_step(stmt);
++	switch (ret) {
++	case SQLITE_ROW:
++		*fsidnum = sqlite3_column_int(stmt, 0);
++		found = 1;
++		break;
++	case SQLITE_CONSTRAINT:
++		/* Maybe we lost the race against another writer and the path is now present. */
++		check = 1;
++		break;
++	case SQLITE_BUSY:
++	case SQLITE_LOCKED:
++		wait_for_dbaccess();
++		goto again;
++	default:
++		xlog(L_WARNING, "Error while looking up '%s' in database: %s", path, sqlite3_errstr(ret));
++	}
++
++out:
++	sqlite3_finalize(stmt);
++
++	if (check) {
++		found = get_fsidnum_by_path(path, fsidnum);
++		if (!found)
++			xlog(L_WARNING, "SQLITE_CONSTRAINT error while inserting '%s' in database", path);
++	}
++
++	return found;
++}
++
++/*
++ * reexpdb_fsidnum_by_path - Lookup a fsid by path.
++ *
++ * @path: File system path used as lookup key
++ * @fsidnum: Pointer where found fsid is written to
++ * @may_create: If non-zero, allocate new fsid if lookup failed
++ *
++ */
++int reexpdb_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create)
++{
++	int found;
++
++	found = get_fsidnum_by_path(path, fsidnum);
++
++	if (!found && may_create)
++		found = new_fsidnum_by_path(path, fsidnum);
++
++	return found;
++}
++
++/*
++ * reexpdb_uncover_subvolume - Make sure a subvolume is present.
++ *
++ * @fsidnum: Numerical fsid number to look for
++ *
++ * Subvolumes (NFS cross mounts) get automatically mounted upon first
++ * access and can vanish after fs.nfs.nfs_mountpoint_timeout seconds.
++ * Also if the NFS server reboots, clients can still have valid file
++ * handles for such a subvolume.
++ *
++ * If kNFSd asks mountd for the path of a given fsidnum it can
++ * trigger an automount by calling statfs() on the given path.
++ */
++void reexpdb_uncover_subvolume(uint32_t fsidnum)
++{
++	struct statfs64 st;
++	char *path = NULL;
++	int ret;
++
++	if (get_path_by_fsidnum(fsidnum, &path)) {
++		ret = nfsd_path_statfs64(path, &st);
++		if (ret == -1)
++			xlog(L_WARNING, "statfs() failed");
++	}
++
++	free(path);
++}
+diff --git a/support/reexport/reexport.h b/support/reexport/reexport.h
+new file mode 100644
+index 00000000..bb6d2a1b
+--- /dev/null
++++ b/support/reexport/reexport.h
+@@ -0,0 +1,39 @@
++#ifndef REEXPORT_H
++#define REEXPORT_H
++
++enum {
++	REEXP_NONE = 0,
++	REEXP_AUTO_FSIDNUM,
++	REEXP_PREDEFINED_FSIDNUM,
++};
++
++#ifdef HAVE_REEXPORT_SUPPORT
++int reexpdb_init(void);
++void reexpdb_destroy(void);
++int reexpdb_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create);
++int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flline);
++void reexpdb_uncover_subvolume(uint32_t fsidnum);
++#else
++static inline int reexpdb_init(void) { return 0; }
++static inline void reexpdb_destroy(void) {}
++static inline int reexpdb_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create)
++{
++	(void)path;
++	(void)may_create;
++	*fsidnum = 0;
++	return 0;
++}
++static inline int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flline)
++{
++	(void)ep;
++	(void)flname;
++	(void)flline;
++	return 0;
++}
++static inline void reexpdb_uncover_subvolume(uint32_t fsidnum)
++{
++	(void)fsidnum;
++}
++#endif /* HAVE_REEXPORT_SUPPORT */
++
++#endif /* REEXPORT_H */
+-- 
+2.31.1
+

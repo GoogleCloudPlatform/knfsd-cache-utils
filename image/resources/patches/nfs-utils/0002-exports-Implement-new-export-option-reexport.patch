@@ -1,0 +1,400 @@
+From 4771a42faf189d42f3602d97e221d68da5a8a4a9 Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Wed, 23 Mar 2022 23:11:34 +0100
+Subject: [PATCH 2/8] exports: Implement new export option reexport=
+
+When re-exporting a NFS volume it is mandatory to specify
+either a UUID or numerical fsid= option because nfsd is unable
+to derive a identifier on its own.
+
+For NFS cross mounts this becomes a problem because nfsd also
+needs a identifier for every crossed mount.
+A common workaround is stating every single subvolume in the
+exports list too.
+But this defeats the purpose of the crossmnt option and is tedious.
+
+This is where the reexport= tries to help.
+It offers various strategies to automatically derive a identifier
+for NFS volumes and sub volumes.
+Each have their pros and cons.
+
+Currently two modes are implemented:
+
+1. auto-fsidnum
+	In this mode mountd/exportd will create a new numerical fsid
+	for a NFS volume and subvolume. The numbers are stored in a database
+	such that the server will always use the same fsid.
+	The entry in the exports file allowed to skip fsid= entiry but
+	stating a UUID is allowed, if needed.
+
+	This mode has the obvious downside that load balancing is not
+	possible since multiple re-exporting NFS servers would generate
+	different ids.
+
+2. predefined-fsidnum
+	This mode works just like auto-fsidnum but does not generate ids
+	for you. It helps in the load balancing case. A system administrator
+	has to manually maintain the database and install it on all re-exporting
+	NFS servers. If you have a massive amount of subvolumes this mode
+	will help because you don't have to bloat the exports list.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ support/export/Makefile.am  |  2 ++
+ support/include/nfslib.h    |  1 +
+ support/nfs/Makefile.am     |  1 +
+ support/nfs/exports.c       | 68 +++++++++++++++++++++++++++++++++++++
+ support/reexport/reexport.c | 65 +++++++++++++++++++++++++++++++++++
+ systemd/Makefile.am         |  4 +++
+ utils/exportfs/Makefile.am  |  6 ++++
+ utils/exportfs/exportfs.c   | 11 ++++++
+ utils/exportfs/exports.man  | 31 +++++++++++++++++
+ utils/mount/Makefile.am     |  7 ++++
+ 10 files changed, 196 insertions(+)
+
+diff --git a/support/export/Makefile.am b/support/export/Makefile.am
+index eec737f6..7338e1c7 100644
+--- a/support/export/Makefile.am
++++ b/support/export/Makefile.am
+@@ -14,6 +14,8 @@ libexport_a_SOURCES = client.c export.c hostname.c \
+ 		      xtab.c mount_clnt.c mount_xdr.c \
+ 		      cache.c auth.c v4root.c fsloc.c \
+ 		      v4clients.c
++libexport_a_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) -I$(top_srcdir)/support/reexport
++
+ BUILT_SOURCES 	= $(GENFILES)
+ 
+ noinst_HEADERS = mount.h
+diff --git a/support/include/nfslib.h b/support/include/nfslib.h
+index 6faba71b..0465a1ff 100644
+--- a/support/include/nfslib.h
++++ b/support/include/nfslib.h
+@@ -85,6 +85,7 @@ struct exportent {
+ 	struct sec_entry e_secinfo[SECFLAVOR_COUNT+1];
+ 	unsigned int	e_ttl;
+ 	char *		e_realpath;
++	int		e_reexport;
+ };
+ 
+ struct rmtabent {
+diff --git a/support/nfs/Makefile.am b/support/nfs/Makefile.am
+index 67e3a8e1..2e1577cc 100644
+--- a/support/nfs/Makefile.am
++++ b/support/nfs/Makefile.am
+@@ -9,6 +9,7 @@ libnfs_la_SOURCES = exports.c rmtab.c xio.c rpcmisc.c rpcdispatch.c \
+ 		   svc_socket.c cacheio.c closeall.c nfs_mntent.c \
+ 		   svc_create.c atomicio.c strlcat.c strlcpy.c
+ libnfs_la_LIBADD = libnfsconf.la
++libnfs_la_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) -I$(top_srcdir)/support/reexport
+ 
+ libnfsconf_la_SOURCES = conffile.c xlog.c
+ 
+diff --git a/support/nfs/exports.c b/support/nfs/exports.c
+index 2c8f0752..bc2b1d93 100644
+--- a/support/nfs/exports.c
++++ b/support/nfs/exports.c
+@@ -31,6 +31,7 @@
+ #include "xlog.h"
+ #include "xio.h"
+ #include "pseudoflavors.h"
++#include "reexport.h"
+ 
+ #define EXPORT_DEFAULT_FLAGS	\
+   (NFSEXP_READONLY|NFSEXP_ROOTSQUASH|NFSEXP_GATHERED_WRITES|NFSEXP_NOSUBTREECHECK)
+@@ -103,6 +104,7 @@ static void init_exportent (struct exportent *ee, int fromkernel)
+ 	ee->e_nsqgids = 0;
+ 	ee->e_uuid = NULL;
+ 	ee->e_ttl = default_ttl;
++	ee->e_reexport = REEXP_NONE;
+ }
+ 
+ struct exportent *
+@@ -302,6 +304,23 @@ putexportent(struct exportent *ep)
+ 	}
+ 	if (ep->e_uuid)
+ 		fprintf(fp, "fsid=%s,", ep->e_uuid);
++
++	if (ep->e_reexport) {
++		fprintf(fp, "reexport=");
++		switch (ep->e_reexport) {
++			case REEXP_AUTO_FSIDNUM:
++				fprintf(fp, "auto-fsidnum");
++				break;
++			case REEXP_PREDEFINED_FSIDNUM:
++				fprintf(fp, "predefined-fsidnum");
++				break;
++			default:
++				xlog(L_ERROR, "unknown reexport method %i", ep->e_reexport);
++				fprintf(fp, "none");
++		}
++		fprintf(fp, ",");
++	}
++
+ 	if (ep->e_mountpoint)
+ 		fprintf(fp, "mountpoint%s%s,",
+ 			ep->e_mountpoint[0]?"=":"", ep->e_mountpoint);
+@@ -538,6 +557,7 @@ parseopts(char *cp, struct exportent *ep, int warn, int *had_subtree_opt_ptr)
+ 	char 	*flname = efname?efname:"command line";
+ 	int	flline = efp?efp->x_line:0;
+ 	unsigned int active = 0;
++	int saw_reexport = 0;
+ 
+ 	squids = ep->e_squids; nsquids = ep->e_nsquids;
+ 	sqgids = ep->e_sqgids; nsqgids = ep->e_nsqgids;
+@@ -644,6 +664,13 @@ bad_option:
+ 			}
+ 		} else if (strncmp(opt, "fsid=", 5) == 0) {
+ 			char *oe;
++
++			if (saw_reexport) {
++				xlog(L_ERROR, "%s:%d: 'fsid=' has to be before 'reexport=' %s\n",
++				     flname, flline, opt);
++				goto bad_option;
++			}
++
+ 			if (strcmp(opt+5, "root") == 0) {
+ 				ep->e_fsid = 0;
+ 				setflags(NFSEXP_FSID, active, ep);
+@@ -688,6 +715,47 @@ bad_option:
+ 			active = parse_flavors(opt+4, ep);
+ 			if (!active)
+ 				goto bad_option;
++		} else if (strncmp(opt, "reexport=", 9) == 0) {
++#ifdef HAVE_REEXPORT_SUPPORT
++			char *strategy = strchr(opt, '=');
++
++			if (!strategy) {
++				xlog(L_ERROR, "%s:%d: bad option %s\n",
++				     flname, flline, opt);
++				goto bad_option;
++			}
++			strategy++;
++
++			if (saw_reexport) {
++				xlog(L_ERROR, "%s:%d: only one 'reexport=' is allowed%s\n",
++				     flname, flline, opt);
++				goto bad_option;
++			}
++
++			if (strcmp(strategy, "auto-fsidnum") == 0) {
++				ep->e_reexport = REEXP_AUTO_FSIDNUM;
++			} else if (strcmp(strategy, "predefined-fsidnum") == 0) {
++				ep->e_reexport = REEXP_PREDEFINED_FSIDNUM;
++			} else if (strcmp(strategy, "none") == 0) {
++				ep->e_reexport = REEXP_NONE;
++			} else {
++				xlog(L_ERROR, "%s:%d: bad option %s\n",
++				     flname, flline, strategy);
++				goto bad_option;
++			}
++
++			if (reexpdb_apply_reexport_settings(ep, flname, flline) != 0)
++				goto bad_option;
++
++			if (ep->e_fsid)
++				setflags(NFSEXP_FSID, active, ep);
++
++			saw_reexport = 1;
++#else
++			xlog(L_ERROR, "%s:%d: 'reexport=' not available, rebuild with --enable-reexport\n",
++			     flname, flline);
++			goto bad_option;
++#endif
+ 		} else {
+ 			xlog(L_ERROR, "%s:%d: unknown keyword \"%s\"\n",
+ 					flname, flline, opt);
+diff --git a/support/reexport/reexport.c b/support/reexport/reexport.c
+index 5474a21f..a9529b2b 100644
+--- a/support/reexport/reexport.c
++++ b/support/reexport/reexport.c
+@@ -283,3 +283,68 @@ void reexpdb_uncover_subvolume(uint32_t fsidnum)
+ 
+ 	free(path);
+ }
++
++/*
++ * reexpdb_apply_reexport_settings - Apply reexport specific settings to an exportent
++ *
++ * @ep: exportent to apply to
++ * @flname: Current export file, only useful for logging
++ * @flline: Current line, only useful for logging
++ *
++ * This is a helper function for applying reexport specific settings to an exportent.
++ * It searches a suitable fsid an sets @ep->e_fsid.
++ */
++int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flline)
++{
++	uint32_t fsidnum;
++	int found;
++	int ret = 0;
++
++	if (ep->e_reexport == REEXP_NONE)
++		goto out;
++
++	if (ep->e_uuid)
++		goto out;
++
++	/*
++	 * We do a lazy database init because we want to init the db only
++	 * when at least one reexport= option is present.
++	 */
++	if (reexpdb_init() != 0) {
++		ret = -1;
++		goto out;
++	}
++
++	found = reexpdb_fsidnum_by_path(ep->e_path, &fsidnum, 0);
++	if (!found) {
++		if (ep->e_reexport == REEXP_AUTO_FSIDNUM) {
++			found = reexpdb_fsidnum_by_path(ep->e_path, &fsidnum, 1);
++			if (!found) {
++				xlog(L_ERROR, "%s:%i: Unable to generate fsid for %s",
++				     flname, flline, ep->e_path);
++				ret = -1;
++				goto out;
++			}
++		} else {
++			if (!ep->e_fsid) {
++				xlog(L_ERROR, "%s:%i: Selected 'reexport=' mode requires either a UUID 'fsid=' or a numerical 'fsid=' or a reexport db entry %d",
++				     flname, flline, ep->e_fsid);
++				ret = -1;
++			}
++
++			goto out;
++		}
++	}
++
++	if (ep->e_fsid) {
++		if (ep->e_fsid != fsidnum) {
++			xlog(L_ERROR, "%s:%i: Selected 'reexport=' mode requires configured numerical 'fsid=' to agree with reexport db entry",
++			     flname, flline);
++			ret = -1;
++		}
++	} else {
++		ep->e_fsid = fsidnum;
++	}
++
++	return ret;
++}
+diff --git a/systemd/Makefile.am b/systemd/Makefile.am
+index 7b5ab84b..b6db467f 100644
+--- a/systemd/Makefile.am
++++ b/systemd/Makefile.am
+@@ -71,6 +71,10 @@ nfs_server_generator_LDADD = ../support/export/libexport.a \
+ 			     ../support/misc/libmisc.a \
+ 			     $(LIBPTHREAD)
+ 
++if CONFIG_REEXPORT
++nfs_server_generator_LDADD += ../support/reexport/libreexport.a $(LIBSQLITE) -lrt
++endif
++
+ rpc_pipefs_generator_LDADD = ../support/nfs/libnfs.la
+ 
+ if INSTALL_SYSTEMD
+diff --git a/utils/exportfs/Makefile.am b/utils/exportfs/Makefile.am
+index 96524c72..451637a0 100644
+--- a/utils/exportfs/Makefile.am
++++ b/utils/exportfs/Makefile.am
+@@ -12,4 +12,10 @@ exportfs_LDADD = ../../support/export/libexport.a \
+ 		 ../../support/misc/libmisc.a \
+ 		 $(LIBWRAP) $(LIBNSL) $(LIBPTHREAD)
+ 
++if CONFIG_REEXPORT
++exportfs_LDADD += ../../support/reexport/libreexport.a $(LIBSQLITE) -lrt
++endif
++
++exportfs_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) -I$(top_srcdir)/support/reexport
++
+ MAINTAINERCLEANFILES = Makefile.in
+diff --git a/utils/exportfs/exportfs.c b/utils/exportfs/exportfs.c
+index 0897b229..8f055d34 100644
+--- a/utils/exportfs/exportfs.c
++++ b/utils/exportfs/exportfs.c
+@@ -38,6 +38,7 @@
+ #include "exportfs.h"
+ #include "xlog.h"
+ #include "conffile.h"
++#include "reexport.h"
+ 
+ static void	export_all(int verbose);
+ static void	exportfs(char *arg, char *options, int verbose);
+@@ -719,6 +720,16 @@ dump(int verbose, int export_format)
+ 				c = dumpopt(c, "fsid=%d", ep->e_fsid);
+ 			if (ep->e_uuid)
+ 				c = dumpopt(c, "fsid=%s", ep->e_uuid);
++			if (ep->e_reexport) {
++				switch (ep->e_reexport) {
++					case REEXP_AUTO_FSIDNUM:
++						c = dumpopt(c, "reexport=%s", "auto-fsidnum");
++						break;
++					case REEXP_PREDEFINED_FSIDNUM:
++						c = dumpopt(c, "reexport=%s", "predefined-fsidnum");
++						break;
++				}
++			}
+ 			if (ep->e_mountpoint)
+ 				c = dumpopt(c, "mountpoint%s%s",
+ 					    ep->e_mountpoint[0]?"=":"",
+diff --git a/utils/exportfs/exports.man b/utils/exportfs/exports.man
+index 54b3f877..ad2c2c59 100644
+--- a/utils/exportfs/exports.man
++++ b/utils/exportfs/exports.man
+@@ -420,6 +420,37 @@ will only work if all clients use a consistent security policy.  Note
+ that early kernels did not support this export option, and instead
+ enabled security labels by default.
+ 
++.TP
++.IR reexport= auto-fsidnum|predefined-fsidnum
++This option helps when a NFS share is re-exported. Since the NFS server
++needs a unique identifier for each exported filesystem and a NFS share
++cannot provide such, usually a manual fsid is needed.
++As soon
++.IR crossmnt
++is used manually assigning fsid won't work anymore. This is where this
++option becomes handy. It will automatically assign a numerical fsid
++to exported NFS shares. The fsid and path relations are stored in a SQLite
++database. If
++.IR auto-fsidnum
++is selected, the fsid is also autmatically allocated.
++.IR predefined-fsidnum
++assumes pre-allocated fsid numbers and will just look them up.
++This option depends also on the kernel, you will need at least kernel version
++5.19.
++Since
++.IR reexport=
++can automatically allocate and assign numerical fsids, it is no longer possible
++to have numerical fsids in other exports as soon this option is used in at least
++one export entry.
++
++The association between fsid numbers and paths is stored in a SQLite database.
++Don't edit or remove the database unless you know exactly what you're doing.
++.IR predefined-fsidnum
++is useful when you have used
++.IR auto-fsidnum
++before and don't want further entries stored.
++
++
+ .SS User ID Mapping
+ .PP
+ .B nfsd
+diff --git a/utils/mount/Makefile.am b/utils/mount/Makefile.am
+index 3101f7ab..0268488c 100644
+--- a/utils/mount/Makefile.am
++++ b/utils/mount/Makefile.am
+@@ -32,6 +32,13 @@ mount_nfs_LDADD = ../../support/nfs/libnfs.la \
+ 		  ../../support/misc/libmisc.a \
+ 		  $(LIBTIRPC)
+ 
++if CONFIG_REEXPORT
++mount_nfs_LDADD += ../../support/reexport/libreexport.a \
++		   ../../support/misc/libmisc.a \
++		   $(LIBSQLITE) -lrt $(LIBPTHREAD)
++endif
++
++
+ mount_nfs_SOURCES = $(mount_common)
+ 
+ if CONFIG_LIBMOUNT
+-- 
+2.31.1
+

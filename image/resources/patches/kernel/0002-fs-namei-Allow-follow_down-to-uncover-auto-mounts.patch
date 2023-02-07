@@ -1,0 +1,77 @@
+From patchwork Wed Dec  7 08:43:08 2022
+From: Richard Weinberger <richard@nod.at>
+Subject: [PATCH 2/3] fs: namei: Allow follow_down() to uncover auto mounts
+Date: Wed,  7 Dec 2022 09:43:08 +0100
+
+This function is only used by NFSD to cross mount points.
+If a mount point is of type auto mount, follow_down() will
+not uncover it. Add LOOKUP_AUTOMOUNT to the lookup flags
+to have ->d_automount() called when NFSD walks down the
+mount tree.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ fs/namei.c            | 6 +++---
+ fs/nfsd/vfs.c         | 6 +++++-
+ include/linux/namei.h | 2 +-
+ 3 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/fs/namei.c b/fs/namei.c
+index 578c2110df02..a6bb6863bf0c 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1458,11 +1458,11 @@ EXPORT_SYMBOL(follow_down_one);
+  * point, the filesystem owning that dentry may be queried as to whether the
+  * caller is permitted to proceed or not.
+  */
+-int follow_down(struct path *path)
++int follow_down(struct path *path, unsigned int flags)
+ {
+ 	struct vfsmount *mnt = path->mnt;
+ 	bool jumped;
+-	int ret = traverse_mounts(path, &jumped, NULL, 0);
++	int ret = traverse_mounts(path, &jumped, NULL, flags);
+
+ 	if (path->mnt != mnt)
+ 		mntput(mnt);
+@@ -2864,7 +2864,7 @@ int path_pts(struct path *path)
+
+ 	path->dentry = child;
+ 	dput(parent);
+-	follow_down(path);
++	follow_down(path, 0);
+ 	return 0;
+ }
+ #endif
+diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
+index 157f0df0e93a..ced04fc2b947 100644
+--- a/fs/nfsd/vfs.c
++++ b/fs/nfsd/vfs.c
+@@ -63,9 +63,13 @@ nfsd_cross_mnt(struct svc_rqst *rqstp, struct dentry **dpp,
+ 	struct dentry *dentry = *dpp;
+ 	struct path path = {.mnt = mntget(exp->ex_path.mnt),
+ 			    .dentry = dget(dentry)};
++	unsigned int follow_flags = 0;
+ 	int err = 0;
+
+-	err = follow_down(&path);
++	if (exp->ex_flags & NFSEXP_CROSSMOUNT)
++		follow_flags = LOOKUP_AUTOMOUNT;
++
++	err = follow_down(&path, follow_flags);
+ 	if (err < 0)
+ 		goto out;
+ 	if (path.mnt == exp->ex_path.mnt && path.dentry == dentry &&
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index 00fee52df842..6f96db73a70a 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -77,7 +77,7 @@ struct dentry *lookup_one_positive_unlocked(struct user_namespace *mnt_userns,
+ 					    struct dentry *base, int len);
+
+ extern int follow_down_one(struct path *);
+-extern int follow_down(struct path *);
++extern int follow_down(struct path *, unsigned int flags);
+ extern int follow_up(struct path *);
+
+ extern struct dentry *lock_rename(struct dentry *, struct dentry *);

@@ -29,6 +29,7 @@ export QUILT_PATCHES=debian/patches
 export NAME=build EMAIL=build
 
 patches="$(pwd)/patches/"
+nproc=$(( $(nproc) + 1))
 
 # begin_command() formats the terminal for a command output
 begin_command() {
@@ -67,7 +68,8 @@ install_build_dependencies() {
         libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
         build-essential libevent-dev libsqlite3-dev libblkid-dev \
         libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
-        gawk llvm
+        gawk llvm \
+        libwrap0-dev libkrb5-dev pkg-config libldap2-dev libcap-dev libmount-dev dh-apport
     complete_command
 
 }
@@ -99,8 +101,13 @@ download_nfs-utils() (
 
     begin_command "Downloading nfs-utils"
     echo -e "------${SHELL_DEFAULT}"
-    curl -o nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
-    tar xvf nfs-utils-2.5.3.tar.gz
+
+    # nfs-utils 2.6.3 isn't avaialble yet from launchpad, for now checkout
+    # 2.6.3-rc5 from git.
+    #pull-lp-source nfs-utils 1:2.6.1-1ubuntu1
+    git clone git://git.linux-nfs.org/projects/steved/nfs-utils.git -b nfs-utils-2-6-3-rc5 --depth 1
+    rm -rf nfs-utils/.git
+
     complete_command
 
 )
@@ -109,10 +116,20 @@ download_nfs-utils() (
 build_install_nfs-utils() (
 
     begin_command "Building and installing nfs-utils"
-    cd nfs-utils-2.5.3
+    cd nfs-utils
+
+    quilt import "$patches"/nfs-utils/*.patch
+    quilt push -a
+
+    # nfs-utils 2.6.3 isn't avaialble yet from launchpad, so cannot easily
+    # build a debian package. For now install using make.
+    # debchange --local +knfsd "Applying reexport patches"
+    # dpkg-buildpackage -b -nc -uc
+    ./autogen.sh
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
-    make -j$((`nproc`+1))
-    make install -j$((`nproc`+1))
+    make -j$nproc
+    make -j$nproc install
+
     chmod u+w,go+r /sbin/mount.nfs
     chown nobody:nogroup /var/lib/nfs
     complete_command
@@ -200,15 +217,25 @@ build_install_kernel() {
     git clone --branch nfs-fscache-netfs --depth 1 --recurse-submodules --shallow-submodules https://github.com/benjamin-maynard/kernel.git kernel/v6.1-rc5
     cd kernel/v6.1-rc5
     git checkout 52acbd4584d1b83c844371e48de1a1e39d255a6d
+
+    quilt import "$patches"/kernel/*.patch
+    quilt push -a
+
     cp /boot/config-`uname -r` .config
     scripts/config --disable CONFIG_SYSTEM_REVOCATION_KEYS
     scripts/config --disable CONFIG_SYSTEM_TRUSTED_KEYS
+
     make olddefconfig
-    make clean
-    make ARCH=$(arch) -j$((`nproc`+1))
-    make ARCH=$(arch) modules_install -j$((`nproc`+1))
-    make ARCH=$(arch) install -j$((`nproc`+1))
-    cd ../../
+    make bindeb-pkg -j$nproc LOCALVERSION=-knfsd
+
+    cd ..
+    apt-get install -y \
+        ./linux-image-6.1.0-rc5-knfsd_6.1.0-rc5-knfsd-1_amd64.deb \
+        ./linux-image-6.1.0-rc5-knfsd-dbg_6.1.0-rc5-knfsd-1_amd64.deb \
+        ./linux-headers-6.1.0-rc5-knfsd_6.1.0-rc5-knfsd-1_amd64.deb \
+        ./linux-libc-dev_6.1.0-rc5-knfsd-1_amd64.deb
+
+    cd ..
     rm -rf kernel/
     complete_command
 

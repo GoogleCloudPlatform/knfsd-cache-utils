@@ -1,0 +1,26 @@
+From patchwork Wed Dec  7 08:43:09 2022
+From: Richard Weinberger <richard@nod.at>
+Subject: [PATCH 3/3] NFS: nfs_encode_fh: Remove S_AUTOMOUNT check
+Date: Wed,  7 Dec 2022 09:43:09 +0100
+
+Now with NFSD being able to cross into auto mounts,
+the check can be removed.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ fs/nfs/export.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/nfs/export.c b/fs/nfs/export.c
+index 01596f2d0a1e..0a5ee1754d50 100644
+--- a/fs/nfs/export.c
++++ b/fs/nfs/export.c
+@@ -42,7 +42,7 @@ nfs_encode_fh(struct inode *inode, __u32 *p, int *max_len, struct inode *parent)
+ 	dprintk("%s: max fh len %d inode %p parent %p",
+ 		__func__, *max_len, inode, parent);
+
+-	if (*max_len < len || IS_AUTOMOUNT(inode)) {
++	if (*max_len < len) {
+ 		dprintk("%s: fh len %d too small, required %d\n",
+ 			__func__, *max_len, len);
+ 		*max_len = len;

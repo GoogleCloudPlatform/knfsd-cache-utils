@@ -1,0 +1,75 @@
+From ae961ecdd7e57955fc748e8bcecde8da473d63ad Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Thu, 24 Mar 2022 09:16:24 +0100
+Subject: [PATCH 5/8] reexport: Make state database location configurable
+
+With the database location configurable it is possible to
+place the sqlite database on a shared filesystem.
+That way the reexport state can be shared among multiple
+re-exporting NFS servers.
+
+Be careful with shared filesystems, SQLite assumes that file locking
+works on such filesystems. Not all filesystems implement this
+correctly.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ nfs.conf                    | 3 +++
+ support/reexport/reexport.c | 5 ++++-
+ systemd/nfs.conf.man        | 6 ++++++
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/nfs.conf b/nfs.conf
+index 323f072b..17cb963c 100644
+--- a/nfs.conf
++++ b/nfs.conf
+@@ -99,3 +99,6 @@ rdma-port=20049
+ #
+ [svcgssd]
+ # principal=
++
++[reexport]
++# sqlitedb=
+diff --git a/support/reexport/reexport.c b/support/reexport/reexport.c
+index 51e49834..61574fc5 100644
+--- a/support/reexport/reexport.c
++++ b/support/reexport/reexport.c
+@@ -12,6 +12,7 @@
+ #include <unistd.h>
+ 
+ #include "nfsd_path.h"
++#include "conffile.h"
+ #include "nfslib.h"
+ #include "reexport.h"
+ #include "xcommon.h"
+@@ -55,7 +56,9 @@ int reexpdb_init(void)
+ 	if (prng_init() != 0)
+ 		return -1;
+ 
+-	ret = sqlite3_open_v2(REEXPDB_DBFILE, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
++	ret = sqlite3_open_v2(conf_get_str_with_def("reexport", "sqlitedb", REEXPDB_DBFILE),
++			      &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX,
++			      NULL);
+ 	if (ret != SQLITE_OK) {
+ 		xlog(L_ERROR, "Unable to open reexport database: %s", sqlite3_errstr(ret));
+ 		return -1;
+diff --git a/systemd/nfs.conf.man b/systemd/nfs.conf.man
+index b95c05a6..1165cf39 100644
+--- a/systemd/nfs.conf.man
++++ b/systemd/nfs.conf.man
+@@ -311,6 +311,12 @@ See
+ .BR nfsrahead (5)
+ for deatils.
+ 
++.TP
++.B reexport
++Only
++.B sqlitedb=
++is recognized, path to the state database.
++
+ .SH FILES
+ .TP 10n
+ .I /etc/nfs.conf
+-- 
+2.31.1
+

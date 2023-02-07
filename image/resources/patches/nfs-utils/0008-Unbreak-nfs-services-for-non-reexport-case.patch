@@ -1,0 +1,113 @@
+From e399fb6bf4f3d938df6302edc8d08abf2971776e Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Mon, 30 Jan 2023 15:09:12 +0100
+Subject: [PATCH 8/8] Unbreak nfs services for non-reexport case
+
+Use fsidd only when need.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ support/export/cache.c      | 13 ++++++++-----
+ support/reexport/reexport.c | 11 +++++++++--
+ utils/mountd/svc_run.c      |  5 -----
+ 3 files changed, 17 insertions(+), 12 deletions(-)
+
+diff --git a/support/export/cache.c b/support/export/cache.c
+index 307d183b..0fe878df 100644
+--- a/support/export/cache.c
++++ b/support/export/cache.c
+@@ -696,7 +696,7 @@ static int match_fsid(struct parsed_fsid *parsed, nfs_export *exp, char *path)
+ 	case FSID_NUM:
+ 		if (((exp->m_export.e_flags & NFSEXP_FSID) == 0 ||
+ 		     exp->m_export.e_fsid != parsed->fsidnum)) {
+-			if (exp->m_export.e_flags & NFSEXP_CROSSMOUNT &&
++			if ((exp->m_export.e_flags & NFSEXP_CROSSMOUNT) && exp->m_export.e_reexport != REEXP_NONE &&
+ 			    match_crossmnt_fsidnum(parsed->fsidnum, path))
+ 				goto match;
+ 
+@@ -774,6 +774,7 @@ static void nfsd_fh(int f)
+ 	int dev_missing = 0;
+ 	char buf[RPC_CHAN_BUF_SIZE], *bp;
+ 	int blen;
++	int did_uncover = 0;
+ 
+ 	blen = cache_read(f, buf, sizeof(buf));
+ 	if (blen <= 0 || buf[blen-1] != '\n') return;
+@@ -805,15 +806,17 @@ static void nfsd_fh(int f)
+ 			goto out;
+ 	}
+ 
+-	if (parsed.fsidtype == FSID_NUM)
+-		reexpdb_uncover_subvolume(parsed.fsidnum);
+-
+ 	/* Now determine export point for this fsid/domain */
+ 	for (i=0 ; i < MCL_MAXTYPES; i++) {
+ 		nfs_export *next_exp;
+ 		for (exp = exportlist[i].p_head; exp; exp = next_exp) {
+ 			char *path;
+ 
++			if (!did_uncover && parsed.fsidtype == FSID_NUM && exp->m_export.e_reexport != REEXP_NONE) {
++				reexpdb_uncover_subvolume(parsed.fsidnum);
++				did_uncover = 1;
++			}
++
+ 			if (exp->m_export.e_flags & NFSEXP_CROSSMOUNT) {
+ 				static nfs_export *prev = NULL;
+ 				static void *mnt = NULL;
+@@ -1019,7 +1022,7 @@ static int dump_to_cache(int f, char *buf, int blen, char *domain,
+ 
+ 		if (do_fsidnum) {
+ 			uint32_t search_fsidnum = 0;
+-			if (reexpdb_fsidnum_by_path(path, &search_fsidnum,
++			if (exp->e_reexport != REEXP_NONE && reexpdb_fsidnum_by_path(path, &search_fsidnum,
+ 			    exp->e_reexport == REEXP_AUTO_FSIDNUM) == 0) {
+ 				errno = EINVAL;
+ 				return -1;
+diff --git a/support/reexport/reexport.c b/support/reexport/reexport.c
+index ac80072e..3540eb80 100644
+--- a/support/reexport/reexport.c
++++ b/support/reexport/reexport.c
+@@ -59,7 +59,14 @@ static bool connect_fsid_service(void)
+ 
+ int reexpdb_init(void)
+ {
+-	return connect_fsid_service();
++	int try_count = 3;
++
++	while (try_count > 0 && !connect_fsid_service()) {
++		sleep(1);
++		try_count--;
++	}
++
++	return try_count > 0;
+ }
+ 
+ void reexpdb_destroy(void)
+@@ -110,7 +117,7 @@ static bool do_fsidd_cmd(const char *cmd_info, char *msg, size_t len, char **res
+ 
+ 	if (fsidd_srv == -1) {
+ 		xlog(L_NOTICE, "Reconnecting to fsid services");
+-		if (connect_fsid_service() == false)
++		if (reexpdb_init() == false)
+ 			return false;
+ 	}
+ 
+diff --git a/utils/mountd/svc_run.c b/utils/mountd/svc_run.c
+index b4b062f0..3ee8654f 100644
+--- a/utils/mountd/svc_run.c
++++ b/utils/mountd/svc_run.c
+@@ -97,11 +97,6 @@ my_svc_run(void)
+ 	fd_set	readfds;
+ 	int	selret;
+ 
+-	if (!reexpdb_init()) {
+-		xlog(L_ERROR, "%s: Failed to init reexport database", __func__);
+-		return;
+-	}
+-
+ 	for (;;) {
+ 
+ 		readfds = svc_fdset;
+-- 
+2.31.1
+

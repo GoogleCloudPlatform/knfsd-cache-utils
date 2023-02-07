@@ -1,0 +1,759 @@
+From 80e95e26bca94486d8397f9416496a717dadd169 Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Tue, 13 Dec 2022 11:15:04 +0100
+Subject: [PATCH 7/8] RFC: Split fsid generation logic into a daemon
+
+fsidd offers a UNIX domain socket which can be used to
+query fsids for reexporting.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ support/Makefile.am                 |   2 +-
+ support/reexport/Makefile.am        |  12 ++
+ support/reexport/backend_sqlite.c   |  67 ++++----
+ support/reexport/fsidd.c            | 228 ++++++++++++++++++++++++++++
+ support/reexport/reexport.c         | 210 ++++++++++++++++++++++---
+ support/reexport/reexport.h         |   2 +
+ support/reexport/reexport_backend.h |   4 +-
+ 7 files changed, 474 insertions(+), 51 deletions(-)
+ create mode 100644 support/reexport/fsidd.c
+
+diff --git a/support/Makefile.am b/support/Makefile.am
+index 9432e452..07cfd87e 100644
+--- a/support/Makefile.am
++++ b/support/Makefile.am
+@@ -10,7 +10,7 @@ if CONFIG_JUNCTION
+ OPTDIRS += junction
+ endif
+ 
+-SUBDIRS = export include misc nfs nsm reexport
++SUBDIRS = export include misc nfs nsm reexport $(OPTDIRS)
+ 
+ MAINTAINERCLEANFILES = Makefile.in
+ 
+diff --git a/support/reexport/Makefile.am b/support/reexport/Makefile.am
+index d45007be..a0f31c88 100644
+--- a/support/reexport/Makefile.am
++++ b/support/reexport/Makefile.am
+@@ -10,4 +10,16 @@ sqlite_la_SOURCES = backend_sqlite.c
+ sqlite_la_LDFLAGS = -module -avoid-version
+ sqlite_la_LIBADD = ../../support/nfs/libnfsconf.la $(LIBSQLITE)
+ 
++sbin_PROGRAMS	= fsidd
++
++fsidd_SOURCES = fsidd.c
++
++fsidd_LDADD = ../../support/misc/libmisc.a \
++	      ../../support/nfs/libnfs.la \
++	       $(OPTLIBS) \
++	       -ldl $(LIBPTHREAD) $(LIBEVENT)
++
++fsidd_CPPFLAGS = $(AM_CPPFLAGS) $(CPPFLAGS) \
++		  -I$(top_builddir)/support/include
++
+ MAINTAINERCLEANFILES = Makefile.in
+diff --git a/support/reexport/backend_sqlite.c b/support/reexport/backend_sqlite.c
+index 2ee2db4b..5b5a7be0 100644
+--- a/support/reexport/backend_sqlite.c
++++ b/support/reexport/backend_sqlite.c
+@@ -43,8 +43,6 @@ static bool sqlite_plug_init(void)
+ 	char *sqlerr;
+ 	int ret;
+ 
+-	xlog(L_ERROR, "GRRR(%i): %i", __LINE__, ret);
+-
+ 	if (init_done)
+ 		return true;
+ 
+@@ -77,8 +75,6 @@ again:
+ 		ret = -1;
+ 	}
+ 
+-	xlog(L_ERROR, "GRRR(%i): %i", __LINE__, ret);
+-
+ 	return ret == 0 ? true : false;
+ }
+ 
+@@ -90,13 +86,15 @@ static void sqlite_plug_destroy(void)
+ 	sqlite3_close_v2(db);
+ }
+ 
+-static bool get_fsidnum_by_path(char *path, uint32_t *fsidnum)
++static bool get_fsidnum_by_path(char *path, uint32_t *fsidnum, bool *found)
+ {
+ 	static const char fsidnum_by_path_sql[] = "SELECT num FROM fsidnums WHERE path = ?1;";
+ 	sqlite3_stmt *stmt = NULL;
+-	bool found = false;
++	bool success = false;
+ 	int ret;
+ 
++	*found = false;
++
+ 	ret = sqlite3_prepare_v2(db, fsidnum_by_path_sql, sizeof(fsidnum_by_path_sql), &stmt, NULL);
+ 	if (ret != SQLITE_OK) {
+ 		xlog(L_WARNING, "Unable to prepare SQL query '%s': %s", fsidnum_by_path_sql, sqlite3_errstr(ret));
+@@ -114,11 +112,13 @@ again:
+ 	switch (ret) {
+ 	case SQLITE_ROW:
+ 		*fsidnum = sqlite3_column_int(stmt, 0);
+-		found = true;
++		success = true;
++		*found = true;
+ 		break;
+ 	case SQLITE_DONE:
+ 		/* No hit */
+-		found = false;
++		success = true;
++		*found = false;
+ 		break;
+ 	case SQLITE_BUSY:
+ 	case SQLITE_LOCKED:
+@@ -130,16 +130,18 @@ again:
+ 
+ out:
+ 	sqlite3_finalize(stmt);
+-	return found;
++	return success;
+ }
+ 
+-static bool sqlite_plug_path_by_fsidnum(uint32_t fsidnum, char **path)
++static bool sqlite_plug_path_by_fsidnum(uint32_t fsidnum, char **path, bool *found)
+ {
+ 	static const char path_by_fsidnum_sql[] = "SELECT path FROM fsidnums WHERE num = ?1;";
+ 	sqlite3_stmt *stmt = NULL;
+-	bool found = false;
++	bool success = false;
+ 	int ret;
+ 
++	*found = false;
++
+ 	ret = sqlite3_prepare_v2(db, path_by_fsidnum_sql, sizeof(path_by_fsidnum_sql), &stmt, NULL);
+ 	if (ret != SQLITE_OK) {
+ 		xlog(L_WARNING, "Unable to prepare SQL query '%s': %s", path_by_fsidnum_sql, sqlite3_errstr(ret));
+@@ -157,12 +159,17 @@ again:
+ 	switch (ret) {
+ 	case SQLITE_ROW:
+ 		*path = strdup((char *)sqlite3_column_text(stmt, 0));
+-		if (*path)
+-			found = true;
++		if (*path) {
++			*found = true;
++			success = true;
++		} else {
++			xlog(L_WARNING, "Out of memory");
++		}
+ 		break;
+ 	case SQLITE_DONE:
+ 		/* No hit */
+-		found = false;
++		*found = false;
++		success = true;
+ 		break;
+ 	case SQLITE_BUSY:
+ 	case SQLITE_LOCKED:
+@@ -174,7 +181,7 @@ again:
+ 
+ out:
+ 	sqlite3_finalize(stmt);
+-	return found;
++	return success;
+ }
+ 
+ static bool new_fsidnum_by_path(char *path, uint32_t *fsidnum)
+@@ -189,7 +196,7 @@ static bool new_fsidnum_by_path(char *path, uint32_t *fsidnum)
+ 
+ 	sqlite3_stmt *stmt = NULL;
+ 	int ret, check = 0;
+-	bool found = false;
++	bool success = false;
+ 
+ 	ret = sqlite3_prepare_v2(db, new_fsidnum_by_path_sql, sizeof(new_fsidnum_by_path_sql), &stmt, NULL);
+ 	if (ret != SQLITE_OK) {
+@@ -208,7 +215,7 @@ again:
+ 	switch (ret) {
+ 	case SQLITE_ROW:
+ 		*fsidnum = sqlite3_column_int(stmt, 0);
+-		found = true;
++		success = true;
+ 		break;
+ 	case SQLITE_CONSTRAINT:
+ 		/* Maybe we lost the race against another writer and the path is now present. */
+@@ -226,24 +233,30 @@ out:
+ 	sqlite3_finalize(stmt);
+ 
+ 	if (check) {
+-		found = get_fsidnum_by_path(path, fsidnum);
++		bool found = false;
++
++		get_fsidnum_by_path(path, fsidnum, &found);
+ 		if (!found)
+ 			xlog(L_WARNING, "SQLITE_CONSTRAINT error while inserting '%s' in database", path);
+ 	}
+ 
+-	return found;
++	return success;
+ }
+ 
+-static bool sqlite_plug_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create)
++static bool sqlite_plug_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create, bool *found)
+ {
+-	bool found;
+-
+-	found = get_fsidnum_by_path(path, fsidnum);
+-
+-	if (!found && may_create)
+-		found = new_fsidnum_by_path(path, fsidnum);
++	bool success;
++
++	success = get_fsidnum_by_path(path, fsidnum, found);
++	if (success) {
++		if (!*found && may_create) {
++			success = new_fsidnum_by_path(path, fsidnum);
++			if (success)
++				*found = true;
++		}
++	}
+ 
+-	return found;
++	return success;
+ }
+ 
+ struct reexpdb_backend_plugin plug_ops = {
+diff --git a/support/reexport/fsidd.c b/support/reexport/fsidd.c
+new file mode 100644
+index 00000000..7db8d053
+--- /dev/null
++++ b/support/reexport/fsidd.c
+@@ -0,0 +1,228 @@
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <dlfcn.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <sys/random.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <sys/vfs.h>
++#include <unistd.h>
++#include <limits.h>
++#include <assert.h>
++
++#include <sys/socket.h>
++#include <sys/un.h>
++
++#include <event2/event.h>
++
++#include "conffile.h"
++#include "reexport_backend.h"
++#include "xcommon.h"
++#include "xlog.h"
++
++#define FSID_SOCKET_NAME "fsid.sock"
++
++static struct reexpdb_backend_plugin *plg;
++static void *backend_dl;
++static struct event_base *evbase;
++
++static bool reexpdb_init(void)
++{
++	char *sofile = conf_get_str_with_def("reexport", "backend_plugin", REEXPDB_BACKEND_DEFAULT);
++
++	backend_dl = dlopen(sofile, RTLD_NOW | RTLD_LOCAL);
++	if (!backend_dl) {
++		xlog(L_WARNING, "Unable to open %s: %s", sofile, dlerror());
++		return false;
++	}
++
++	plg = (struct reexpdb_backend_plugin *)dlsym(backend_dl, REEXPDB_BACKEND_OPS);
++	if (plg == NULL) {
++		xlog(L_WARNING, "Unable to locate plug_ops in %s: %s", sofile, dlerror());
++		dlclose(backend_dl);
++		return false;
++	}
++
++	return plg->initdb();
++}
++
++static void reexpdb_destroy(void)
++{
++	plg->destroydb();
++	plg = NULL;
++	dlclose(backend_dl);
++}
++
++static void client_cb(evutil_socket_t cl, short ev, void *d)
++{
++	struct event *me = d;
++	char buf[PATH_MAX * 2];
++	int n;
++
++	(void)ev;
++
++	n = recv(cl, buf, sizeof(buf) - 1, 0);
++	if (n <= 0) {
++		event_del(me);
++		event_free(me);
++		close(cl);
++		return;
++	}
++
++	buf[n] = '\0';
++
++	if (strncmp(buf, "get_fsidnum ", strlen("get_fsidnum ")) == 0) {
++		char *req_path = buf + strlen("get_fsidnum ");
++		uint32_t fsidnum;
++		char *answer = NULL;
++		bool found;
++
++		assert(req_path < buf + n );
++
++		printf("client asks for %s\n", req_path);
++
++		if (plg->fsidnum_by_path(req_path, &fsidnum, false, &found)) {
++			if (found)
++				assert(asprintf(&answer, "+ %u", fsidnum) != -1);
++			else
++				assert(asprintf(&answer, "+ ") != -1);
++		
++		} else {
++			assert(asprintf(&answer, "- %s", "Command failed") != -1);
++		}
++
++		(void)send(cl, answer, strlen(answer) + 1, 0);
++
++		free(answer);
++	} else if (strncmp(buf, "get_or_create_fsidnum ", strlen("get_or_create_fsidnum ")) == 0) {
++		char *req_path = buf + strlen("get_or_create_fsidnum ");
++		uint32_t fsidnum;
++		char *answer = NULL;
++		bool found;
++
++		assert(req_path < buf + n );
++
++
++		if (plg->fsidnum_by_path(req_path, &fsidnum, true, &found)) {
++			if (found) {
++				assert(asprintf(&answer, "+ %u", fsidnum) != -1);
++			} else {
++				assert(asprintf(&answer, "+ ") != -1);
++			}
++		
++		} else {
++			assert(asprintf(&answer, "- %s", "Command failed") != -1);
++		}
++
++		(void)send(cl, answer, strlen(answer) + 1, 0);
++
++		free(answer);
++	} else if (strncmp(buf, "get_path ", strlen("get_path ")) == 0) {
++		char *req_fsidnum = buf + strlen("get_path ");
++		char *path = NULL, *answer = NULL, *endp;
++		bool bad_input = true;
++		uint32_t fsidnum;
++		bool found;
++
++		assert(req_fsidnum < buf + n );
++
++		errno = 0;
++		fsidnum = strtoul(req_fsidnum, &endp, 10);
++		if (errno == 0 && *endp == '\0') {
++			bad_input = false;
++		}
++
++		if (bad_input) {
++			assert(asprintf(&answer, "- %s", "Command failed: Bad input") != -1);
++		} else {
++			if (plg->path_by_fsidnum(fsidnum, &path, &found)) {
++				if (found)
++					assert(asprintf(&answer, "+ %s", path) != -1);
++				else
++					assert(asprintf(&answer, "+ ") != -1);
++			} else {
++				assert(asprintf(&answer, "+ ") != -1);
++			}
++		}
++
++		(void)send(cl, answer, strlen(answer) + 1, 0);
++
++		free(path);
++		free(answer);
++	} else if (strcmp(buf, "version") == 0) {
++		char answer[] = "+ 1";
++
++		(void)send(cl, answer, sizeof(answer), 0);
++	} else {
++		char *answer = NULL;
++
++		assert(asprintf(&answer, "- bad command") != -1);
++		(void)send(cl, answer, strlen(answer) + 1, 0);
++
++		free(answer);
++	}
++}
++
++static void srv_cb(evutil_socket_t fd, short ev, void *d)
++{
++	int cl = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
++	struct event *client_ev;
++	
++	(void)ev;
++	(void)d;
++
++	client_ev = event_new(evbase, cl, EV_READ | EV_PERSIST | EV_CLOSED, client_cb, event_self_cbarg());
++	event_add(client_ev, NULL);
++}
++
++int main(void)
++{
++	struct event *srv_ev;
++	struct sockaddr_un addr;
++	char *sock_file;
++	int srv;
++
++	conf_init_file(NFS_CONFFILE);
++
++	if (!reexpdb_init()) {
++		return 1;
++	}
++
++	sock_file = conf_get_str_with_def("reexport", "fsidd_socket", FSID_SOCKET_NAME);
++
++	unlink(sock_file);
++
++	memset(&addr, 0, sizeof(struct sockaddr_un));
++	addr.sun_family = AF_UNIX;
++	strncpy(addr.sun_path, sock_file, sizeof(addr.sun_path) - 1);
++
++	srv = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
++	if (srv == -1) {
++		xlog(L_WARNING, "Unable to create AF_UNIX socket for %s: %m\n", sock_file);
++		return 1;
++	}
++
++	if (bind(srv, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
++		xlog(L_WARNING, "Unable to bind %s: %m\n", sock_file);
++		return 1;
++	}
++
++	if (listen(srv, 5) == -1) {
++		xlog(L_WARNING, "Unable to listen on %s: %m\n", sock_file);
++		return 1;
++	}
++
++	evbase = event_base_new();
++
++	srv_ev = event_new(evbase, srv, EV_READ | EV_PERSIST, srv_cb, NULL);
++	event_add(srv_ev, NULL);
++
++	event_base_dispatch(evbase);
++
++	reexpdb_destroy();
++
++	return 0;
++}
+diff --git a/support/reexport/reexport.c b/support/reexport/reexport.c
+index 9f468d93..ac80072e 100644
+--- a/support/reexport/reexport.c
++++ b/support/reexport/reexport.c
+@@ -10,6 +10,9 @@
+ #include <sys/types.h>
+ #include <sys/vfs.h>
+ #include <unistd.h>
++#include <errno.h>
++#include <sys/socket.h>
++#include <sys/un.h>
+ 
+ #include "nfsd_path.h"
+ #include "conffile.h"
+@@ -19,37 +22,200 @@
+ #include "xcommon.h"
+ #include "xlog.h"
+ 
+-struct reexpdb_backend_plugin *plg;
+-static void *backend_dl;
++static int fsidd_srv = -1;
+ 
+-int reexpdb_init(void)
++static bool connect_fsid_service(void)
+ {
+-	xlog(L_ERROR, "X-GRRR(%i)", __LINE__);
++	struct sockaddr_un addr;
++	char *sock_file;
++	int ret;
++	int s;
++
++	if (fsidd_srv != -1)
++		return true;
+ 
+-	char *sofile = conf_get_str_with_def("reexport", "backend_plugin", REEXPDB_BACKEND_DEFAULT);
++	sock_file = conf_get_str_with_def("reexport", "fsidd_socket", FSID_SOCKET_NAME);
+ 
+-	backend_dl = dlopen(sofile, RTLD_NOW | RTLD_LOCAL);
+-	if (!backend_dl) {
+-		xlog(L_WARNING, "Unable to open %s: %s", sofile, dlerror());
+-		return -1;
++	memset(&addr, 0, sizeof(struct sockaddr_un));
++	addr.sun_family = AF_UNIX;
++	strncpy(addr.sun_path, sock_file, sizeof(addr.sun_path) - 1);
++
++	s = socket(AF_UNIX, SOCK_SEQPACKET, 0);
++	if (s == -1) {
++		xlog(L_WARNING, "Unable to create AF_UNIX socket for %s: %m\n", sock_file);
++		return false;
+ 	}
+ 
+-	plg = (struct reexpdb_backend_plugin *)dlsym(backend_dl, REEXPDB_BACKEND_OPS);
+-	if (plg == NULL) {
+-		xlog(L_WARNING, "Unable to locate plug_ops in %s: %s", sofile, dlerror());
+-		dlclose(backend_dl);
+-		return -1;
++	ret = connect(s, (const struct sockaddr *)&addr, sizeof(struct sockaddr_un));
++	if (ret == -1) {
++		xlog(L_WARNING, "Unable to connect %s: %m\n", sock_file);
++		return false;
+ 	}
+-	xlog(L_ERROR, "X-GRRR: %i", __LINE__);
+ 
+-	return plg->initdb() == true;
++	fsidd_srv = s;
++
++	return true;
++}
++
++int reexpdb_init(void)
++{
++	return connect_fsid_service();
+ }
+ 
+ void reexpdb_destroy(void)
+ {
+-	plg->destroydb();
+-	plg = NULL;
+-	dlclose(backend_dl);
++	close(fsidd_srv);
++	fsidd_srv = -1;
++}
++
++static bool parse_fsidd_reply(const char *cmd_info, char *buf, size_t len, char **result)
++{
++	if (len == 0) {
++		xlog(L_WARNING, "Unable to read %s result: server closed the connection", cmd_info);
++		return false;
++	} else if (len < 3) {
++		xlog(L_WARNING, "Unable to read %s result: server sent too few bytes", cmd_info);
++		return false;
++	}
++
++	if (buf[0] == '-') {
++		if (len > 3) {
++			char *reason = buf + 2;
++			xlog(L_WARNING, "Command %s failed, server said: %s", cmd_info, reason);
++		} else {
++			xlog(L_WARNING, "Command %s failed at server side", cmd_info);
++		}
++
++		return false;
++	}
++
++	if (buf[0] != '+') {
++		xlog(L_WARNING, "Unable to read %s result: server sent malformed answer", cmd_info);
++		return false;
++	}
++
++	if (len > 3) {
++		*result = strdup(buf + 2);
++	} else {
++		*result = NULL;
++	}
++
++	return true;
++}
++
++static bool do_fsidd_cmd(const char *cmd_info, char *msg, size_t len, char **result)
++{
++	char recvbuf[1024];
++	int n;
++
++	if (fsidd_srv == -1) {
++		xlog(L_NOTICE, "Reconnecting to fsid services");
++		if (connect_fsid_service() == false)
++			return false;
++	}
++
++	xlog(D_GENERAL, "Request to fsidd: msg=\"%s\" len=%zd", msg, len);
++
++	if (write(fsidd_srv, msg, len) == -1) {
++		xlog(L_WARNING, "Unable to send %s command: %m", cmd_info);
++		goto out_close;
++	}
++
++	n = read(fsidd_srv, recvbuf, sizeof(recvbuf) - 1);
++	if (n <= -1) {
++		xlog(L_WARNING, "Unable to recv %s answer: %m", cmd_info);
++		goto out_close;
++	} else if (n == sizeof(recvbuf) - 1) {
++		//TODO: use better way to detect truncation
++		xlog(L_WARNING, "Unable to recv %s answer: answer truncated", cmd_info);
++		goto out_close;
++	}
++	recvbuf[n] = '\0';
++
++	xlog(D_GENERAL, "Answer from fsidd: msg=\"%s\" len=%i", recvbuf, n);
++
++	if (parse_fsidd_reply(cmd_info, recvbuf, n, result) == false) {
++		goto out_close;
++	}
++
++	return true;
++
++out_close:
++	close(fsidd_srv);
++	fsidd_srv = -1;
++	return false;
++}
++
++static bool fsidnum_get_by_path(char *path, uint32_t *fsidnum, bool may_create)
++{
++	char *msg, *result;
++	bool ret = false;
++	int len;
++
++	char *cmd = may_create ? "get_or_create_fsidnum" : "get_fsidnum";
++
++	len = asprintf(&msg, "%s %s", cmd, path);
++	if (len == -1) {
++		xlog(L_WARNING, "Unable to build %s command: %m", cmd);
++		goto out;
++	}
++
++	if (do_fsidd_cmd(cmd, msg, len, &result) == false) {
++		goto out;
++	}
++
++	if (result) {
++		bool bad_input = true;
++		char *endp;
++
++		errno = 0;
++		*fsidnum = strtoul(result, &endp, 10);
++		if (errno == 0 && *endp == '\0') {
++			bad_input = false;
++		}
++
++		free(result);
++
++		if (!bad_input) {
++			ret = true;
++		} else {
++			xlog(L_NOTICE, "Got malformed fsid for path %s", path);
++		}
++	} else {
++		xlog(L_NOTICE, "No fsid found for path %s", path);
++	}
++
++out:
++	free(msg);
++	return ret;
++}
++
++static bool path_by_fsidnum(uint32_t fsidnum, char **path)
++{
++	char *msg, *result;
++	bool ret = false;
++	int len;
++
++	len = asprintf(&msg, "get_path %d", (unsigned int)fsidnum);
++	if (len == -1) {
++		xlog(L_WARNING, "Unable to build get_path command: %m");
++		goto out;
++	}
++
++	if (do_fsidd_cmd("get_path", msg, len, &result) == false) {
++		goto out;
++	}
++
++	if (result) {
++		*path = result;
++		ret = true;
++	} else {
++		xlog(L_NOTICE, "No path found for fsid %u", (unsigned int)fsidnum);
++	}
++
++out:
++	free(msg);
++	return ret;
+ }
+ 
+ /*
+@@ -62,7 +228,7 @@ void reexpdb_destroy(void)
+  */
+ int reexpdb_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create)
+ {
+-	return plg->fsidnum_by_path(path, fsidnum, may_create);
++	return fsidnum_get_by_path(path, fsidnum, may_create);
+ }
+ 
+ /*
+@@ -84,7 +250,7 @@ void reexpdb_uncover_subvolume(uint32_t fsidnum)
+ 	char *path = NULL;
+ 	int ret;
+ 
+-	if (plg->path_by_fsidnum(fsidnum, &path)) {
++	if (path_by_fsidnum(fsidnum, &path)) {
+ 		ret = nfsd_path_statfs64(path, &st);
+ 		if (ret == -1)
+ 			xlog(L_WARNING, "statfs() failed");
+@@ -115,6 +281,7 @@ int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flli
+ 	if (ep->e_uuid)
+ 		goto out;
+ 
++#if 0
+ 	/*
+ 	 * We do a lazy database init because we want to init the db only
+ 	 * when at least one reexport= option is present.
+@@ -123,6 +290,7 @@ int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flli
+ 		ret = -1;
+ 		goto out;
+ 	}
++#endif
+ 
+ 	found = reexpdb_fsidnum_by_path(ep->e_path, &fsidnum, 0);
+ 	if (!found) {
+diff --git a/support/reexport/reexport.h b/support/reexport/reexport.h
+index ce68948d..3bed03a9 100644
+--- a/support/reexport/reexport.h
++++ b/support/reexport/reexport.h
+@@ -13,4 +13,6 @@ int reexpdb_fsidnum_by_path(char *path, uint32_t *fsidnum, int may_create);
+ int reexpdb_apply_reexport_settings(struct exportent *ep, char *flname, int flline);
+ void reexpdb_uncover_subvolume(uint32_t fsidnum);
+ 
++#define FSID_SOCKET_NAME "fsid.sock"
++
+ #endif /* REEXPORT_H */
+diff --git a/support/reexport/reexport_backend.h b/support/reexport/reexport_backend.h
+index 9e5e5c43..be5e4fde 100644
+--- a/support/reexport/reexport_backend.h
++++ b/support/reexport/reexport_backend.h
+@@ -17,7 +17,7 @@ struct reexpdb_backend_plugin {
+ 	 * On success, the fsidnum will be stored into @fsidnum.
+ 	 * Upon errors, false is returned and errors are logged.
+ 	 */
+-	bool (*fsidnum_by_path)(char *path, uint32_t *fsidnum, int may_create);
++	bool (*fsidnum_by_path)(char *path, uint32_t *fsidnum, int may_create, bool *found);
+ 
+ 	/*
+ 	 * Lookup path by a given fsidnum
+@@ -31,7 +31,7 @@ struct reexpdb_backend_plugin {
+ 	 * via @path, @path will point to a freshly allocated buffer
+ 	 * which is free()'able.
+ 	 */
+-	bool (*path_by_fsidnum)(uint32_t fsidnum, char **path);
++	bool (*path_by_fsidnum)(uint32_t fsidnum, char **path, bool *found);
+ 
+ 	/*
+ 	 * Init database connection, can get called multiple times.
+-- 
+2.31.1
+

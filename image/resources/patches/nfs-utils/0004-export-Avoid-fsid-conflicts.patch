@@ -1,0 +1,139 @@
+From 81ded5f65c7156d2d08afde147458abf3c79d11f Mon Sep 17 00:00:00 2001
+From: Richard Weinberger <richard@nod.at>
+Date: Mon, 28 Mar 2022 20:56:16 +0200
+Subject: [PATCH 4/8] export: Avoid fsid= conflicts
+
+As soon reexport= is used, numerical fsids are automatically
+assigned, therefore other fsid= options are no longer possible
+without the risk of a conflict.
+
+Signed-off-by: Richard Weinberger <richard@nod.at>
+---
+ support/export/export.c        | 27 +++++++++++++++++++++++++--
+ systemd/nfs-server-generator.c | 14 ++++++++++++--
+ utils/exportfs/exportfs.c      | 10 ++++++++--
+ 3 files changed, 45 insertions(+), 6 deletions(-)
+
+diff --git a/support/export/export.c b/support/export/export.c
+index 03390dfc..c5e56b1a 100644
+--- a/support/export/export.c
++++ b/support/export/export.c
+@@ -25,6 +25,7 @@
+ #include "exportfs.h"
+ #include "nfsd_path.h"
+ #include "xlog.h"
++#include "reexport.h"
+ 
+ exp_hash_table exportlist[MCL_MAXTYPES] = {{NULL, {{NULL,NULL}, }}, }; 
+ static int export_hash(char *);
+@@ -115,6 +116,7 @@ export_read(char *fname, int ignore_hosts)
+ 	nfs_export		*exp;
+ 
+ 	int volumes = 0;
++	int reexport_found = 0;
+ 
+ 	setexportent(fname, "r");
+ 	while ((eep = getexportent(0,1)) != NULL) {
+@@ -126,7 +128,25 @@ export_read(char *fname, int ignore_hosts)
+ 		}
+ 		else
+ 			warn_duplicated_exports(exp, eep);
++
++		if (eep->e_reexport)
++			reexport_found = 1;
++	}
++
++	if (reexport_found) {
++		for (int i = 0; i < MCL_MAXTYPES; i++) {
++			for (exp = exportlist[i].p_head; exp; exp = exp->m_next) {
++				if (exp->m_export.e_reexport)
++					continue;
++
++				if (exp->m_export.e_flags & NFSEXP_FSID) {
++					xlog(L_ERROR, "When a reexport= option is present no manully assigned numerical fsid= options are allowed");
++					return -1;
++				}
++			}
++		}
+ 	}
++
+ 	endexportent();
+ 
+ 	return volumes;
+@@ -147,7 +167,7 @@ export_d_read(const char *dname, int ignore_hosts)
+ 	int n = 0, i;
+ 	struct dirent **namelist = NULL;
+ 	int volumes = 0;
+-
++	int num_exports;
+ 
+ 	n = scandir(dname, &namelist, NULL, versionsort);
+ 	if (n < 0) {
+@@ -186,7 +206,10 @@ export_d_read(const char *dname, int ignore_hosts)
+ 			continue;
+ 		}
+ 
+-		volumes += export_read(fname, ignore_hosts);
++		num_exports = export_read(fname, ignore_hosts);
++		if (num_exports < 0)
++			return -1;
++		volumes += num_exports;
+ 	}
+ 
+ 	for (i = 0; i < n; i++)
+diff --git a/systemd/nfs-server-generator.c b/systemd/nfs-server-generator.c
+index eec98fd2..e4202954 100644
+--- a/systemd/nfs-server-generator.c
++++ b/systemd/nfs-server-generator.c
+@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
+ 	struct list	*list = NULL;
+ 	FILE		*f, *fstab;
+ 	struct mntent	*mnt;
++	int		num_exports;
++	int		num_exports_d;
+ 
+ 	/* Avoid using any external services */
+ 	xlog_syslog(0);
+@@ -102,8 +104,16 @@ int main(int argc, char *argv[])
+ 	path = alloca(strlen(argv[1]) + sizeof(dirbase) + sizeof(filebase));
+ 	if (!path)
+ 		exit(2);
+-	if (export_read(_PATH_EXPORTS, 1) +
+-	    export_d_read(_PATH_EXPORTS_D, 1) == 0)
++
++	num_exports = export_read(_PATH_EXPORTS, 1);
++	if (num_exports < 0)
++		exit(1);
++
++	num_exports_d = export_d_read(_PATH_EXPORTS_D, 1);
++	if (num_exports_d < 0)
++		exit(1);
++
++	if (num_exports + num_exports_d == 0)
+ 		/* Nothing is exported, so nothing to do */
+ 		exit(0);
+ 
+diff --git a/utils/exportfs/exportfs.c b/utils/exportfs/exportfs.c
+index 8f055d34..0342db0b 100644
+--- a/utils/exportfs/exportfs.c
++++ b/utils/exportfs/exportfs.c
+@@ -206,8 +206,14 @@ main(int argc, char **argv)
+ 	atexit(release_lockfile);
+ 
+ 	if (f_export && ! f_ignore) {
+-		if (! (export_read(_PATH_EXPORTS, 0) +
+-		       export_d_read(_PATH_EXPORTS_D, 0))) {
++		int num_exports, num_exports_d;
++
++		num_exports = export_read(_PATH_EXPORTS, 0);
++		num_exports_d = export_d_read(_PATH_EXPORTS_D, 0);
++		if (num_exports < 0 || num_exports_d < 0)
++			return 1;
++
++		if (!(num_exports + num_exports_d)) {
+ 			if (f_verbose)
+ 				xlog(L_WARNING, "No file systems exported!");
+ 		}
+-- 
+2.31.1
+
