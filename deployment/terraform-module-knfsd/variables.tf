@@ -160,6 +160,11 @@ variable "EXPORT_OPTIONS" {
   type    = string
 }
 
+variable "AUTO_REEXPORT" {
+  default = false
+  type    = bool
+}
+
 variable "FSID_MODE" {
   default = "external"
   type    = string
