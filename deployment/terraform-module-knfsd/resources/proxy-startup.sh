@@ -65,11 +65,8 @@ function build_mount_options() {
 # build_export_options() builds the common export options for all exports
 # Do not use this directly, the result will be cached in EXPORT_OPTIONS
 function build_export_options() {
-  local HIDE_OPT
   local NOHIDE="$(get_attribute NOHIDE)"
-  if [[ $NOHIDE == 'true' ]]; then
-    HIDE_OPT="nohide"
-  fi
+  local EXTRA_OPTIONS="$(get_attribute EXPORT_OPTIONS)"
 
   local -a OPTIONS=(
     rw
@@ -80,10 +77,15 @@ function build_export_options() {
     no_subtree_check
     sec=sys
     secure
-    $HIDE_OPT
   )
 
-  local EXTRA_OPTIONS="$(get_attribute EXPORT_OPTIONS)"
+  if [[ $AUTO_REEXPORT == 'true' ]]; then
+    # AUTO_REEXPORT overrides nohide with the crossmnt option
+    OPTIONS+=(crossmnt)
+  elif [[ $NOHIDE == 'true' ]]; then
+    OPTIONS+=(nohide)
+  fi
+
   if [[ -n "$EXTRA_OPTIONS" ]]; then
     OPTIONS+=("$EXTRA_OPTIONS")
   fi
@@ -220,6 +222,7 @@ function init() {
 	EXPORT_HOST_AUTO_DETECT=$(get_attribute EXPORT_HOST_AUTO_DETECT)
 	EXPORT_CIDR=$(get_attribute EXPORT_CIDR)
 
+	AUTO_REEXPORT="$(get_attribute AUTO_REEXPORT)"
 	FSID_MODE="$(get_attribute FSID_MODE)"
 	get_attribute FSID_DATABASE_CONFIG >/etc/knfsd-fsidd.conf
 
