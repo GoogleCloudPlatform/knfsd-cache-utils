@@ -1,4 +1,5 @@
-# next
+
+# v1.0.0-beta3
 
 * Temporary fix for cachefilesd intermittently terminating
 
