@@ -16,16 +16,17 @@
 
 locals {
   FSID_DATABASE_CONFIG = (
-    var.FSID_MODE != "external" ? "" :
-    var.FSID_DATABASE_DEPLOY == false ? var.FSID_DATABASE_CONFIG :
-    templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", module.fsid_database.0)
+    # this module deployed an external fsid database, so generate our own config
+    local.deploy_fsid_database ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", module.fsid_database.0) :
+    # otherwise use an external config
+    var.FSID_DATABASE_CONFIG
   )
 }
 
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
 
-  provider = "google-beta" // Required due to network_performance_config being in beta provider only
+  provider = google-beta # Required due to network_performance_config being in beta provider only
 
   project          = var.PROJECT
   region           = var.REGION
@@ -35,10 +36,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
   labels           = var.PROXY_LABELS
-
-  lifecycle {
-    create_before_destroy = true
-  }
 
   disk {
     source_image = var.PROXY_IMAGENAME
@@ -148,13 +145,103 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     preemptible         = false
   }
 
-  # We use a dnaymic block for service_account here as we only want to assign an SA if we have metrics enabled.
+  # We use a dynamic block for service_account here as we only want to assign an SA if we have metrics enabled.
   # If we do not have metrics enabled there is no need for an SA
   dynamic "service_account" {
     for_each = local.enable_service_account ? [1] : []
     content {
       email  = var.SERVICE_ACCOUNT
       scopes = local.scopes
+    }
+  }
+
+  lifecycle {
+    create_before_destroy = true
+
+    # Most of these preconditions are conditional. Terraform 1.20 does not have
+    # support for some kind of "enabled" or "when" condition, so write the
+    # conditions in the form:
+    #   condition = (when ? check : true)
+    #
+    # This roughly translates to
+    #   if when then
+    #     check precondition
+    #   else
+    #     skip precondition
+
+    precondition {
+      # AUTO_REEXPORT requires an fsid service to be enabled
+      condition = (
+        var.AUTO_REEXPORT
+        ? contains(["local", "external"], var.FSID_MODE)
+        : true
+      )
+      error_message = "FSID_MODE must be either \"local\" or \"external\" when AUTO_REEXPORT is enabled."
+    }
+
+    # If this module has created the database ensure that the user did not try
+    # and provide their own FSID_DATABASE_CONFIG, as that configuration will be
+    # ignored.
+    # This just avoids two possible errors:
+    #   * This module ignores the custom configuration leading to confusion.
+    #   * This module uses the custom configuration leading to an unused Cloud
+    #     SQL being deployed.
+    precondition {
+      condition = (
+        var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
+        ? var.FSID_DATABASE_CONFIG == ""
+        : true
+      )
+      error_message = "Can only provide a custom FSID_DATABASE_CONFIG when using a custom external fsid database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
+    }
+
+    # Again to avoid confusion, if not using an external database do not allow
+    # the user to provide their own FSID_DATABASE_CONFIG.
+    precondition {
+      condition = (
+        var.FSID_MODE != "external"
+        ? var.FSID_DATABASE_CONFIG == ""
+        : true
+      )
+      error_message = "Can only provide a custom FSID_DATABASE_CONFIG when using a custom external fsid database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
+    }
+
+    # When using an custom external database then FSID_DATABASE_DEPLOY must be provided
+    precondition {
+      condition = (
+        var.FSID_MODE == "external" && !var.FSID_DATABASE_DEPLOY
+        ? var.FSID_DATABASE_CONFIG != ""
+        : true
+      )
+      error_message = "Must specify a database configuration (FSID_DATABASE_CONFIG) when using a custom external database (FSID_MODE = \"external\" and FISD_DATABASE_DEPLOY = false)."
+    }
+
+    # Bug check: This should not occur and indicates a bug in the Terraform script.
+    # Fail early during terraform plan, otherwise the proxy will deploy and enter
+    # a reboot loop.
+    precondition {
+      condition = (
+        local.deploy_fsid_database
+        ? local.FSID_DATABASE_CONFIG != ""
+        : true
+      )
+      error_message = "BUG: database configuration not set for external fsid database."
+    }
+
+    # Bug check: This should not occur and indicates a bug in the Terraform script.
+    # Check that if the script deployed a Cloud SQL database, that database will
+    # be used by the proxy otherwise its just wasting money.
+    # Including this here as this is the likely place people will update when
+    # changing how FSID_MODE is handled as this is the main proxy validation.
+    # This acts as a cross check for the local.deploy_fsid_database logic in
+    # case only one is updated.
+    precondition {
+      condition = (
+        local.deploy_fsid_database
+        ? var.FSID_MODE == "external"
+        : true
+      )
+      error_message = "BUG: deployed Cloud SQL database, but that database is not in use."
     }
   }
 }

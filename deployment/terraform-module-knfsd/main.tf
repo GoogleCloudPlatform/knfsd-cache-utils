@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+terraform {
+  required_version = ">=1.2.0"
+}
+
 locals {
   enable_service_account = var.SERVICE_ACCOUNT != "" || var.ENABLE_STACKDRIVER_METRICS
   scopes = (
@@ -22,6 +26,7 @@ locals {
     []
   )
   CULLING_LAST_ACCESS_DEFAULT = var.CACHEFILESD_DISK_TYPE == "local-ssd" ? "${var.LOCAL_SSDS}h" : "6h"
+  deploy_fsid_database        = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
 }
 
 # Static IP used for the Load Balancer. This can be manually set via the LOADBALANCER_IP variable, otherwise it defaults to null which allocates a random IP address
@@ -42,6 +47,19 @@ resource "google_compute_address" "nfsproxy_static" {
   }
 }
 
+# Validate that SERVICE_ACCOUNT is set when deploying an external database.
+# This provides a better error message with more context than the default
+# error message.
+resource "null_resource" "validate_fsid_database" {
+  count = local.deploy_fsid_database ? 1 : 0
+  lifecycle {
+    precondition {
+      condition     = var.SERVICE_ACCOUNT != ""
+      error_message = "SERVICE_ACCOUNT is required when deploying an external fsid database. See FSID_MODE and FSID_DATABASE_DEPLOY."
+    }
+  }
+}
+
 module "fsid_database" {
   source                = "../database"
   count                 = local.deploy_fsid_database ? 1 : 0
@@ -53,4 +71,11 @@ module "fsid_database" {
 
   # Simplify creating and destroying proxy cluster instances.
   deletion_protection = false
+
+  # Modules do not support lifecycle pre/post conditions. Simulate this by
+  # making the module depend on a null_resource and place the precondition on
+  # the null resource.
+  depends_on = [
+    null_resource.validate_fsid_database,
+  ]
 }
