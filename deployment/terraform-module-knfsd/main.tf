@@ -26,11 +26,25 @@ locals {
     []
   )
   MIG_REPLACEMENT_METHOD_DEFAULT = var.ASSIGN_STATIC_IPS ? "RECREATE" : "SUBSTITUTE"
+  deploy_fsid_database           = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
+}
+
+# Validate that SERVICE_ACCOUNT is set when deploying an external database.
+# This provides a better error message with more context than the default
+# error message.
+resource "null_resource" "validate_fsid_database" {
+  count = local.deploy_fsid_database ? 1 : 0
+  lifecycle {
+    precondition {
+      condition     = var.SERVICE_ACCOUNT != ""
+      error_message = "SERVICE_ACCOUNT is required when deploying an external fsid database. See FSID_MODE and FSID_DATABASE_DEPLOY."
+    }
+  }
 }
 
 module "fsid_database" {
   source                = "../database"
-  count                 = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY ? 1 : 0
+  count                 = local.deploy_fsid_database ? 1 : 0
   project               = var.PROJECT
   region                = var.REGION
   zone                  = var.ZONE
@@ -39,4 +53,11 @@ module "fsid_database" {
 
   # Simplify creating and destroying proxy cluster instances.
   deletion_protection = false
+
+  # Modules do not support lifecycle pre/post conditions. Simulate this by
+  # making the module depend on a null_resource and place the precondition on
+  # the null resource.
+  depends_on = [
+    null_resource.validate_fsid_database,
+  ]
 }
