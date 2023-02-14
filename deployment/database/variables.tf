@@ -60,4 +60,8 @@ variable "deletion_protection" {
 
 variable "proxy_service_account" {
   type = string
+  validation {
+    condition     = var.proxy_service_account != ""
+    error_message = "proxy_service_account is required"
+  }
 }
