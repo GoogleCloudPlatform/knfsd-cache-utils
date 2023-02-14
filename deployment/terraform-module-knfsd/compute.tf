@@ -117,9 +117,9 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     NFS_MOUNT_VERSION = var.NFS_MOUNT_VERSION
 
     # auto-reexport nested mounts
-    AUTO_REEXPORT            = var.AUTO_REEXPORT
-    FSID_MODE                = var.FSID_MODE
-    FSID_DATABASE_CONFIG     = local.FSID_DATABASE_CONFIG
+    AUTO_REEXPORT        = var.AUTO_REEXPORT
+    FSID_MODE            = var.FSID_MODE
+    FSID_DATABASE_CONFIG = local.FSID_DATABASE_CONFIG
 
     # system
     NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server.conf")

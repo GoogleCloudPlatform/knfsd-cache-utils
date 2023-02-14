@@ -169,7 +169,7 @@ variable "FSID_MODE" {
   default = "external"
   type    = string
   validation {
-    condition = contains(["static", "local", "external"], var.FSID_MODE)
+    condition     = contains(["static", "local", "external"], var.FSID_MODE)
     error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
   }
 }
