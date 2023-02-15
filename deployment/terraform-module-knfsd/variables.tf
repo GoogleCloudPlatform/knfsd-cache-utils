@@ -166,7 +166,7 @@ variable "AUTO_REEXPORT" {
 }
 
 variable "FSID_MODE" {
-  default = "external"
+  default = "static"
   type    = string
   validation {
     condition     = contains(["static", "local", "external"], var.FSID_MODE)
