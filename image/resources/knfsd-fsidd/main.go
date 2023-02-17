@@ -15,6 +15,12 @@ import (
 	"github.com/spf13/pflag"
 )
 
+type FSIDProvider interface {
+	GetFSID(ctx context.Context, path string) (int32, error)
+	AllocateFSID(ctx context.Context, path string) (int32, error)
+	GetPath(ctx context.Context, fsid int32) (string, error)
+}
+
 func main() {
 	var err error
 
@@ -30,6 +36,7 @@ func main() {
 	f.BoolVar(&cfg.Database.IAMAuth, "iam-auth", false, "")
 	f.BoolVar(&cfg.Database.PrivateIP, "private-ip", false, "")
 	f.BoolVar(&cfg.Debug, "debug", false, "")
+	f.BoolVar(&cfg.Cache, "cache", true, "")
 
 	// read the config file before parsing the command line arguments so
 	// that the command line arguments override any config values
@@ -85,16 +92,23 @@ func run(ctx context.Context, cfg *Config) error {
 	}
 	defer db.Close()
 
-	f := FSIDSource{
+	source := FSIDSource{
 		db:        db,
 		tableName: cfg.Database.TableName,
 	}
 
 	if cfg.Database.CreateTable {
-		err = f.CreateTable(ctx)
+		err = source.CreateTable(ctx)
 		if err != nil {
 			return err
 		}
+	}
+
+	var f FSIDProvider
+	if cfg.Cache {
+		f = &FSIDCache{source: source}
+	} else {
+		f = source
 	}
 
 	s, err := resolveSocket(cfg.SocketPath)
