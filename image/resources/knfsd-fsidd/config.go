@@ -39,6 +39,7 @@ type Config struct {
 	SocketPath string         `ini:"socket"`
 	Database   DatabaseConfig `ini:"database"`
 	Debug      bool           `ini:"debug"`
+	Cache      bool           `ini:"cache"`
 }
 
 type DatabaseConfig struct {
@@ -101,6 +102,7 @@ func readEnv(cfg *Config) error {
 	err = multierr.Append(err, envBool(&cfg.Database.IAMAuth, "FSID_IAM_AUTH"))
 	err = multierr.Append(err, envBool(&cfg.Database.PrivateIP, "FSID_PRIVATE_IP"))
 	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_DEBUG"))
+	err = multierr.Append(err, envBool(&cfg.Debug, "FSID_CACHE"))
 	return err
 }
 
