@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -157,4 +158,14 @@ func (s FSIDSource) GetPath(ctx context.Context, fsid int32) (string, error) {
 	row := s.db.QueryRow(ctx, sql, fsid)
 	err := row.Scan(&path)
 	return path, err
+}
+
+func IsConflict(err error) bool {
+	var pgerr *pgconn.PgError
+	if errors.As(err, &pgerr) {
+		// unique constraint violation
+		return pgerr.Code == "23505"
+	} else {
+		return false
+	}
 }
