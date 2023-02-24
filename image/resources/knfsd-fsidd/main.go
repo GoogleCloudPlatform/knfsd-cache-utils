@@ -25,6 +25,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/internal/metrics"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
 	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/jackc/pgx/v4"
@@ -102,6 +103,17 @@ func main() {
 func run(ctx context.Context, cfg *Config) error {
 	var err error
 
+	m := metrics.Start(ctx, cfg.Metrics)
+	defer func() {
+		deadline, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := m.Shutdown(deadline)
+		if err != nil {
+			log.Warn.Printf("metrics did not shutdown gracefully: %s", err)
+		}
+	}()
+
 	db, err := connect(ctx, cfg.Database)
 	if err != nil {
 		return err
@@ -134,40 +146,42 @@ func run(ctx context.Context, cfg *Config) error {
 	defer s.Close()
 
 	s.Handle("get_fsidnum", func(ctx context.Context, path string) (string, error) {
+		rec := metrics.StartRequest("get_fsidnum")
 		if path == "" {
+			rec.End(ctx, "error")
 			return "", ErrInvalidArgument
 		}
 
 		var fsid int32
-		found := true
-
 		err := withRetry(ctx, func() error {
 			var err error
+			rec := rec.StartOperation()
 			fsid, err = f.GetFSID(ctx, path)
-			if errors.Is(err, pgx.ErrNoRows) {
-				err = nil
-				found = false
-			}
+			rec.End(ctx, SQLMetricResult(err))
 			return err
 		})
 
-		if err != nil {
-			return "", err
-		} else if found {
+		rec.End(ctx, SQLMetricResult(err))
+		if err == nil {
 			return strconv.FormatInt(int64(fsid), 10), nil
-		} else {
+		} else if IsNotFound(err) {
 			return "", nil
+		} else {
+			return "", err
 		}
 	})
 
 	s.Handle("get_or_create_fsidnum", func(ctx context.Context, path string) (string, error) {
+		rec := metrics.StartRequest("get_or_create_fsidnum")
 		if path == "" {
+			rec.End(ctx, "error")
 			return "", ErrInvalidArgument
 		}
 
 		var fsid int32
-		err := withRetry(ctx, func() error {
+		err = withRetry(ctx, func() error {
 			var err error
+			rec := rec.StartOperation()
 			fsid, err = f.GetFSID(ctx, path)
 			if errors.Is(err, pgx.ErrNoRows) {
 				// FSID not found for path, so try and allocate one.
@@ -177,35 +191,41 @@ func run(ctx context.Context, cfg *Config) error {
 				// allocated by the other process.
 				fsid, err = f.AllocateFSID(ctx, path)
 			}
+			rec.End(ctx, SQLMetricResult(err))
 			return err
 		})
+
+		rec.End(ctx, SQLMetricResult(err))
 		return strconv.FormatInt(int64(fsid), 10), err
 	})
 
 	s.Handle("get_path", func(ctx context.Context, arg string) (string, error) {
+		rec := metrics.StartRequest("get_path")
 		fsid, err := strconv.ParseInt(arg, 10, 32)
 		if err != nil {
+			rec.End(ctx, "error")
 			return "", ErrInvalidArgument
 		}
 		if fsid < 1 {
+			rec.End(ctx, "error")
 			return "", ErrInvalidArgument
 		}
 
 		var path string
 		err = withRetry(ctx, func() error {
 			var err error
+			rec := rec.StartOperation()
 			path, err = f.GetPath(ctx, int32(fsid))
-			if errors.Is(err, pgx.ErrNoRows) {
-				err = nil
-				path = ""
-			}
+			rec.End(ctx, SQLMetricResult(err))
 			return err
 		})
 
+		rec.End(ctx, SQLMetricResult(err))
 		return path, err
 	})
 
 	s.Handle("version", func(ctx context.Context, arg string) (string, error) {
+		metrics.Request(ctx, "version", "ok", 0, 0)
 		return "1", nil
 	})
 
