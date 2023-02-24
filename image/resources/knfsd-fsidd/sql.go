@@ -8,8 +8,10 @@ import (
 	"net"
 	"strings"
 	"text/template"
+	"time"
 
 	"cloud.google.com/go/cloudsqlconn"
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/internal/metrics"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -138,25 +140,31 @@ func (s FSIDSource) CreateTable(ctx context.Context) error {
 
 func (s FSIDSource) GetFSID(ctx context.Context, path string) (int32, error) {
 	var fsid int32
+	start := time.Now()
 	sql := fmt.Sprintf("SELECT fsid FROM \"%s\" WHERE path = $1", s.tableName)
 	row := s.db.QueryRow(ctx, sql, path)
 	err := row.Scan(&fsid)
+	metrics.SQLOperation(ctx, "get_fsid", SQLMetricResult(err), time.Since(start))
 	return fsid, err
 }
 
 func (s FSIDSource) AllocateFSID(ctx context.Context, path string) (int32, error) {
 	var fsid int32
+	start := time.Now()
 	sql := fmt.Sprintf("INSERT INTO \"%s\" (path) VALUES ($1) RETURNING fsid", s.tableName)
 	row := s.db.QueryRow(ctx, sql, path)
 	err := row.Scan(&fsid)
+	metrics.SQLOperation(ctx, "allocate_fsid", SQLMetricResult(err), time.Since(start))
 	return fsid, err
 }
 
 func (s FSIDSource) GetPath(ctx context.Context, fsid int32) (string, error) {
 	var path string
+	start := time.Now()
 	sql := fmt.Sprintf("SELECT path FROM \"%s\" WHERE fsid = $1", s.tableName)
 	row := s.db.QueryRow(ctx, sql, fsid)
 	err := row.Scan(&path)
+	metrics.SQLOperation(ctx, "get_path", SQLMetricResult(err), time.Since(start))
 	return path, err
 }
 
@@ -167,5 +175,21 @@ func IsConflict(err error) bool {
 		return pgerr.Code == "23505"
 	} else {
 		return false
+	}
+}
+
+func IsNotFound(err error) bool {
+	return errors.Is(err, pgx.ErrNoRows)
+}
+
+func SQLMetricResult(err error) string {
+	if err == nil {
+		return "ok"
+	} else if IsNotFound(err) {
+		return "not_found"
+	} else if IsConflict(err) {
+		return "conflict"
+	} else {
+		return "error"
 	}
 }

@@ -172,6 +172,35 @@ processors:
       include: fscache.oldest_file
       new_name: fscache_oldest_file
 
+    # fsid daemon metrics, these are reported via the oltp receiver
+    - action: update
+      include: fsid.operation.count
+      new_name: fsid/operation/count
+
+    - action: update
+      include: fsid.operation.duration
+      new_name: fsid/operation/duration
+
+    - action: update
+      include: fsid.request.count
+      new_name: fsid/request/count
+
+    - action: update
+      include: fsid.request.duration
+      new_name: fsid/request/duration
+
+    - action: update
+      include: fsid.request.retries
+      new_name: fsid/request/retries
+
+    - action: update
+      include: fsid.sql.query.count
+      new_name: fsid/sql/query/count
+
+    - action: update
+      include: fsid.sql.query.duration
+      new_name: fsid/sql/query/duration
+
     # prefix all metrics with custom.googleapis.com/knfsd/
     - action: update
       include: ^(.*)$$

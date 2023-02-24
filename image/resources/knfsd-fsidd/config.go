@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/internal/metrics"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
 
 	"github.com/go-ini/ini"
@@ -22,6 +23,7 @@ const (
 type Config struct {
 	SocketPath string         `ini:"socket"`
 	Database   DatabaseConfig `ini:"database"`
+	Metrics    metrics.Config `ini:"metrics"`
 	Debug      bool           `ini:"debug"`
 	Cache      bool           `ini:"cache"`
 }
@@ -40,6 +42,9 @@ func (cfg *Config) Validate() error {
 	var err error
 	err = multierr.Append(err, required("socket-path", cfg.SocketPath))
 	err = multierr.Append(err, cfg.Database.Validate())
+	// No validation for the metrics, if there's errors in the config then the
+	// service will still start, just without metrics. Metrics are considered
+	// best effort, and errors do not prevent the app from running.
 	return err
 }
 

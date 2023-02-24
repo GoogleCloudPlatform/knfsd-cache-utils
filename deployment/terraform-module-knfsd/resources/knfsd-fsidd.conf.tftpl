@@ -7,3 +7,11 @@ url=user=${sql_user} database=${database_name}
 private-ip=${private_ip_address != ""}
 table-name=fsids
 create-table=true
+
+[metrics]
+enabled=${enable_metrics}
+endpoint=unix:///run/knfsd-metrics.sock
+# TLS security is not required as unix domain sockets can only be accessed on
+# the local machine. This socket will be protected by standard unix permissions.
+insecure=true
+interval=1m

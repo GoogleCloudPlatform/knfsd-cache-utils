@@ -31,6 +31,7 @@ import (
 	"go.opentelemetry.io/collector/extension/zpagesextension"
 	"go.opentelemetry.io/collector/processor/batchprocessor"
 	"go.opentelemetry.io/collector/processor/memorylimiterprocessor"
+	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/elasticexporter"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/elasticsearchexporter"
@@ -55,6 +56,7 @@ func components() (component.Factories, error) {
 	var err error
 
 	receivers, err := component.MakeReceiverFactoryMap(
+		otlpreceiver.NewFactory(),
 		connections.NewFactory(),
 		mounts.NewFactory(),
 		exports.NewFactory(),
