@@ -17,7 +17,14 @@
 locals {
   FSID_DATABASE_CONFIG = (
     # this module deployed an external fsid database, so generate our own config
-    local.deploy_fsid_database ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", module.fsid_database.0) :
+    local.deploy_fsid_database ? templatefile("${path.module}/resources/knfsd-fsidd.conf.tftpl", {
+      connection_name    = module.fsid_database.0.connection_name,
+      sql_user           = module.fsid_database.0.sql_user,
+      database_name      = module.fsid_database.0.database_name,
+      private_ip_address = module.fsid_database.0.private_ip_address,
+      enable_metrics     = var.ENABLE_STACKDRIVER_METRICS,
+    }) :
+
     # otherwise use an external config
     var.FSID_DATABASE_CONFIG
   )

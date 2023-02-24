@@ -12,10 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "/run/knfsd-metrics.sock"
+        transport: "unix"
+
 service:
   pipelines:
     metrics:
       receivers:
+        - otlp
         - connections
         - mounts
         - exports
