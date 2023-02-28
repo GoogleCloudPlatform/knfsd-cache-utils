@@ -341,11 +341,11 @@ func (c *connection) execute(ctx context.Context, cmd, arg string) error {
 		return c.writeError(err.Error())
 	}
 
-	return c.write("+ " + response + "\u0000")
+	return c.write("+ " + response)
 }
 
 func (c *connection) writeError(msg string) error {
-	return c.write("- " + msg + "\u0000")
+	return c.write("- " + msg)
 }
 
 func (c *connection) write(msg string) error {
