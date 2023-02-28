@@ -1,6 +1,6 @@
 module netapp-exports
 
-go 1.17
+go 1.20
 
 require (
 	cloud.google.com/go/secretmanager v1.0.0

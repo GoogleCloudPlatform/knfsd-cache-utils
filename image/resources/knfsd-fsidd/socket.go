@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
-	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/atomic"
 	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-fsidd/log"
 	"github.com/coreos/go-systemd/v22/activation"
 

@@ -1,3 +1,3 @@
 module github.com/GoogleCloudPlatform/knfsd-cache-utils/image/knfsd-agent/src
 
-go 1.17
+go 1.20

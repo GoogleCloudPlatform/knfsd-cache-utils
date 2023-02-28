@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent
 
-go 1.17
+go 1.20
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/cmd/mdatagen v0.44.0
