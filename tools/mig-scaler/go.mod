@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/knfsd-cache-utils/tools/mig-scaler
 
-go 1.17
+go 1.20
 
 require (
 	cloud.google.com/go/workflows v1.5.0

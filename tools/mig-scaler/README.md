@@ -10,7 +10,7 @@ The MIG scaler workflow will scale up a MIG in increments over a period of time 
 
 ## Building mig-scaler
 
-To build mig-scaler you need go 1.17 or later:
+To build mig-scaler you need go 1.20 or later:
 
 ```sh
 cd tools/mig-scaler

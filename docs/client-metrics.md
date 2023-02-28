@@ -8,7 +8,7 @@ These instructions only include the custom NFS metrics collected by the KNFSD Me
 
 ## Prerequisites
 
-To build the metrics agent you will need [go 1.17](https://go.dev/).
+To build the metrics agent you will need [go 1.20](https://go.dev/).
 
 ## Building the agent
 
@@ -161,14 +161,14 @@ gcloud compute scp ./knfsd-metrics-agent.tar.gz "$VM_NAME:" \
 gcloud compute ssh "$VM_NAME" --project="$PROJECT" --zone="$ZONE"
 ```
 
-### (remote) Download and install Go 1.17
+### (remote) Download and install Go 1.20
 
 There are other methods to install Go. For simplicity, this example will install Go based on the the [standard Go instructions](https://go.dev/doc/install).
 
 ```bash
-curl curl -fSLO https://go.dev/dl/go1.17.8.linux-amd64.tar.gz
+curl -fSLO https://go.dev/dl/go1.20.1.linux-amd64.tar.gz
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.17.8.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.20.1.linux-amd64.tar.gz
 ```
 
 Add Go to your path:
