@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IMAGE=golang:1.17
+IMAGE=golang:1.20
 
 cd "$(dirname "$0")"
 
