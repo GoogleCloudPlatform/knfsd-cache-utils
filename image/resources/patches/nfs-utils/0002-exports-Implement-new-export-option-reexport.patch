@@ -1,7 +1,7 @@
 From 4771a42faf189d42f3602d97e221d68da5a8a4a9 Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Wed, 23 Mar 2022 23:11:34 +0100
-Subject: [PATCH 2/8] exports: Implement new export option reexport=
+Subject: [PATCH 2/9] exports: Implement new export option reexport=
 
 When re-exporting a NFS volume it is mandatory to specify
 either a UUID or numerical fsid= option because nfsd is unable

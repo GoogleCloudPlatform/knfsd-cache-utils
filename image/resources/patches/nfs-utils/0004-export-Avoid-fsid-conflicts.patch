@@ -1,7 +1,7 @@
 From 81ded5f65c7156d2d08afde147458abf3c79d11f Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Mon, 28 Mar 2022 20:56:16 +0200
-Subject: [PATCH 4/8] export: Avoid fsid= conflicts
+Subject: [PATCH 4/9] export: Avoid fsid= conflicts
 
 As soon reexport= is used, numerical fsids are automatically
 assigned, therefore other fsid= options are no longer possible

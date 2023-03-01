@@ -1,7 +1,7 @@
 From 749ffc38b8e084a84b5071db6d46d5e5977180cb Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Wed, 23 Mar 2022 22:51:45 +0100
-Subject: [PATCH 1/8] Implement reexport helper library
+Subject: [PATCH 1/9] Implement reexport helper library
 
 This internal library contains code that will be used by various
 tools within the nfs-utils package to deal better with NFS re-export,
