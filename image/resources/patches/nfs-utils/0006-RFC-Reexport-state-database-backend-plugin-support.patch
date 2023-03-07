@@ -1,7 +1,7 @@
 From 86e2bda94c73a40e998568abef4e95fa18d7e049 Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Thu, 19 May 2022 00:47:43 +0200
-Subject: [PATCH 6/8] RFC: Reexport state database backend plugin support
+Subject: [PATCH 6/9] RFC: Reexport state database backend plugin support
 
 Since I talked about the feature already I though it is time to show some code.
 

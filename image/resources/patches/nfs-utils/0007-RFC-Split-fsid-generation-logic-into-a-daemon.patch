@@ -1,7 +1,7 @@
 From 80e95e26bca94486d8397f9416496a717dadd169 Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Tue, 13 Dec 2022 11:15:04 +0100
-Subject: [PATCH 7/8] RFC: Split fsid generation logic into a daemon
+Subject: [PATCH 7/9] RFC: Split fsid generation logic into a daemon
 
 fsidd offers a UNIX domain socket which can be used to
 query fsids for reexporting.

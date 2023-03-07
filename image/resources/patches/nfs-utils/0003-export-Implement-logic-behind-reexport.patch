@@ -1,7 +1,7 @@
 From e2d05c5c20dd0ae47fada67c3f5a6f7bb23fa7b1 Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Wed, 23 Mar 2022 23:20:49 +0100
-Subject: [PATCH 3/8] export: Implement logic behind reexport=
+Subject: [PATCH 3/9] export: Implement logic behind reexport=
 
 This covers the cross mount case. When mountd/exportd detect
 a cross mount on a re-exported NFS volume a identifier has to

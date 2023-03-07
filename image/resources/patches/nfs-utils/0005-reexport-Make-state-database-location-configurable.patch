@@ -1,7 +1,7 @@
 From ae961ecdd7e57955fc748e8bcecde8da473d63ad Mon Sep 17 00:00:00 2001
 From: Richard Weinberger <richard@nod.at>
 Date: Thu, 24 Mar 2022 09:16:24 +0100
-Subject: [PATCH 5/8] reexport: Make state database location configurable
+Subject: [PATCH 5/9] reexport: Make state database location configurable
 
 With the database location configurable it is possible to
 place the sqlite database on a shared filesystem.
