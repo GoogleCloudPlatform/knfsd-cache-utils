@@ -29,6 +29,7 @@ export QUILT_PATCHES=debian/patches
 export NAME=build EMAIL=build
 
 patches="$(pwd)/patches/"
+nproc="$(nproc)"
 
 # begin_command() formats the terminal for a command output
 begin_command() {
@@ -193,26 +194,39 @@ install_netapp_exports() (
 )
 
 # build_install_kernel() builds and installs the kernel with custom patches
-build_install_kernel() {
+build_install_kernel() (
 
     # Build and install the new kernel
     begin_command "Building and installing kernel"
-    git clone --branch nfs-fscache-netfs --depth 1 --recurse-submodules --shallow-submodules https://github.com/benjamin-maynard/kernel.git kernel/v6.1-rc5
-    cd kernel/v6.1-rc5
-    git checkout 52acbd4584d1b83c844371e48de1a1e39d255a6d
+
+    mkdir kernel
+    cd kernel
+    curl -sSO https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-6.2-rc5.tar.gz
+    tar -xf linux-6.2-rc5.tar.gz
+    cd linux-6.2-rc5
+
+    quilt import "$patches"/kernel/*.patch
+    quilt push -a
+
     cp /boot/config-`uname -r` .config
     scripts/config --disable CONFIG_SYSTEM_REVOCATION_KEYS
     scripts/config --disable CONFIG_SYSTEM_TRUSTED_KEYS
+
     make olddefconfig
-    make clean
-    make ARCH=$(arch) -j$((`nproc`+1))
-    make ARCH=$(arch) modules_install -j$((`nproc`+1))
-    make ARCH=$(arch) install -j$((`nproc`+1))
-    cd ../../
+    make bindeb-pkg -j$nproc LOCALVERSION=-knfsd
+
+    cd ..
+    apt-get install -y \
+        ./linux-image-6.2.0-rc5-knfsd_6.2.0-rc5-knfsd-1_amd64.deb \
+        ./linux-image-6.2.0-rc5-knfsd-dbg_6.2.0-rc5-knfsd-1_amd64.deb \
+        ./linux-headers-6.2.0-rc5-knfsd_6.2.0-rc5-knfsd-1_amd64.deb \
+        ./linux-libc-dev_6.2.0-rc5-knfsd-1_amd64.deb
+
+    cd ..
     rm -rf kernel/
     complete_command
 
-}
+)
 
 # copy_config() copies the NFS Server configuration
 copy_config() {

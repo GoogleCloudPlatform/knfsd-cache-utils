@@ -1,10 +1,26 @@
 # next
 
 * Change the default build machine type to c2-standard-16
+* Update to the latest FS-Cache performance patches (v11)
 
 ## Change the default build machine type to c2-standard-16
 
 This improves the build times for the custom kernel. These are generally available and tend to offer the best build speed to price. Some additional speed may be gained by using a c2-standard-30.
+
+## Update to the latest FS-Cache performance patches (v11)
+
+Builds a custom version of the kernel based on `6.2.0-rc5`. This updates the custom patches that resolve the FS-Cache single page caching performance issue to the v11 revision of the patch set.
+
+This includes the following patch sets:
+
+* Initial conversion of NFS basic I/O to use folios (v2)
+  <https://lore.kernel.org/linux-nfs/0FEB407A-5D01-4430-AEE4-13A45B4840D8@hammerspace.com/>
+* Convert NFS with fscache to the netfs API (v11)
+  <https://lore.kernel.org/linux-nfs/20230220134308.1193219-1-dwysocha@redhat.com/>
+* mm, netfs, fscache: Stop read optimisation when folio removed from pagecache (v6)
+  <https://lore.kernel.org/linux-nfs/20230216150701.3654894-1-dhowells@redhat.com/>
+* vfs, security: Fix automount superblock LSM init problem, preventing NFS sb sharing (v5)
+  <https://lore.kernel.org/linux-kernel/217595.1662033775@warthog.procyon.org.uk/>
 
 # v1.0.0-beta3
 
