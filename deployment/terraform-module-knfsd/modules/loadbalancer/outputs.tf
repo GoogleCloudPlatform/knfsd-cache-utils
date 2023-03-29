@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = ">=1.2.0"
-}
-
-locals {
-  enable_service_account = var.SERVICE_ACCOUNT != "" || var.ENABLE_STACKDRIVER_METRICS
-  scopes = (
-    var.SERVICE_ACCOUNT != "" ? ["cloud-platform"] :
-    var.ENABLE_STACKDRIVER_METRICS ? ["logging-write", "monitoring-write"] :
-    []
-  )
+# The Internal DNS name of the Internal Load Balancer
+output "dns_name" {
+  description = "The internal DNS name of the load balancer."
+  value       = "${google_compute_forwarding_rule.default.service_label}.${var.PROXY_BASENAME}.il4.${var.REGION}.lb.${var.PROJECT}.internal"
 }
