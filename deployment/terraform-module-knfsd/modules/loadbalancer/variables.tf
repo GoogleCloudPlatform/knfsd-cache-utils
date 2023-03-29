@@ -14,16 +14,46 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = ">=1.2.0"
+variable "PROJECT" {
+  type    = string
+  default = ""
 }
 
-locals {
-  enable_service_account = var.SERVICE_ACCOUNT != "" || var.ENABLE_STACKDRIVER_METRICS
-  scopes = (
-    var.SERVICE_ACCOUNT != "" ? ["cloud-platform"] :
-    var.ENABLE_STACKDRIVER_METRICS ? ["logging-write", "monitoring-write"] :
-    []
-  )
-  CULLING_LAST_ACCESS_DEFAULT = var.CACHEFILESD_DISK_TYPE == "local-ssd" ? "${var.LOCAL_SSDS}h" : "6h"
+variable "REGION" {
+  type    = string
+  default = ""
+}
+
+variable "PROXY_BASENAME" {
+  type = string
+}
+
+variable "NETWORK" {
+  type = string
+}
+
+variable "SUBNETWORK" {
+  type = string
+}
+
+variable "SERVICE_LABEL" {
+  type    = string
+  default = "dns"
+}
+
+variable "IP_ADDRESS" {
+  type = string
+}
+
+variable "ENABLE_UDP" {
+  type    = bool
+  default = false
+}
+
+variable "HEALTH_CHECK" {
+  type = string
+}
+
+variable "INSTANCE_GROUP" {
+  type = string
 }

@@ -17,11 +17,11 @@
 // The IP Address of the Internal Load Balancer
 output "nfsproxy_loadbalancer_ipaddress" {
   description = "The internal ip address for the nfsProxy load balancer:"
-  value       = google_compute_address.nfsproxy_static.address
+  value       = one(google_compute_address.nfsproxy_static.*.address)
 }
 
 # The Internal DNS name of the Internal Load Balancer
 output "nfsproxy_loadbalancer_dnsaddress" {
   description = "The internal dns entry address for the nfsProxy load balancer:"
-  value       = "${google_compute_forwarding_rule.default.service_label}.${var.PROXY_BASENAME}.il4.${var.REGION}.lb.${var.PROJECT}.internal"
+  value       = one(module.loadbalancer.*.dns_name)
 }

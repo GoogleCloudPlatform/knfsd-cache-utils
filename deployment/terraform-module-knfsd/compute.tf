@@ -117,7 +117,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     VFS_CACHE_PRESSURE     = var.VFS_CACHE_PRESSURE
     DISABLED_NFS_VERSIONS  = var.DISABLED_NFS_VERSIONS
     READ_AHEAD_KB          = floor(var.READ_AHEAD / 1024)
-    LOADBALANCER_IP        = google_compute_address.nfsproxy_static.address
+    LOADBALANCER_IP        = one(google_compute_address.nfsproxy_static.*.address)
     serial-port-enable     = "TRUE"
 
     # metrics
@@ -219,67 +219,4 @@ resource "google_compute_firewall" "allow-tcp-healthcheck" {
   source_ranges = ["130.211.0.0/22", "35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
   target_tags   = ["knfsd-cache-server"]
 
-}
-
-# Load Balancer backend service for the Knfsd Cluster
-resource "google_compute_region_backend_service" "nfsproxy" {
-  project               = var.PROJECT
-  region                = var.REGION
-  name                  = "${var.PROXY_BASENAME}-backend-service"
-  health_checks         = [google_compute_health_check.autohealing.self_link]
-  load_balancing_scheme = "INTERNAL"
-  session_affinity      = "CLIENT_IP"
-  protocol              = "TCP"
-  timeout_sec           = 10
-  backend {
-    description = "Load Balancer backend for nfsProxy managed instance group."
-    group       = google_compute_instance_group_manager.proxy-group.instance_group
-  }
-}
-
-# Load Balancer backend service for the Knfsd Cluster
-resource "google_compute_region_backend_service" "nfsproxy_udp" {
-  count                 = var.ENABLE_UDP ? 1 : 0
-  project               = var.PROJECT
-  region                = var.REGION
-  name                  = "${var.PROXY_BASENAME}-backend-service-udp"
-  health_checks         = [google_compute_health_check.autohealing.self_link]
-  load_balancing_scheme = "INTERNAL"
-  session_affinity      = "CLIENT_IP"
-  protocol              = "UDP"
-  timeout_sec           = 10
-  backend {
-    description = "Load Balancer backend for NFS proxy managed instance group."
-    group       = google_compute_instance_group_manager.proxy-group.instance_group
-  }
-}
-
-# Load Balancer forwarding rule service for the Knfsd Cluster
-resource "google_compute_forwarding_rule" "default" {
-  project               = var.PROJECT
-  region                = var.REGION
-  name                  = var.PROXY_BASENAME
-  load_balancing_scheme = "INTERNAL"
-  backend_service       = google_compute_region_backend_service.nfsproxy.self_link
-  ip_protocol           = "TCP"
-  ip_address            = google_compute_address.nfsproxy_static.address
-  all_ports             = true
-  network               = var.NETWORK
-  subnetwork            = var.SUBNETWORK
-  service_label         = var.SERVICE_LABEL
-}
-
-resource "google_compute_forwarding_rule" "udp" {
-  count                 = var.ENABLE_UDP ? 1 : 0
-  project               = var.PROJECT
-  region                = var.REGION
-  name                  = "${var.PROXY_BASENAME}-udp"
-  load_balancing_scheme = "INTERNAL"
-  backend_service       = google_compute_region_backend_service.nfsproxy_udp[0].self_link
-  ip_protocol           = "UDP"
-  ip_address            = google_compute_address.nfsproxy_static.address
-  all_ports             = true
-  network               = var.NETWORK
-  subnetwork            = var.SUBNETWORK
-  service_label         = var.SERVICE_LABEL
 }
