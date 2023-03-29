@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+terraform {
+  required_version = ">=1.2.0"
+}
+
 locals {
   enable_service_account = var.SERVICE_ACCOUNT != "" || var.ENABLE_STACKDRIVER_METRICS
   scopes = (
