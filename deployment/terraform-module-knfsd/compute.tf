@@ -17,7 +17,7 @@
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
 
-  provider = "google-beta" // Required due to network_performance_config being in beta provider only
+  provider = google-beta # Required due to network_performance_config being in beta provider only
 
   project          = var.PROJECT
   region           = var.REGION
@@ -27,10 +27,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   can_ip_forward   = false
   tags             = ["knfsd-cache-server"]
   labels           = var.PROXY_LABELS
-
-  lifecycle {
-    create_before_destroy = true
-  }
 
   disk {
     source_image = var.PROXY_IMAGENAME
@@ -135,7 +131,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     preemptible         = false
   }
 
-  # We use a dnaymic block for service_account here as we only want to assign an SA if we have metrics enabled.
+  # We use a dynamic block for service_account here as we only want to assign an SA if we have metrics enabled.
   # If we do not have metrics enabled there is no need for an SA
   dynamic "service_account" {
     for_each = local.enable_service_account ? [1] : []
@@ -143,6 +139,10 @@ resource "google_compute_instance_template" "nfsproxy-template" {
       email  = var.SERVICE_ACCOUNT
       scopes = local.scopes
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
