@@ -2,7 +2,7 @@
 
 This module supports deploying an Internal TCP Load Balancer TCP (and optionally UDP) for the KNFSD proxy cluster.
 
-This module is not generally intended to be used directly, and is included by the main KNFSD proxy module when `LOADBALANCING_MODE = "loadbalancer"`.
+This module is not generally intended to be used directly, and is included by the main KNFSD proxy module when `TRAFFIC_DISTRIBUTION_MODE = "loadbalancer"`.
 
 ## Prerequisites
 

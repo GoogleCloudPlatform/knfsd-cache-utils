@@ -23,7 +23,7 @@
 resource "google_compute_address" "nfsproxy_static" {
   # This module will be made optional later, set the count to 1 so that the
   # correct refactoring can be created and tested.
-  count = 1
+  count = var.TRAFFIC_DISTRIBUTION_MODE == "loadbalancer" ? 1 : 0
 
   project      = var.PROJECT
   region       = var.REGION
@@ -41,11 +41,10 @@ resource "google_compute_address" "nfsproxy_static" {
   }
 }
 
-
 module "loadbalancer" {
   # This module will be made optional later, set the count to 1 so that the
   # correct refactoring can be created and tested.
-  count  = 1
+  count  = var.TRAFFIC_DISTRIBUTION_MODE == "loadbalancer" ? 1 : 0
   source = "./modules/loadbalancer"
 
   PROJECT        = var.PROJECT
@@ -58,6 +57,31 @@ module "loadbalancer" {
   ENABLE_UDP     = var.ENABLE_UDP
   HEALTH_CHECK   = google_compute_health_check.autohealing.self_link
   INSTANCE_GROUP = google_compute_instance_group_manager.proxy-group.instance_group
+}
+
+resource "null_resource" "dns_round_robin" {
+  count = var.TRAFFIC_DISTRIBUTION_MODE == "dns_round_robin" ? 1 : 0
+  lifecycle {
+    precondition {
+      condition     = var.ASSIGN_STATIC_IPS
+      error_message = "ASSIGN_STATIC_IPS must be enabled when using DNS round robin."
+    }
+
+    precondition {
+      condition     = !var.ENABLE_KNFSD_AUTOSCALING
+      error_message = "ENABLE_KNFSD_AUTOSCALING cannot be enabled when using DNS round robin."
+    }
+  }
+}
+
+module "dns_round_robin" {
+  count          = var.TRAFFIC_DISTRIBUTION_MODE == "dns_round_robin" ? 1 : 0
+  source         = "./modules/dns_round_robin"
+  project        = var.PROJECT
+  instance_group = google_compute_instance_group_manager.proxy-group.instance_group
+  proxy_basename = var.PROXY_BASENAME
+  dns_name       = var.DNS_NAME
+  knfsd_nodes    = var.KNFSD_NODES
 }
 
 moved {
