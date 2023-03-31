@@ -5,6 +5,7 @@
 * Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
 * Temporary fix for cachefilesd intermittently terminating
 * Assign static IPs to proxy instances
+* DNS Round Robin based load balancing
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 
@@ -33,6 +34,14 @@ Added a new configuration option, `ASSIGN_STATIC_IPS`. This configures the MIG t
 When using stateful IP addresses, if an instance needs to be replaced due to an update, or auto-healing the new instance will have the same IP as the original instance.
 
 This allows using the cluster without a load balancer, where the clients connected directly to a specific proxy instance via the instances internal IP address.
+
+## DNS Round Robin based load balancing
+
+Add a new configuration option, `TRAFFIC_DISTRIBUTION_MODE`, to choose between using DNS round robin or the internal TCP load balancer.
+
+DNS round robin uses Cloud DNS to distribute the traffic between the different proxy instances in a KNFSD proxy instance group.
+
+DNS round robin is the recommended method, however making this the default could cause unintended changes to existing deployments. To avoid this the `TRAFFIC_DISTRIBUTION_MODE` is required and has no default.
 
 # v0.10.0
 

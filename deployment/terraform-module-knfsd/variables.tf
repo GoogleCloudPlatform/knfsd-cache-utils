@@ -100,9 +100,27 @@ variable "AUTO_CREATE_FIREWALL_RULES" {
   type    = bool
 }
 
+variable "TRAFFIC_DISTRIBUTION_MODE" {
+  type = string
+  validation {
+    condition     = contains(["dns_round_robin", "loadbalancer", "none"], var.TRAFFIC_DISTRIBUTION_MODE)
+    error_message = "Valid values for TRAFFIC_DISTRIBUTION_MODE are 'dns_round_robin', 'loadbalancer', and 'none'."
+  }
+}
+
 variable "LOADBALANCER_IP" {
   default = null
   type    = string
+}
+
+variable "DNS_NAME" {
+  default = ""
+  type    = string
+
+  validation {
+    condition     = var.DNS_NAME == "" || endswith(var.DNS_NAME, ".")
+    error_message = "DNS_NAME must end with tailing dot, for example \"knfsd.example.\" (note the tailing dot)."
+  }
 }
 
 variable "SERVICE_LABEL" {
