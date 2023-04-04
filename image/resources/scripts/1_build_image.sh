@@ -68,7 +68,8 @@ install_build_dependencies() {
         libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
         build-essential libevent-dev libsqlite3-dev libblkid-dev \
         libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
-        gawk llvm
+        gawk llvm \
+        libwrap0-dev libkrb5-dev pkg-config libldap2-dev libcap-dev libmount-dev dh-apport
     complete_command
 
 }
@@ -100,8 +101,13 @@ download_nfs-utils() (
 
     begin_command "Downloading nfs-utils"
     echo -e "------${SHELL_DEFAULT}"
-    curl -o nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
-    tar xvf nfs-utils-2.5.3.tar.gz
+
+    # nfs-utils 2.6.3 isn't avaialble yet from launchpad, for now checkout
+    # 2.6.3-rc5 from git.
+    #pull-lp-source nfs-utils 1:2.6.1-1ubuntu1
+    git clone git://git.linux-nfs.org/projects/steved/nfs-utils.git -b nfs-utils-2-6-3-rc6 --depth 1
+    rm -rf nfs-utils/.git
+
     complete_command
 
 )
@@ -110,10 +116,20 @@ download_nfs-utils() (
 build_install_nfs-utils() (
 
     begin_command "Building and installing nfs-utils"
-    cd nfs-utils-2.5.3
+    cd nfs-utils
+
+    quilt import "$patches"/nfs-utils/*.patch
+    quilt push -a
+
+    # nfs-utils 2.6.3 isn't avaialble yet from launchpad, so cannot easily
+    # build a debian package. For now install using make.
+    # debchange --local +knfsd "Applying reexport patches"
+    # dpkg-buildpackage -b -nc -uc
+    ./autogen.sh
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
-    make -j$((`nproc`+1))
-    make install -j$((`nproc`+1))
+    make -j$nproc
+    make -j$nproc install
+
     chmod u+w,go+r /sbin/mount.nfs
     chown nobody:nogroup /var/lib/nfs
     complete_command
