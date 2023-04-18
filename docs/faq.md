@@ -1,5 +1,25 @@
 # FAQ
 
+## Error creating HealthCheck: already exists
+
+> Error creating HealthCheck: googleapi: Error 409: The resource 'projects/my-gcp-project/global/healthChecks/rendercluster1-autohealing-health-check' already exists, alreadyExists
+
+Some of the resources created by Terraform (such as health checks) have to have a globally unique name. When deploying multiple knfsd proxy clusters (even if the clusters are in different regions) you *MUST* give each knfsd proxy cluster a unique `PROXY_BASENAME`.
+
+See [firewall configuration](../deployment/firewall.md) for more details.
+
+## Error creating Firewall: already exists
+
+> Error creating Firewall: googleapi: Error 409: The resource 'projects/my-gcp-project/global/firewalls/allow-nfs-tcp-healthcheck' already exists, alreadyExists
+
+The firewall rules can only be deployed once. When deploying multiple knfsd proxy clusters the best practice is to set `AUTO_CREATE_FIREWALL_RULES = false` for all the clusters and create the firewall rules yourself.
+
+## Proxy instances are replaced every 10 minutes
+
+The knfsd proxy instances in the Managed Instance Group (MIG) never become healthy. When the initial grace period expires the instances are replaced. The initial grace period defaults to 10 minutes (600 seconds) and can be changed by setting `HEALTHCHECK_INITIAL_DELAY_SECONDS`.
+
+See [Check the knfsd proxy instance is starting correctly](./check-startup.md).
+
 ## Every file shows an I/O error in ls, or when trying to read/write
 
 This could have one of two causes:

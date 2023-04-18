@@ -206,6 +206,7 @@ function start-services() {
 function init() {
 	# Set any variables cleanup depends upon as blank before setting the trap.
 	# This prevents stray environment variables causing unexpected behaviour.
+	startup_complete=
 	WORKDIR=
 	trap cleanup EXIT
 
@@ -536,12 +537,20 @@ function post-startup() {
 	exportfs -s
 
 	echo "Reached Proxy Startup Exit. Happy caching!"
+	startup_complete=yes
 }
 
+# Do not call cleanup explicitly, the init function sets an exit trap
 function cleanup() {
-	# Do not call this explicitly, the init function sets an exit trap
+	# If the script exits unexpectedly print an error message. This makes it
+	# easier when searching the logs to know if the start up script has
+	# terminated.
+	if [[ startup_complete != yes ]]; then
+		echo "Error starting proxy"
+	fi
+
 	if [[ -n "${WORKDIR}" ]] && [[ -d "${WORKDIR}" ]]; then
-		rm -rf "${WORKDIR}"
+		rm -rf "${WORKDIR}" || true
 	fi
 }
 

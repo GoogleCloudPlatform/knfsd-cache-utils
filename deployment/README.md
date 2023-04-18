@@ -38,10 +38,14 @@ module "nfs_proxy" {
     # Network Configuration
     NETWORK                        = "my-vpc"
     SUBNETWORK                     = "my-subnet"
-    AUTO_CREATE_FIREWALL_RULES     = false
     TRAFFIC_DISTRIBUTION_MODE      = "dns_round_robin"
     DNS_NAME                       = "rendercluster1.gcp.example.com."
     ASSIGN_STATIC_IPS              = true
+
+    # Automatically create the firewall rules for the example to provide a
+    # simple quick start when testing the knfsd proxy. Best practice is to
+    # create these rules yourself as part of configuring the VPC network.
+    AUTO_CREATE_FIREWALL_RULES     = true
 
     # Knfsd Proxy Configuration
     PROXY_IMAGENAME                = "knfsd-base-image"
@@ -138,7 +142,7 @@ If using the NetApp Exports Auto-Discovery feature, please also read the [NetApp
 
 | Variable                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                             | Required | Default                         |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------- |
-| PROXY_BASENAME                   | A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).                                                                                                                                                                                                                                                                                                                         | False    | `nfsproxy`                      |
+| PROXY_BASENAME                   | Prefix used to name GCP resources. Every deployment in a GCP project *MUST* be given a unique basename to avoid conflicts (some of the resources created have to have a globally unique name within the GCP project).                                                                                                                                                                                                                   | False    | `nfsproxy`                      |
 | EXPORT_CIDR                      | The CIDR to use in `/etc/exports` of the Knfsd Node for filesystem re-export.                                                                                                                                                                                                                                                                                                                                                           | False    | `10.0.0.0/8`                    |
 | PROXY_IMAGENAME                  | The name of the Knfsd base [image](https://cloud.google.com/compute/docs/images).                                                                                                                                                                                                                                                                                                                                                       | True     | N/A                             |
 | KNFSD_NODES                      | The number of Knfsd nodes to deploy as part of the cluster.                                                                                                                                                                                                                                                                                                                                                                             | False    | 3                               |
