@@ -29,7 +29,7 @@ provider "google" {
 }
 
 module "metrics" {
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v0.9.0"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v1.0.0-beta4"
 }
 ```
 

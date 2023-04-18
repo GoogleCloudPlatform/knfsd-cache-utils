@@ -1,5 +1,7 @@
 # next
 
+# v1.0.0-beta4
+
 * Change the default build machine type to c2-standard-16
 * Update to the latest FS-Cache performance patches (v11)
 * Assign static IPs to proxy instances
