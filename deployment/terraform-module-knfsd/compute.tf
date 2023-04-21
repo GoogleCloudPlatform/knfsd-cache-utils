@@ -69,7 +69,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     network            = var.NETWORK
     subnetwork         = var.SUBNETWORK
     subnetwork_project = var.SUBNETWORK_PROJECT != "" ? var.SUBNETWORK_PROJECT : null
-    nic_type           = var.ENABLE_HIGH_BANDWIDTH_CONFIGURATION ? "GVNIC" : "VIRTIO_NET"
+    nic_type           = (var.ENABLE_HIGH_BANDWIDTH_CONFIGURATION || var.ENABLE_GVNIC) ? "GVNIC" : "VIRTIO_NET"
   }
 
   metadata = {

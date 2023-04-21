@@ -6,6 +6,7 @@
 * Temporary fix for cachefilesd intermittently terminating
 * Assign static IPs to proxy instances
 * DNS Round Robin based load balancing
+* Allow gVNIC without requiring the high bandwidth option
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 
@@ -42,6 +43,12 @@ Add a new configuration option, `TRAFFIC_DISTRIBUTION_MODE`, to choose between u
 DNS round robin uses Cloud DNS to distribute the traffic between the different proxy instances in a KNFSD proxy instance group.
 
 DNS round robin is the recommended method, however making this the default could cause unintended changes to existing deployments. To avoid this the `TRAFFIC_DISTRIBUTION_MODE` is required and has no default.
+
+## Allow gVNIC without requiring the high bandwidth option
+
+Add a new configuration option, `ENABLE_GVNIC`, to use the `gVNIC` network interface type even if  `ENABLE_HIGH_BANDWIDTH_CONFIGURATION` is not enabled.
+
+This will allow the use of the more performant `gVNIC` instead of the default `virtio` driver on smaller instances, or where there is no need for the TIER_1 network performance.
 
 # v0.10.0
 
@@ -265,7 +272,6 @@ When the health check is enabled, after 10 minutes the proxy instance will be re
 ## Custom GCP labels for proxy VM instances
 
 Added a new `PROXY_LABELS` variable to set custom labels on the proxy VM instances. This can aid with filtering metrics and logs when running multiple proxy clusters in a single project.
-
 
 # v0.5.1
 

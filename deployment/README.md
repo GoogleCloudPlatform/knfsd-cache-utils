@@ -57,7 +57,7 @@ output "dns_name" {
 }
 ```
 
-Edit the above [configuration variables](#Configuration-Variables) to match your desired configuration.
+Edit the above [configuration variables](#configuration-variables) to match your desired configuration.
 
 ### Deploy Knfsd
 
@@ -91,7 +91,8 @@ terraform apply
 | ENABLE_UDP                          | Create a load balancer to support UDP traffic to the NFS proxy instances (when `TRAFFIC_DISTRIBUTION_MODE = "loadbalancer"`). UDP is not recommended for the main NFS traffic as it can cause data corruption. However, this maybe useful for older clients that default to using UDP for the mount protocol.                                                                                                                                                                                                      | False    | `false`                              |
 | DNS_NAME                            | The fully qualified DNS name (FQDN) to use for the KNFSD proxy cluster when `TRAFFIC_DISTRIBUTION_MODE = "round_robin_dns"`. This must end with a period, such as `rendercluster1.gcp.example.com.` or `rendercluster1.knfsd.internal.`.                                                                                                                                                                                                                                                                           | False    | `"{PROXY_BASENAME}.knfsd.internal."` |
 | ASSIGN_STATIC_IPS                   | If set to `true`, configures the MIG to use [stateful IP addresses](https://cloud.google.com/compute/docs/instance-groups/configuring-stateful-ip-addresses-in-migs). If an instance is replaced due to an update or failing health check the new instance will keep the same IP address as the original instance.                                                                                                                                                                                                 | False    | `false`                              |
-| ENABLE_HIGH_BANDWIDTH_CONFIGURATION | If set to `true` enables [gVNIC](https://cloud.google.com/compute/docs/networking/using-gvnic) and [Tier 1 Bandwidth](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration) for higher egress. When enabled, only N2, N2D, C2 or C2D VM's are supported. You should also make sure you [assign enough vCPU's](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration#bandwidth-tiers) to take advantage of this configuration. | False    | null                                 |
+| ENABLE_HIGH_BANDWIDTH_CONFIGURATION | If set to `true` enables [gVNIC](https://cloud.google.com/compute/docs/networking/using-gvnic) and [Tier 1 Bandwidth](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration) for higher egress. When enabled, only N2, N2D, C2 or C2D VM's are supported. You should also make sure you [assign enough vCPU's](https://cloud.google.com/compute/docs/networking/configure-vm-with-high-bandwidth-configuration#bandwidth-tiers) to take advantage of this configuration. | False    | `false`                                 |
+| ENABLE_GVNIC | If set to `true`, enables [gVNIC](https://cloud.google.com/compute/docs/networking/using-gvnic) for optimal network performance. | False | `false` |
 
 ### Health Check Configuration
 
