@@ -400,3 +400,8 @@ variable "ENABLE_HIGH_BANDWIDTH_CONFIGURATION" {
   type    = bool
   default = false
 }
+
+variable "ENABLE_GVNIC" {
+  type    = bool
+  default = false
+}
