@@ -3,6 +3,7 @@
 * Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 * Stop pinning to specific package versions
 * Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
+* Temporary fix for cachefilesd intermittently terminating
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 
@@ -17,6 +18,12 @@ Most of the packages are already unpinned and install the latest version. The on
 ## Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
 
 The older `ssh-rsa` (RSA with SHA1) key algorithm is no longer secure and is not supported by the latest versions of OpenSSH or Ubuntu Jammy. The google computer packer plugin needs to be a minimum of 1.0.13 to support the newer `rsa-ssh2-256` and `rsa-ssh2-512` key algorithms.
+
+## Temporary fix for cachefilesd intermittently terminating
+
+The cachefilesd service keeps terminating causing the cache to be withdrawn. This results in the proxy no longer caching any data and just acting as a pass-through server.
+
+This patch provides a temporary fix while the linux-cachefs maintainers decide the best way to solve the issue.
 
 # v0.10.0
 

@@ -73,6 +73,28 @@ install_build_dependencies() {
 
 }
 
+install_cachefilesd() (
+    begin_command "Building and installing cachefilesd"
+    echo -e "------${SHELL_DEFAULT}"
+
+    pull-lp-source cachefilesd 0.10.10-0.2ubuntu1
+    cd cachefilesd-0.10.10/
+
+    quilt import "$patches"/cachefilesd/*.patch
+    quilt push -a
+
+    debchange --local +knfsd "Applying custom patches"
+    debuild -i -uc -us -b
+
+    cd ..
+    apt-get install -y \
+        ./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb \
+        ./cachefilesd-dbgsym_0.10.10-0.2ubuntu1+knfsd1_amd64.ddeb
+
+    systemctl disable cachefilesd
+    echo "RUN=yes" >> /etc/default/cachefilesd
+)
+
 # download_nfs-utils() downloads version 2.5.3 of nfs-utils
 download_nfs-utils() (
 
@@ -94,28 +116,6 @@ build_install_nfs-utils() (
     make install -j$nproc
     chmod u+w,go+r /sbin/mount.nfs
     chown nobody:nogroup /var/lib/nfs
-    complete_command
-
-)
-
-# install_cachefilesd() builds and installs cachefilesd 0.10.10 from source
-install_cachefilesd() (
-    begin_command "Downloading cachefilesd"
-    pull-lp-source cachefilesd 0.10.10-0.2ubuntu1
-
-    begin_command "Building cachefilesd"
-    cd cachefilesd-0.10.10
-    quilt import "${patches}"/cachefilesd/*.patch
-    quilt push -a
-    debchange --local +knfsd "Apply knfsd patches"
-    dpkg-buildpackage -b -us -uc
-
-    begin_command "Installing cachefilesd"
-    cd ..
-    apt-get install -y ./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb
-    echo "RUN=yes" >> /etc/default/cachefilesd
-    systemctl disable cachefilesd
-
     complete_command
 
 )
@@ -228,9 +228,9 @@ copy_config() {
 # Run Build
 install_nfs_packages
 install_build_dependencies
+install_cachefilesd
 download_nfs-utils
 build_install_nfs-utils
-install_cachefilesd
 install_stackdriver_agent
 install_golang
 install_knfsd_agent

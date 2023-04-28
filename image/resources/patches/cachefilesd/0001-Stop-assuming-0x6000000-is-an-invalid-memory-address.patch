@@ -1,0 +1,136 @@
+From c5532c9200d2c0d471b468b97370bb29d9d5393c Mon Sep 17 00:00:00 2001
+From: Chris Chilvers <chris.chilvers@appsbroker.com>
+Date: Fri, 3 Feb 2023 17:10:50 +0000
+Subject: [PATCH] Stop assuming 0x6000000 is an invalid memory address
+
+On 32 bit architectures, this address would often live in the kernel
+address space (though not all systems have this guarantee).
+
+With a 64 bit architecture however this bit pattern can appear in valid
+addresses allocated using calloc. This causes the decant_cull_table
+check to mistakenly abort the application.
+
+For now create a defined sentinel address that can be used for bug
+checks. The downside is that with only a single sentinel value we
+cannot tell how an invalid value got into cullbuild.
+
+This also does not deal with the other invalid memory patters that are
+created using memset. This is used to fill the memory with a repeating
+pattern such as 0x6b, 0x6d, or 0x6e; all of which would also match the
+mask 0xf0000000 == 0x60000000.
+
+For now just change memset to fill the memory with zeros. This should
+act like a null pointer and cause a segfault if there's an attempt to
+dereference one.
+---
+ cachefilesd.c | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/cachefilesd.c b/cachefilesd.c
+index d4d236f..b59ffb9 100644
+--- a/cachefilesd.c
++++ b/cachefilesd.c
+@@ -98,6 +98,10 @@ static unsigned culltable_size = 4096;
+ static struct object **cullbuild;
+ static struct object **cullready;
+ 
++// represents an invalid entry in the cull table
++// it might be possible to just replace this with NULL
++static struct object invalid = {};
++
+ static unsigned nr_in_build_table;
+ static unsigned nr_in_ready_table;
+ static int ncullable;
+@@ -1092,7 +1096,7 @@ static void put_object(struct object *object)
+ 
+ 	parent = object->parent;
+ 
+-	memset(object, 0x6d, sizeof(struct object));
++	memset(object, 0, sizeof(struct object));
+ 	free(object);
+ 
+ 	if (parent)
+@@ -1213,7 +1217,7 @@ static void insert_into_cull_table(struct object *object)
+ 
+ 	/* newest object in table will be displaced by this one */
+ 	put_object(cullbuild[0]);
+-	cullbuild[0] = (void *)(0x6b000000 | __LINE__);
++	cullbuild[0] = &invalid;
+ 	object->usage++;
+ 
+ 	/* place directly in first slot if second is older */
+@@ -1391,7 +1395,7 @@ next:
+ 
+ 			if (loop == nr_in_ready_table - 1) {
+ 				/* child was oldest object */
+-				cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
++				cullready[--nr_in_ready_table] = &invalid;
+ 				put_object(child);
+ 				goto removed;
+ 			}
+@@ -1400,7 +1404,7 @@ next:
+ 				memmove(&cullready[loop],
+ 					&cullready[loop + 1],
+ 					(nr_in_ready_table - (loop + 1)) * sizeof(cullready[0]));
+-				cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
++				cullready[--nr_in_ready_table] = &invalid;
+ 				put_object(child);
+ 				goto removed;
+ 			}
+@@ -1411,7 +1415,7 @@ next:
+ 
+ 			if (loop == nr_in_build_table - 1) {
+ 				/* child was oldest object */
+-				cullbuild[--nr_in_build_table] = (void *)(0x6b000000 | __LINE__);
++				cullbuild[--nr_in_build_table] = &invalid;
+ 				put_object(child);
+ 			}
+ 			else if (loop < nr_in_build_table - 1) {
+@@ -1419,7 +1423,7 @@ next:
+ 				memmove(&cullbuild[loop],
+ 					&cullbuild[loop + 1],
+ 					(nr_in_build_table - (loop + 1)) * sizeof(cullbuild[0]));
+-				cullbuild[--nr_in_build_table] = (void *)(0x6b000000 | __LINE__);
++				cullbuild[--nr_in_build_table] = &invalid;
+ 				put_object(child);
+ 			}
+ 
+@@ -1531,7 +1535,7 @@ static void decant_cull_table(void)
+ 
+ 		n = copy * sizeof(cullready[0]);
+ 		memcpy(cullready, cullbuild, n);
+-		memset(cullbuild, 0x6e, n);
++		memset(cullbuild, 0, n);
+ 		nr_in_ready_table = nr_in_build_table;
+ 		nr_in_build_table = 0;
+ 		goto check;
+@@ -1559,7 +1563,7 @@ static void decant_cull_table(void)
+ 	nr_in_ready_table += copy;
+ 
+ 	memcpy(&cullready[0], &cullbuild[leave], copy * sizeof(cullready[0]));
+-	memset(&cullbuild[leave], 0x6b, copy * sizeof(cullbuild[0]));
++	memset(&cullbuild[leave], 0, copy * sizeof(cullbuild[0]));
+ 	nr_in_build_table = leave;
+ 
+ 	if (copy + leave > culltable_size)
+@@ -1567,7 +1571,8 @@ static void decant_cull_table(void)
+ 
+ check:
+ 	for (loop = 0; loop < nr_in_ready_table; loop++)
+-		if (((long)cullready[loop] & 0xf0000000) == 0x60000000)
++		// check for invalid sentiel value, or 0 from memset
++		if (cullready[loop] == &invalid || ((long)cullready[loop] == 0))
+ 			abort();
+ }
+ 
+@@ -1645,6 +1650,6 @@ static void cull_objects(void)
+ 
+ 	if (cullready[nr_in_ready_table - 1]->cullable) {
+ 		cull_object(cullready[nr_in_ready_table - 1]);
+-		cullready[--nr_in_ready_table] = (void *)(0x6b000000 | __LINE__);
++		cullready[--nr_in_ready_table] = &invalid;
+ 	}
+ }
+-- 
+2.34.1
+
