@@ -1,0 +1,14 @@
+steps:
+- name: 'hashicorp/packer:1.8'
+  dir: 'image'
+  args:
+  - build
+  - -var-file
+  - internal-build/image.pkrvars.hcl
+  - -var
+  - image_name=knfsd-$COMMIT_SHA
+  - .
+options:
+  pool:
+    name: 'projects/knfsd-cache-utils/locations/us-central1/workerPools/knfsd-build-pool'
+timeout: 3600s

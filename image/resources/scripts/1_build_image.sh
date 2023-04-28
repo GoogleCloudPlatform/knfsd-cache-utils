@@ -17,7 +17,7 @@
 # Exit on command failure
 set -e
 
-# Set shell color variables
+# Set variables
 SHELL_YELLOW='\033[0;33m'
 SHELL_DEFAULT='\033[0m'
 
@@ -29,149 +29,139 @@ export DEBIAN_PRIORITY=critical
 export QUILT_PATCHES=debian/patches
 export NAME=build EMAIL=build
 
-patches="$(pwd)/patches"
+patches="$(pwd)/patches/"
+nproc="$(nproc)"
+
+# begin_command() formats the terminal for a command output
+begin_command() {
+    echo -e "${SHELL_YELLOW}"
+    echo "RUNNING STEP: $1..."
+    echo -e "------${SHELL_DEFAULT}"
+}
+
+# begin_command() formats the terminal after command completion
+complete_command() {
+    echo -e -n "${SHELL_YELLOW}------ "
+    echo "DONE"
+    echo -e "${SHELL_DEFAULT}"
+
+}
 
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
 
-    # Install Cachefilesd
-    echo "Installing cachefilesd and rpcbind..."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing rpcbind and nfs-kernel-server"
     apt-get update
     apt-get install -y rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
     systemctl disable nfs-kernel-server
     systemctl disable nfs-idmapd.service
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
+    complete_command
 
 }
 
 # install_build_dependencies() installs the dependencies to required to build the kernel
 install_build_dependencies() {
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Installing build dependencies..."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing build dependencies"
     apt-get update
     apt-get install -y \
         libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms \
         libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
         build-essential libevent-dev libsqlite3-dev libblkid-dev \
         libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 
 }
 
 # download_nfs-utils() downloads version 2.5.3 of nfs-utils
 download_nfs-utils() (
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Downloading nfs-utils..."
+    begin_command "Downloading nfs-utils"
     echo -e "------${SHELL_DEFAULT}"
     curl -o nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
     tar xvf nfs-utils-2.5.3.tar.gz
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
+    complete_command
 
 )
 
 # build_install_nfs-utils() builds and installs nfs-utils
 build_install_nfs-utils() (
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Installing nfs-utils..."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Building and installing nfs-utils"
     cd nfs-utils-2.5.3
     ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
-    make -j20
-    make install -j20
+    make -j$nproc
+    make install -j$nproc
     chmod u+w,go+r /sbin/mount.nfs
     chown nobody:nogroup /var/lib/nfs
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
+    complete_command
 
 )
 
 # install_cachefilesd() builds and installs cachefilesd 0.10.10 from source
 install_cachefilesd() (
-    echo -e "${SHELL_YELLOW}"
-    echo "Downloading cachefilesd..."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Downloading cachefilesd"
     pull-lp-source cachefilesd 0.10.10-0.2ubuntu1
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Building cachefilesd..."
-    echo -e "------${SHELL_DEFAULT}"
-
+    begin_command "Building cachefilesd"
     cd cachefilesd-0.10.10
     quilt import "${patches}"/cachefilesd/*.patch
     quilt push -a
     debchange --local +knfsd "Apply knfsd patches"
     dpkg-buildpackage -b -us -uc
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Installing cachefilesd..."
-    echo -e "------${SHELL_DEFAULT}"
-
+    begin_command "Installing cachefilesd"
     cd ..
     apt-get install -y ./cachefilesd_0.10.10-0.2ubuntu1+knfsd1_amd64.deb
     echo "RUN=yes" >> /etc/default/cachefilesd
     systemctl disable cachefilesd
 
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
+    complete_command
 
 )
 
 # install_stackdriver_agent() installs the Cloud Ops Agent for metrics
 install_stackdriver_agent() {
 
-    echo -e "${SHELL_YELLOW}"
-    echo "Installing Cloud Ops Agent dependencies..."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing Cloud Ops Agent dependencies"
     cd ops-agent
     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-    bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.11.0
+    bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.22.0
     systemctl disable google-cloud-ops-agent
     cp google-cloud-ops-agent.conf /etc/logrotate.d/
     cd ..
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 
 }
 
 # install_golang() installs golang
 install_golang() {
 
-    echo "Installing golang...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing golang"
     curl -o go1.17.3.linux-amd64.tar.gz https://dl.google.com/go/go1.17.3.linux-amd64.tar.gz
     rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.3.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 
 }
 
 # install_knfsd_agent() installs the knfsd-agent (see https://github.com/GoogleCloudPlatform/knfsd-cache-utils/tree/main/image/knfsd-agent)
 install_knfsd_agent() (
 
-    echo "Installing knfsd-agent...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing Knfsd agent"
     cd knfsd-agent/src
     go build -o /usr/local/bin/knfsd-agent *.go
     cd ..
     cp knfsd-logrotate.conf /etc/logrotate.d/
     cp knfsd-agent.service /etc/systemd/system/
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 
 )
 
+# Install_knfsd_metrics_agent() installs the custom Knfsd Metrics Agent
 install_knfsd_metrics_agent() (
-    echo "Installing knfsd-metrics-agent...."
-    echo -e "------${SHELL_DEFAULT}"
+
+    begin_command "Installing knfsd-metrics-agent"
 
     cd knfsd-metrics-agent
     go build -o /usr/local/bin/knfsd-metrics-agent
@@ -180,13 +170,11 @@ install_knfsd_metrics_agent() (
     cp config/*.yaml /etc/knfsd-metrics-agent/
     cp systemd/proxy.service /etc/systemd/system/knfsd-metrics-agent.service
 
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 )
 
 install_knfsd_cull() (
-    echo "Installing knfsd-cull...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing knfsd-cull"
 
     cd knfsd-cull
     go test ./...
@@ -194,45 +182,42 @@ install_knfsd_cull() (
     cp knfsd-cull.conf /etc/
     cp knfsd-cull.service /etc/systemd/system/
 
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 )
 
+# install_filter_exports installs the agent that filters NFS Exports
 install_filter_exports() (
-    echo "Installing netapp-exports...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing filter-exports"
     cd filter-exports
     go test ./...
     go build -o /usr/local/bin/filter-exports
-    echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 )
 
+# install_netapp_exports() installs the NetApp export detection service
 install_netapp_exports() (
-    echo "Installing netapp-exports...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing netapp-exports"
     cd netapp-exports
     go test ./...
     go build -o /usr/local/bin/netapp-exports
     echo -e -n "${SHELL_YELLOW}------ "
-    echo "DONE"
+    complete_command
 )
 
 # install_kernel() installs the latest 5.13 kernel
 install_kernel() {
 
     # Install the new kernel using dpkg
-    echo "Installing kernel...."
-    echo -e "------${SHELL_DEFAULT}"
+    begin_command "Installing kernel"
     apt-get install -y 'linux-generic-hwe-20.04=5.13.*' \
         'linux-image-generic-hwe-20.04=5.13.*' \
         'linux-headers-generic-hwe-20.04=5.13.*'
 
-    echo -e -n "${SHELL_YELLOW}------"
-    echo "DONE"
+    complete_command
 
 }
 
+# copy_config() copies the NFS Server configuration
 copy_config() {
     chown --recursive root:root etc
     chmod --recursive 0644 etc
@@ -240,7 +225,7 @@ copy_config() {
     mkdir -p /srv/nfs
 }
 
-# Prep Server
+# Run Build
 install_nfs_packages
 install_build_dependencies
 download_nfs-utils

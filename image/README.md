@@ -13,7 +13,7 @@ For details of the patches that are applied, see [1_build_image.sh](scripts/1_bu
 
 For the image we are using a specific version for this packages:
 
-* google-cloud-ops-agent=2.11.0
+* google-cloud-ops-agent=2.22.0
 * cachefilesd=0.10.10-0.2ubuntu1
 * rpcbind=1.2.5-8
 * nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
