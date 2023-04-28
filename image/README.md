@@ -1,17 +1,14 @@
 # Instructions
 
-This directory contains scripts for building an image for Knfsd. We start with the base GCP Ubuntu 20.04 image but make a number of modifications, namely:
+This directory contains scripts for building a Google Cloud [image](https://cloud.google.com/compute/docs/images) for Knfsd.
 
-* Installation of a newer kernel which has better support for NFS re-exporting
-* Installation of supporting components such as `nfs-kernel-server`, `cachefilesd` and the `stackdriver-agent`
+We start with the base Google Cloud Ubuntu 20.04 image, and use the scripts in this directory to build the Knfsd Image.
 
-This directory contains scripts that will automatically take the GCP Ubuntu 20.04 image and build the Knfsd Image.
-
-For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
+For details of the modifications that are made to the base image, see [resources/scripts/1_build_image.sh](resources/scripts/1_build_image.sh).
 
 ## Customizing the image
 
-If you need to customize the image (e.g. installing custom metric agents such as metricbeat), then you can add any custom steps to the `resources/scripts/8_custom.sh` file.
+If you need to customize the image (e.g. installing custom metric agents such as Metricbeat), then you can add any custom steps to the [resources/scripts/8_custom.sh](resources/scripts/8_custom.sh) file.
 
 Alternatively, if your build procedure is more complex, you can replace the customization step with your own process.
 
