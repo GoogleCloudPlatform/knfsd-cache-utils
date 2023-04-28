@@ -52,7 +52,7 @@ install_nfs_packages() {
 
     begin_command "Installing rpcbind and nfs-kernel-server"
     apt-get update
-    apt-get install -y rpcbind=1.2.5-8 nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
+    apt-get install -y rpcbind nfs-kernel-server
     systemctl disable nfs-kernel-server
     systemctl disable nfs-idmapd.service
     complete_command

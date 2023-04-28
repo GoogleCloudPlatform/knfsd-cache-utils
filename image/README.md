@@ -9,17 +9,6 @@ This directory contains scripts that will automatically take the GCP Ubuntu 20.0
 
 For details of the patches that are applied, see [1_build_image.sh](scripts/1_build_image.sh).
 
-## Essential Package Versions
-
-For the image we are using a specific version for this packages:
-
-* google-cloud-ops-agent=2.22.0
-* cachefilesd=0.10.10-0.2ubuntu1
-* rpcbind=1.2.5-8
-* nfs-kernel-server=1:1.3.4-2.5ubuntu3.4
-* nfs-utils=2.5.3
-* kernel=5.13.*
-
 ## Customizing the image
 
 If you need to customize the image (e.g. installing custom metric agents such as metricbeat), then you can add any custom steps to the `resources/scripts/8_custom.sh` file.

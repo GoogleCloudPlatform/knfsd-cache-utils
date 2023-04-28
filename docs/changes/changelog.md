@@ -1,10 +1,17 @@
 # Next
 
 * Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
+* Stop pinning to specific package versions
 
 ## Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 
 Updated the monitoring dashboard to corretly show FS-Cache usage, and read write throughput when using Persistent Disk for the FS-Cache volume.
+
+## Stop pinning to specific package versions
+
+Pinning is causing issues with maintaining the repository and building images because the apt repository only keeps the latest version for many of these packages. This causes the image for release tags to stop building when the package they depend upon is removed from the apt repository.
+
+Most of the packages are already unpinned and install the latest version. The only components where the version really matters is the kernel and nfs-tools, which are both installed separately from apt.
 
 # v0.10.0
 
