@@ -22,7 +22,7 @@ provider "google" {
 
 locals {
   source_ip = google_filestore_instance.source.networks[0].ip_addresses[0]
-  proxy_ip  = module.proxy.nfsproxy_loadbalancer_ipaddress
+  proxy_ip  = module.proxy.dns_name
 }
 
 resource "google_filestore_instance" "source" {
@@ -43,16 +43,19 @@ resource "google_filestore_instance" "source" {
 }
 
 module "proxy" {
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v0.10.0"
+  source = "../../../deployment/terraform-module-knfsd"
 
   PROJECT = var.project
   REGION  = var.region
   ZONE    = var.zone
 
-  NETWORK    = google_compute_network.this.name
-  SUBNETWORK = google_compute_subnetwork.this.name
+  NETWORK            = google_compute_network.this.name
+  SUBNETWORK         = google_compute_subnetwork.this.name
+  SUBNETWORK_PROJECT = google_compute_subnetwork.this.project
 
   AUTO_CREATE_FIREWALL_RULES = false
+  TRAFFIC_DISTRIBUTION_MODE  = "dns_round_robin"
+  ASSIGN_STATIC_IPS          = true
 
   PROXY_BASENAME  = "${var.prefix}-proxy"
   PROXY_IMAGENAME = var.proxy_image
