@@ -45,9 +45,6 @@ function assert_nocull() {
 	run configure-culling
 	assert_success
 	assert_nocull
-
-	# check no services were started
-	assert_equal "$(cat /tmp/systemctl)" ""
 }
 
 @test "culling custom sets nocull" {
@@ -56,9 +53,6 @@ function assert_nocull() {
 	run configure-culling
 	assert_success
 	assert_nocull
-
-	# check custom culling agent started
-	assert_equal "$(cat /tmp/systemctl)" "start knfsd-cull"
 
 	# run a second time to check it doesn't add a duplicate nocull
 	run configure-culling

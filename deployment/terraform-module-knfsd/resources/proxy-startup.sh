@@ -278,7 +278,7 @@ function create-fs-cache() {
 		else
 			echo "Persistent Disk is already formatted."
 		fi
-		
+
 		echo "Mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)..."
 		mount -o discard,defaults /dev/disk/by-id/google-pd-fscache /var/cache/fscache
 		echo "Finished mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)"
@@ -352,7 +352,7 @@ function start-fs-cache() {
 
 	MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
 	echo "FS-Cache started."
-	
+
 }
 
 function export-map() {
@@ -453,23 +453,16 @@ function configure-culling() (
 	}
 
 	sed -i '/^nocull/d' /etc/cachefilesd.conf
-
 	if [[ "$CULLING" == "none" ]] || [[ "$CULLING" == "custom" ]]; then
 		echo "nocull" >>/etc/cachefilesd.conf
 	fi
 
+	: >/etc/knfsd-cull.conf
 	if [[ "$CULLING" == "custom" ]]; then
-		: >/etc/knfsd-cull.conf
 		fmt last-access "$CULLING_LAST_ACCESS" >>/etc/knfsd-cull.conf
 		fmt threshold "$CULLING_THRESHOLD" >>/etc/knfsd-cull.conf
 		fmt interval "$CULLING_INTERVAL" >>/etc/knfsd-cull.conf
 		fmt quiet-period "$CULLING_QUIET_PERIOD" >>/etc/knfsd-cull.conf
-
-		echo "Starting Custom Culling Agent..."
-		start-services knfsd-cull
-		echo "Finished starting Custom Culling Agent."
-	else
-		echo "Custom Culling Agent disabled. Skipping..."
 	fi
 )
 
@@ -509,6 +502,14 @@ function start-nfs() {
 		echo "Knfsd Agent disabled. Skipping..."
 	fi
 
+	if [[ "$CULLING" == "custom" ]]; then
+		echo "Starting Custom Culling Agent..."
+		start-services knfsd-cull
+		echo "Finished starting Custom Culling Agent."
+	else
+		echo "Custom Culling Agent disabled. Skipping..."
+	fi
+
 	# Start NFS Server
 	echo "Starting nfs-kernel-server..."
 	start-services portmap nfs-kernel-server
@@ -541,6 +542,9 @@ function cleanup() {
 
 function main() {
 	init
+
+	# culling needs to be configured before cachefilesd is started
+	configure-culling
 	create-fs-cache
 
 	echo "Mount options : ${MOUNT_OPTIONS}"
@@ -552,7 +556,6 @@ function main() {
 
 	configure-read-ahead
 	configure-nfs
-	configure-culling
 	configure-metrics
 
 	start-nfs
