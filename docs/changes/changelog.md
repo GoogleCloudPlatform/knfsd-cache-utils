@@ -1,5 +1,7 @@
 # Next
 
+# v0.11.0
+
 * Update Monitoring Dashboard to support new Persistent Disk FS-Cache Volumes
 * Stop pinning to specific package versions
 * Update packer to support rsa-ssh2-256 and rsa-ssh2-512 key algorithms
