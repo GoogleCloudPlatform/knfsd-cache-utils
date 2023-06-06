@@ -1,12 +1,17 @@
 # next
 
 * Allow gVNIC without requiring the high bandwidth option
+* Update kernel to 6.4-rc5
 
 ## Allow gVNIC without requiring the high bandwidth option
 
 Add a new configuration option, `ENABLE_GVNIC`, to use the `gVNIC` network interface type even if  `ENABLE_HIGH_BANDWIDTH_CONFIGURATION` is not enabled.
 
 This will allow the use of the more performant `gVNIC` instead of the default `virtio` driver on smaller instances, or where there is no need for the TIER_1 network performance.
+
+## Update kernel to 6.4-rc5
+
+The 6.4 kernel includes most of the FS-Cache performance patches. Also updated the image build process to use the Ubuntu build scripts.
 
 # v1.0.0-beta4
 

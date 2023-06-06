@@ -1,0 +1,32 @@
+From 983c135342ca6f1036712ff40b5956a172c551b3 Mon Sep 17 00:00:00 2001
+From: Dave Wysochanski <dwysocha@redhat.com>
+Date: Wed, 24 May 2023 11:47:55 -0400
+Subject: [PATCH 3/3] NFS: When fscache is enabled call
+ mapping_set_release_always()
+
+If fscache is enabled we must call mapping_set_release_always to
+ensure the fscache optimisation is removed.
+
+Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
+---
+ fs/nfs/fscache.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/fs/nfs/fscache.c b/fs/nfs/fscache.c
+index 8c35d88a84b1..d4a20748b14f 100644
+--- a/fs/nfs/fscache.c
++++ b/fs/nfs/fscache.c
+@@ -180,6 +180,10 @@ void nfs_fscache_init_inode(struct inode *inode)
+ 					       &auxdata,      /* aux_data */
+ 					       sizeof(auxdata),
+ 					       i_size_read(inode));
++
++	if (netfs_inode(inode)->cache)
++		mapping_set_release_always(inode->i_mapping);
++
+ }
+ 
+ /*
+-- 
+2.34.1
+

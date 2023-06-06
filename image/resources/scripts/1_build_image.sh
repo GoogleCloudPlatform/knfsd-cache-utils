@@ -193,39 +193,58 @@ install_netapp_exports() (
     complete_command
 )
 
-# build_install_kernel() builds and installs the kernel with custom patches
-build_install_kernel() (
-
-    # Build and install the new kernel
-    begin_command "Building and installing kernel"
-
-    mkdir kernel
+download_kernel() (
+    begin_command "Downloading kernel"
     cd kernel
-    curl -sSO https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-6.2-rc5.tar.gz
-    tar -xf linux-6.2-rc5.tar.gz
-    cd linux-6.2-rc5
+    git clone --depth 1 --branch cod/mainline/v6.4-rc5 git://kernel.ubuntu.com/virgin/testing/crack.git ubuntu-6.4-rc5
+    complete_command
+)
+
+build_kernel() (
+    begin_command "Building kernel"
+
+    cd kernel/ubuntu-6.4-rc5
 
     quilt import "$patches"/kernel/*.patch
     quilt push -a
 
-    cp /boot/config-`uname -r` .config
-    scripts/config --disable CONFIG_SYSTEM_REVOCATION_KEYS
-    scripts/config --disable CONFIG_SYSTEM_TRUSTED_KEYS
+    # Replace generic kernel config with amd64-gcp.
+    # The Ubuntu build process generates the config using these annotation
+    # files to provide a consistent config. Include the annotation overrides
+    # used by the GCP flavour of the Ubuntu kernel.
+    mv debian.master/config/annotations debian.master/config/generic
+    cp ../annotations ../gcp debian.master/config/
 
-    make olddefconfig
-    make bindeb-pkg -j$nproc LOCALVERSION=-knfsd
+    # Rename the flavour from generic to knfsd to make it easier to check that
+    # the custom kernel is in use.
+    mv debian.master/abi/amd64/generic debian.master/abi/amd64/knfsd
+    mv debian.master/abi/amd64/generic.compiler debian.master/abi/amd64/knfsd.compiler
+    mv debian.master/abi/amd64/generic.modules debian.master/abi/amd64/knfsd.modules
+    mv debian.master/abi/amd64/generic.retpoline debian.master/abi/amd64/knfsd.retpoline
+    mv debian.master/control.d/generic.inclusion-list debian.master/control.d/knfsd.inclusion-list
+    mv debian.master/control.d/vars.generic debian.master/control.d/vars.knfsd
+    cp ../amd64.mk debian.master/rules.d/
+
+    fakeroot debian/rules clean
+    # Need to ignore build dependency checks (-d) as this version of Ubuntu is
+    # missing bindgen-0.56.
+    dpkg-buildpackage -uc -ui -b -d
 
     cd ..
-    apt-get install -y \
-        ./linux-image-6.2.0-rc5-knfsd_6.2.0-rc5-knfsd-1_amd64.deb \
-        ./linux-image-6.2.0-rc5-knfsd-dbg_6.2.0-rc5-knfsd-1_amd64.deb \
-        ./linux-headers-6.2.0-rc5-knfsd_6.2.0-rc5-knfsd-1_amd64.deb \
-        ./linux-libc-dev_6.2.0-rc5-knfsd-1_amd64.deb
+    rm -rf ubuntu-6.4-rc5
 
-    cd ..
-    rm -rf kernel/
     complete_command
+)
 
+install_kernel() (
+    begin_command "Installing kernel"
+    cd kernel
+    apt-get install -y \
+        ./linux-headers-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb \
+        ./linux-headers-6.4.0-060400rc5_6.4.0-060400rc5.202306041930_all.deb \
+        ./linux-image-unsigned-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb \
+        ./linux-modules-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb
+    complete_command
 )
 
 # copy_config() copies the NFS Server configuration
@@ -248,7 +267,9 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
-build_install_kernel
+download_kernel
+build_kernel
+install_kernel
 copy_config
 
 echo
