@@ -102,7 +102,17 @@ The NFS protocol only supports a maximum of 16 supplementary (auxiliary) groups 
 
 If your system relies on users with more than 16 supplementary groups the NFS proxy will need to be connected to LDAP so that the proxy can resolve the full list of groups for a user.
 
-Once connected to LDAP you need to add `--manage-gids` to the `RPCMOUNTDOPTS` in the `/etc/default/nfs-kernel-server` file.
+Once connected to LDAP you need to set:
+
+```ini
+[mountd]
+manage-gids=yes
+```
+
+You can set this by:
+
+1. Changing `image/resources/etc/nfs.conf` and building a new image.
+2. Running `nfsconf --set mountd manage-gids yes` in a `CUSTOM_PRE_STARTUP_SCRIPT`.
 
 ## Cache only writes, never reads, on 5.17 kernel
 

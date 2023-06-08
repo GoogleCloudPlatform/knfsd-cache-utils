@@ -3,6 +3,7 @@
 * Allow gVNIC without requiring the high bandwidth option
 * Update kernel to 6.4-rc5
 * Fix configuring NFSD process
+* Updated instructions on configuring manage-gids
 
 ## Allow gVNIC without requiring the high bandwidth option
 
@@ -21,6 +22,12 @@ Ubuntu 22.04 (Jammy Jellyfish) deprecated `/etc/default/nfs-kernel-server`. NFS 
 This means that `NUM_NFS_THREADS` and `DISABLED_NFS_VERSIONS` was being ignored since `v1.0.0-beta1`.
 
 The proxy startup script will now create an `/etc/nfs.conf.d/knfsd.conf` file to configure the NFSD process.
+
+## Updated instructions on configuring manage-gids
+
+Ubuntu 22.04 (Jammy Jellyfish) deprecated `/etc/default/nfs-kernel-server`. This means that the old method of updating `RPCMOUNTDOPTS` to contain `--manage-gids` will no longer work.
+
+Instead the `/etc/nfs.conf` needs to be updated as either part of the image build process, or using a `CUSTOM_PRE_STARTUP_SCRIPT`.
 
 # v1.0.0-beta4
 
