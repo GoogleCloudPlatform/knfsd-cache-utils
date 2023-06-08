@@ -2,6 +2,7 @@
 
 * Allow gVNIC without requiring the high bandwidth option
 * Update kernel to 6.4-rc5
+* Fix configuring NFSD process
 
 ## Allow gVNIC without requiring the high bandwidth option
 
@@ -12,6 +13,14 @@ This will allow the use of the more performant `gVNIC` instead of the default `v
 ## Update kernel to 6.4-rc5
 
 The 6.4 kernel includes most of the FS-Cache performance patches. Also updated the image build process to use the Ubuntu build scripts.
+
+## Fix configuring NFSD process
+
+Ubuntu 22.04 (Jammy Jellyfish) deprecated `/etc/default/nfs-kernel-server`. NFS configuration is now managed using `/etc/nfs.conf` and `/etc/nfs.conf.d/*.conf`.
+
+This means that `NUM_NFS_THREADS` and `DISABLED_NFS_VERSIONS` was being ignored since `v1.0.0-beta1`.
+
+The proxy startup script will now create an `/etc/nfs.conf.d/knfsd.conf` file to configure the NFSD process.
 
 # v1.0.0-beta4
 

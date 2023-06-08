@@ -105,7 +105,6 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     NFS_MOUNT_VERSION = var.NFS_MOUNT_VERSION
 
     # system
-    NFS_KERNEL_SERVER_CONF = file("${path.module}/resources/nfs-kernel-server.conf")
     NUM_NFS_THREADS        = var.NUM_NFS_THREADS
     VFS_CACHE_PRESSURE     = var.VFS_CACHE_PRESSURE
     DISABLED_NFS_VERSIONS  = var.DISABLED_NFS_VERSIONS

@@ -210,7 +210,6 @@ function init() {
 	MOUNT_OPTIONS="$(build_mount_options)"
 	EXPORT_OPTIONS="$(build_export_options)"
 
-	NFS_KERNEL_SERVER_CONF=$(get_attribute NFS_KERNEL_SERVER_CONF)
 	NUM_NFS_THREADS=$(get_attribute NUM_NFS_THREADS)
 	VFS_CACHE_PRESSURE=$(get_attribute VFS_CACHE_PRESSURE)
 	DISABLED_NFS_VERSIONS=$(get_attribute DISABLED_NFS_VERSIONS)
@@ -272,7 +271,7 @@ function create-fs-cache() {
 		else
 			echo "Persistent Disk is already formatted."
 		fi
-		
+
 		echo "Mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)..."
 		mount -o discard,defaults /dev/disk/by-id/google-pd-fscache /var/cache/fscache
 		echo "Finished mounting /dev/disk/by-id/google-pd-fscache to FS-Cache directory (/var/cache/fscache)"
@@ -346,7 +345,7 @@ function start-fs-cache() {
 
 	MOUNT_OPTIONS="${MOUNT_OPTIONS},fsc"
 	echo "FS-Cache started."
-	
+
 }
 
 function export-map() {
@@ -421,20 +420,20 @@ function configure-nfs() {
 	sysctl vm.vfs_cache_pressure=$VFS_CACHE_PRESSURE
 	echo "Finished setting VFS Cache Pressure."
 
-	# Set NFS Kernel Server Config
-	echo "$NFS_KERNEL_SERVER_CONF" >/etc/default/nfs-kernel-server
-
 	# Build Flags to Disable NFS Versions
+	DISABLED_NFS_VERSIONS_FLAGS=("vers2=no")
 	for v in $(echo $DISABLED_NFS_VERSIONS | sed "s/,/ /g"); do
-		DISABLED_NFS_VERSIONS_FLAGS="$DISABLED_NFS_VERSIONS_FLAGS --no-nfs-version $v"
+		DISABLED_NFS_VERSIONS_FLAGS+=("vers$v=no")
 	done
+	DISABLED_NFS_VERSIONS_FLAGS=$(printf '%s\n' "${DISABLED_NFS_VERSIONS_FLAGS[@]}")
 
-	# Set number of NFS Threads and NFS Server Disable Flags
-	# Note.... Due to https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=738063 and https://unix.stackexchange.com/questions/205403/disable-nfsv4-server-on-debian-allow-nfsv3
-	# we have to set the DISABLED_NFS_VERSIONS_FLAGS flags from above under the RPCNFSDCOUNT config value as RPCMOUNTDOPTS does not work. This should be resolved when we upgrade to
-	# nfs-utils/1:2.5.4-1~exp1 +
+	# Set NFS Kernel Server Config
 	echo "Setting number of NFS Threads to $NUM_NFS_THREADS..."
-	sed -i "s/^\(RPCNFSDCOUNT=\).*/\1\"${NUM_NFS_THREADS}${DISABLED_NFS_VERSIONS_FLAGS}\"/" /etc/default/nfs-kernel-server
+	cat <<-EOF >/etc/nfs.conf.d/knfsd.conf
+		[nfsd]
+		threads=${NUM_NFS_THREADS}
+		${DISABLED_NFS_VERSIONS_FLAGS}
+	EOF
 	echo "Finished setting number of NFS Threads."
 
 }

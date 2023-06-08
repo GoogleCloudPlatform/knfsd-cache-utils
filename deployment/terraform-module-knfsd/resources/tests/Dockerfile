@@ -19,3 +19,5 @@ RUN apk add --no-cache git && \
     cd /opt/bats/lib && \
     git clone --depth 1 --branch v0.3.0 https://github.com/bats-core/bats-support.git && \
     git clone --depth 1 --branch v2.0.0 https://github.com/bats-core/bats-assert.git
+
+RUN apk add --no-cache nfs-utils

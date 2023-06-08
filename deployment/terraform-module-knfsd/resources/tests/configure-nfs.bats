@@ -1,5 +1,7 @@
 function setup_file() {
-	mkdir -p /etc/default
+	: >/etc/nfs.conf
+	rm -rf /etc/nfs.conf.d
+	mkdir -p /etc/nfs.conf.d
 }
 
 function setup() {
@@ -7,8 +9,6 @@ function setup() {
 	source /opt/bats/lib/bats-assert/load.bash
 	load ./common.bash
 	load ../proxy-startup.sh
-
-	NFS_KERNEL_SERVER_CONF="$(<"$BATS_TEST_DIRNAME"/../nfs-kernel-server.conf)"
 }
 
 @test "sets cache pressure" {
@@ -26,17 +26,22 @@ function setup() {
 	run configure-nfs
 	assert_success
 
-	actual="$(find_lines '^RPCNFSDCOUNT=' /etc/default/nfs-kernel-server)"
-	assert_equal "$actual" 'RPCNFSDCOUNT="16 --no-nfs-version 3 --no-nfs-version 4.0 --no-nfs-version 4.2"'
+	assert [ -f /etc/nfs.conf.d/knfsd.conf ]
+	assert_equal "$(nfsconf --get nfsd vers2)" no
+	assert_equal "$(nfsconf --get nfsd vers3)" no
+	assert_equal "$(nfsconf --get nfsd vers4)" "" # not set
+	assert_equal "$(nfsconf --get nfsd vers4.0)" no
+	assert_equal "$(nfsconf --get nfsd vers4.1)" "" # not set
+	assert_equal "$(nfsconf --get nfsd vers4.2)" no
 }
 
 @test "set RPC thread count" {
-	NUM_NFS_THREADS=8
+	NUM_NFS_THREADS=42
 	DISABLED_NFS_VERSIONS=""
 
 	run configure-nfs
 	assert_success
 
-	actual="$(find_lines '^RPCNFSDCOUNT=' /etc/default/nfs-kernel-server)"
-	assert_equal "$actual" 'RPCNFSDCOUNT="8"'
+	assert [ -f /etc/nfs.conf.d/knfsd.conf ]
+	assert_equal "$(nfsconf --get nfsd threads)" 42
 }
