@@ -58,19 +58,19 @@ install_nfs_packages() {
 
 }
 
-# install_build_dependencies() installs the dependencies to required to build the kernel
+# install_build_dependencies() installs the dependencies to required to build
+# the kernel and nfs-utils
 install_build_dependencies() {
-
     begin_command "Installing build dependencies"
     apt-get update
     apt-get install -y \
         libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms \
         libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
         build-essential libevent-dev libsqlite3-dev libblkid-dev \
+        libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
         libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
-        gawk llvm
+        gawk llvm pkg-config
     complete_command
-
 }
 
 install_cachefilesd() (
@@ -95,13 +95,16 @@ install_cachefilesd() (
     echo "RUN=yes" >> /etc/default/cachefilesd
 )
 
-# download_nfs-utils() downloads version 2.5.3 of nfs-utils
+# download_nfs-utils() downloads version 2.6.3 of nfs-utils
 download_nfs-utils() (
 
     begin_command "Downloading nfs-utils"
     echo -e "------${SHELL_DEFAULT}"
-    curl -o nfs-utils-2.5.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.5.3/nfs-utils-2.5.3.tar.gz
-    tar xvf nfs-utils-2.5.3.tar.gz
+    # Need nfs-utils 2.6.3 to support the new reexport features and fsidd
+    # service. Install this using apt-get once nfs-common 2.6.3 or greater is
+    # avaliable as an Ubuntu package.
+    curl -o nfs-utils-2.6.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.6.3/nfs-utils-2.6.3.tar.gz
+    tar xvf nfs-utils-2.6.3.tar.gz
     complete_command
 
 )
@@ -110,10 +113,39 @@ download_nfs-utils() (
 build_install_nfs-utils() (
 
     begin_command "Building and installing nfs-utils"
-    cd nfs-utils-2.5.3
-    ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/sbin --disable-gss
+    cd nfs-utils-2.6.3
+    # Based on Ubuntu's build options for nfs-utils 1:2.6.2-4ubuntu1 amd64.
+    # https://launchpad.net/ubuntu/+source/nfs-utils
+    # https://launchpad.net/ubuntu/+source/nfs-utils/1:2.6.2-4ubuntu1/+build/25611701
+    ./configure \
+        --build=x86_64-linux-gnu \
+        --prefix=/usr \
+        --includedir=\${prefix}/include \
+        --mandir=\${prefix}/share/man \
+        --infodir=\${prefix}/share/info \
+        --sysconfdir=/etc \
+        --localstatedir=/var \
+        --disable-silent-rules \
+        --libdir=\${prefix}/lib/x86_64-linux-gnu \
+        --runstatedir=/run \
+        --disable-maintainer-mode \
+        --disable-dependency-tracking \
+        --mandir=\${prefix}/share/man \
+        --enable-libmount-mount \
+        --enable-svcgss \
+        --with-pluginpath=/usr/lib/x86_64-linux-gnu/libnfsidmap \
+        --with-tcp-wrappers \
+        --with-systemd=/lib/systemd/system
+
     make -j$((`nproc`+1))
+
+    # Install directly using make, cannot use Ubuntu (Debian) packaging yet as
+    # it hasn't been updated to include the new fsidd service.
+    # Normally this isn't recommended as it will likely conflict with apt-get
+    # but in this case it doesn't matter. When updating packages we'll just
+    # build a new image from scratch.
     make install -j$((`nproc`+1))
+
     chmod u+w,go+r /sbin/mount.nfs
     chown nobody:nogroup /var/lib/nfs
     complete_command

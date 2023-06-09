@@ -2,6 +2,7 @@
 
 * Allow gVNIC without requiring the high bandwidth option
 * Update kernel to 6.4-rc5
+* Update nfs-utils to 2.6.3
 * Fix configuring NFSD process
 * Updated instructions on configuring manage-gids
 
@@ -14,6 +15,10 @@ This will allow the use of the more performant `gVNIC` instead of the default `v
 ## Update kernel to 6.4-rc5
 
 The 6.4 kernel includes most of the FS-Cache performance patches. Also updated the image build process to use the Ubuntu build scripts.
+
+## Update nfs-utils to 2.6.3
+
+nfs-utils 2.6.3 is required to use the new re-export and fsidd features that were introduced in the 6.3 kernel.
 
 ## Fix configuring NFSD process
 
