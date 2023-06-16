@@ -1,10 +1,26 @@
 # next
 
+* FSID service to store FSID to export path mappings in an external database
+* Automatically re-export nested volumes to support `crossmnt` and NFSv4
 * Allow gVNIC without requiring the high bandwidth option
 * Update kernel to 6.4-rc5
 * Update nfs-utils to 2.6.3
 * Fix configuring NFSD process
 * Updated instructions on configuring manage-gids
+
+## FSID service to store FSID to export path mappings in an external database
+
+A new `FSID_MODE` option has been added to control how FSIDs are assigned to export paths. The default (and recommended) option is `external`, which uses a custom `knfsd-fsidd` service to store FSIDs in an external database.
+
+See [Filesystem Identifiers](../../deployment/fsids.md) for more detail.
+
+## Automatically re-export nested volumes to support `crossmnt` and NFSv4
+
+Previously all nested volumes had to be explicitly re-exported. This could cause issues with slow start-up times on servers with a large number of nested volumes.
+
+The main reason nested volumes had to be explicitly re-exported was to assign the nested volume an FSID. With the new FSID service nested volumes can be automatically assigned an FSID when the nested volume is uncovered.
+
+See [Auto Re-export](../../deployment/auto-re-export.md) for more detail.
 
 ## Allow gVNIC without requiring the high bandwidth option
 

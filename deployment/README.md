@@ -211,12 +211,40 @@ These mount options are for the proxy to the source server.
 | DISABLED_NFS_VERSIONS | The versions of NFS that should be disabled in `nfs-kernel-server`. Explicitly disabling unwanted NFS versions prevents clients from accidentally auto-negotiating an undesired NFS version. Specify multiple versions to disable with a comma separated list. Acceptable values are `3`, `4`, `4.0`, `4.1`, `4.2`. NFS Version 2 is always diabled. | False    | `4.0,4.1,4.2` |
 | NUM_NFS_THREADS       | The number of NFS Threads to use for KNFSD.                                                                                                                                                                                                                                                                                                          | False    | `512`         |
 
+**NOTE:** When using NFS v4, it is recommended that you use NFS v4.1 or greater. NFS v4.1 has many improvements to fix limitations of the NFS v4.0 protocol.
+
 ### Export Options
 
-| Variable       | Description                                                                       | Required | Default |
-| -------------- | --------------------------------------------------------------------------------- | -------- | ------- |
-| NOHIDE         | When `true`, adds the `nohide` option to all the exports.                         | False    | `true`  |
-| EXPORT_OPTIONS | Any custom NFS exports options. These options will be applied to all NFS exports. | False    | `""`    |
+| Variable       | Description                                                                                                                                | Required | Default |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------- |
+| NOHIDE         | When `true`, adds the `nohide` option to all the exports. Overridden by AUTO_REEXPORT                                                      | False    | `true`  |
+| AUTO_REEXPORT  | When `true` enables the `crossmnt` option on all exports and automatically re-exports any nested mounts that were not explicitly exported. | False    | `false` |
+| EXPORT_OPTIONS | Any custom NFS exports options. These options will be applied to all NFS exports.                                                          | False    | `""`    |
+
+Use of `AUTO_REEXPORT` requires that `FSID_MODE` is `local` or `external`. `external` is recommended. See [Auto Re-export](./auto-re-export.md) for more detail.
+
+### FSID database options
+
+| Variable             | Description | Required | Default |
+| FSID_MODE            | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. | False | `"external"` |
+| FSID_DATABASE_DEPLOY | Set to `false` to prevent automatically creating a Cloud SQL instance when `FSID_MODE` is set to `external`.    | False | `true`       |
+| FSID_DATABASE_CONFIG | Allows Overriding the default FSID database configuration when `FSID_MODE` is set to `external`.                | False | `""`         |
+
+The recommended `FSID_MODE` is to always use `external`. For more details on `FSID_MODE` and `FSID_DATABASE_CONFIG` see [Filesystem Identifiers](./fsids.md).
+
+Older knfsd versions that do not support `FSID_MODE` always used `static` to assign FSIDs. If you're upgrading from an earlier knfsd version it's advised you switch to `external` when possible, though you can use `static` to keep the existing behaviour.
+
+The `FSID_MODE` option supports:
+
+* `static` - Each export is explicitly allocated an incrementing FSID number on start-up. This requires all the exports to be known at start-up and is not compatible with `AUTO_REEXPORT=true`. `static` is only recommended if using an explicit `EXPORT_MAP`.
+
+* `local` - Each export is automatically allocated an FSID number by the `mountd` using using the standard NFS `fsidd` service. This uses a local sqlite database to store FSID mappings. This is not recommended for production and should only be used for single instance proxy clusters.
+
+  If multiple proxy instances in a cluster allocate a different FSID to the same export then I/O errors or data corruption may occur if a client changes instance.
+
+  Also, even with a single proxy instance, if the instance is rebooted
+
+* `external` - Each export is automatically allocated an FSID number by the `mountd` using using the `knfsd-fsidd` service. This uses a Cloud SQL Postgres instance to store the FSID mappings. This ensures that all the instances in cluster allocate the same FSID to each export.
 
 ### Autoscaling Configuration
 
