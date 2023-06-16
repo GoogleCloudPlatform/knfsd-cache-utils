@@ -119,7 +119,7 @@ resource "google_project_iam_member" "nfs_proxy" {
 # clusters
 module "fsid_database" {
 
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta4"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta5"
 
   project               = "my-gcp-project"
   region                = "us-west1"

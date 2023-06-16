@@ -1,5 +1,7 @@
 # next
 
+# v1.0.0-beta5
+
 * FSID service to store FSID to export path mappings in an external database
 * Automatically re-export nested volumes to support `crossmnt` and NFSv4
 * Allow gVNIC without requiring the high bandwidth option
@@ -7,6 +9,7 @@
 * Update nfs-utils to 2.6.3
 * Fix configuring NFSD process
 * Updated instructions on configuring manage-gids
+* Bump prometheus/procfs version to resolve issues with high numbers of NFS mounts
 
 ## FSID service to store FSID to export path mappings in an external database
 
@@ -49,6 +52,10 @@ The proxy startup script will now create an `/etc/nfs.conf.d/knfsd.conf` file to
 Ubuntu 22.04 (Jammy Jellyfish) deprecated `/etc/default/nfs-kernel-server`. This means that the old method of updating `RPCMOUNTDOPTS` to contain `--manage-gids` will no longer work.
 
 Instead the `/etc/nfs.conf` needs to be updated as either part of the image build process, or using a `CUSTOM_PRE_STARTUP_SCRIPT`.
+
+## Bump prometheus/procfs version to resolve issues with high numbers of NFS mounts
+
+See [https://github.com/GoogleCloudPlatform/knfsd-cache-utils/pull/29](https://github.com/GoogleCloudPlatform/knfsd-cache-utils/pull/29)
 
 # v1.0.0-beta4
 
