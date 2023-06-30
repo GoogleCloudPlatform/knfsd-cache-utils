@@ -15,33 +15,39 @@
  */
 
 variable "EXPORT_MAP" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "EXPORT_HOST_AUTO_DETECT" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "EXCLUDED_EXPORTS" {
-  type    = list(string)
-  default = []
+  type     = list(string)
+  nullable = false
+  default  = []
 }
 
 variable "INCLUDED_EXPORTS" {
-  type    = list(string)
-  default = []
+  type     = list(string)
+  nullable = false
+  default  = []
 }
 
 variable "EXPORT_CIDR" {
-  type    = string
-  default = "10.0.0.0/8"
+  type     = string
+  nullable = false
+  default  = "10.0.0.0/8"
 }
 
 variable "PROJECT" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "SUBNETWORK_PROJECT" {
@@ -50,58 +56,74 @@ variable "SUBNETWORK_PROJECT" {
 }
 
 variable "REGION" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "ZONE" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETWORK" {
-  default = "default"
   type    = string
+  default = "default"
 }
 
 variable "SUBNETWORK" {
-  default = "default"
   type    = string
+  default = "default"
 }
 
 variable "ASSIGN_STATIC_IPS" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "PROXY_BASENAME" {
-  default = "nfsproxy"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "nfsproxy"
+  validation {
+    condition     = var.PROXY_BASENAME != ""
+    error_message = "PROXY_BASENAME is required."
+  }
 }
 
 variable "PROXY_LABELS" {
+  type = map(string)
   default = {
     vm-type = "nfs-proxy",
   }
-  type = map(string)
 }
 
 variable "PROXY_IMAGENAME" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.PROXY_IMAGENAME != ""
+    error_message = "PROXY_IMAGENAME is required."
+  }
 }
 
 variable "KNFSD_NODES" {
-  default = 3
-  type    = number
+  type     = number
+  nullable = false
+  default  = 3
 }
 
 variable "AUTO_CREATE_FIREWALL_RULES" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "TRAFFIC_DISTRIBUTION_MODE" {
-  type = string
+  type     = string
+  nullable = false
   validation {
     condition     = contains(["dns_round_robin", "loadbalancer", "none"], var.TRAFFIC_DISTRIBUTION_MODE)
     error_message = "Valid values for TRAFFIC_DISTRIBUTION_MODE are 'dns_round_robin', 'loadbalancer', and 'none'."
@@ -109,13 +131,15 @@ variable "TRAFFIC_DISTRIBUTION_MODE" {
 }
 
 variable "LOADBALANCER_IP" {
-  default = null
-  type    = string
+  type     = string
+  nullable = true
+  default  = null
 }
 
 variable "DNS_NAME" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 
   validation {
     condition     = var.DNS_NAME == "" || endswith(var.DNS_NAME, ".")
@@ -124,73 +148,86 @@ variable "DNS_NAME" {
 }
 
 variable "SERVICE_LABEL" {
-  default = "dns"
   type    = string
+  default = "dns"
 }
 
 variable "SERVICE_ACCOUNT" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NCONNECT_VALUE" {
-  default = "16"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "16"
 }
 
 variable "ACDIRMIN" {
-  default = 600
-  type    = number
+  type     = number
+  nullable = false
+  default  = 600
 }
 
 variable "ACDIRMAX" {
-  default = 600
-  type    = number
+  type     = number
+  nullable = false
+  default  = 600
 }
 
 variable "ACREGMIN" {
-  default = 600
-  type    = number
+  type     = number
+  nullable = false
+  default  = 600
 }
 
 variable "ACREGMAX" {
-  default = 600
-  type    = number
+  type     = number
+  nullable = false
+  default  = 600
 }
 
 variable "RSIZE" {
-  default = 1048576
-  type    = number
+  type     = number
+  nullable = false
+  default  = 1048576
 }
 
 variable "WSIZE" {
-  default = 1048576
-  type    = number
+  type     = number
+  nullable = false
+  default  = 1048576
 }
 
 variable "NOHIDE" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "MOUNT_OPTIONS" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "EXPORT_OPTIONS" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "AUTO_REEXPORT" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "FSID_MODE" {
-  default = "static"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "static"
   validation {
     condition     = contains(["static", "local", "external"], var.FSID_MODE)
     error_message = "Valid values for FSID_MODE are 'static', 'local', or 'external'."
@@ -198,188 +235,221 @@ variable "FSID_MODE" {
 }
 
 variable "FSID_DATABASE_DEPLOY" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "FSID_DATABASE_CONFIG" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "VFS_CACHE_PRESSURE" {
-  default = "100"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "100"
 }
 
 variable "READ_AHEAD" {
-  default = 8388608
-  type    = number
+  type     = number
+  nullable = false
+  default  = 8388608
 }
 
 variable "ENABLE_UDP" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "ENABLE_AUTOHEALING_HEALTHCHECKS" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "HEALTHCHECK_INITIAL_DELAY_SECONDS" {
-  type    = number
-  default = 600
+  type     = number
+  nullable = false
+  default  = 600
 }
 
 variable "HEALTHCHECK_INTERVAL_SECONDS" {
-  type    = number
-  default = 60
+  type     = number
+  nullable = false
+  default  = 60
 }
 
 variable "HEALTHCHECK_TIMEOUT_SECONDS" {
-  type    = number
-  default = 2
+  type     = number
+  nullable = false
+  default  = 2
 }
 
 variable "HEALTHCHECK_HEALTHY_THRESHOLD" {
-  type    = number
-  default = 3
+  type     = number
+  nullable = false
+  default  = 3
 }
 
 variable "HEALTHCHECK_UNHEALTHY_THRESHOLD" {
-  type    = number
-  default = 3
+  type     = number
+  nullable = false
+  default  = 3
 }
 
 variable "NUM_NFS_THREADS" {
-  default = 512
-  type    = number
+  type     = number
+  nullable = false
+  default  = 512
 }
 
 variable "ENABLE_STACKDRIVER_METRICS" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "METRICS_AGENT_CONFIG" {
-  default = ""
-  type    = string
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "ROUTE_METRICS_PRIVATE_GOOGLEAPIS" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "ENABLE_KNFSD_AUTOSCALING" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "KNFSD_AUTOSCALING_MIN_INSTANCES" {
-  default = 1
-  type    = number
+  type     = number
+  nullable = false
+  default  = 1
 }
 
 variable "KNFSD_AUTOSCALING_MAX_INSTANCES" {
-  default = 10
-  type    = number
+  type     = number
+  nullable = false
+  default  = 10
 }
 
 variable "KNFSD_AUTOSCALING_NFS_CONNECTIONS_THRESHOLD" {
-  default = 250
-  type    = number
+  type     = number
+  nullable = false
+  default  = 250
 }
 
 variable "CUSTOM_PRE_STARTUP_SCRIPT" {
-  default = "echo 'Running default pre startup script. No action taken.'"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "echo 'Running default pre startup script. No action taken.'"
 }
 
 variable "CUSTOM_POST_STARTUP_SCRIPT" {
-  default = "echo 'Running default post startup script. No action taken.'"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "echo 'Running default post startup script. No action taken.'"
 }
 
 variable "MACHINE_TYPE" {
-  default = "n1-highmem-16"
   type    = string
+  default = "n1-highmem-16"
 }
 
 variable "MIG_MINIMAL_ACTION" {
-  default = "RESTART"
   type    = string
+  default = "RESTART"
 }
 
 variable "MIG_MAX_UNAVAILABLE_PERCENT" {
-  default = "100"
   type    = number
+  default = "100"
 }
 
 variable "MIG_REPLACEMENT_METHOD" {
-  default = ""
   type    = string
+  default = ""
 }
 
 variable "ENABLE_KNFSD_AGENT" {
-  default = true
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "DISABLED_NFS_VERSIONS" {
-  default = "4.0,4.1,4.2"
-  type    = string
+  type     = string
+  nullable = false
+  default  = "4.0,4.1,4.2"
 }
 
 variable "ENABLE_NETAPP_AUTO_DETECT" {
-  default = false
-  type    = bool
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "NETAPP_HOST" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_URL" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_USER" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_SECRET" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_SECRET_PROJECT" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_SECRET_VERSION" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_CA" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "NETAPP_ALLOW_COMMON_NAME" {
-  type    = bool
-  default = false
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "CACHEFILESD_DISK_TYPE" {
-  type    = string
-  default = "local-ssd"
+  type     = string
+  nullable = false
+  default  = "local-ssd"
 
   validation {
     condition     = contains(["local-ssd", "pd-ssd", "pd-balanced", "pd-standard"], var.CACHEFILESD_DISK_TYPE)
@@ -388,8 +458,9 @@ variable "CACHEFILESD_DISK_TYPE" {
 }
 
 variable "LOCAL_SSDS" {
-  default = 4
-  type    = number
+  type     = number
+  nullable = false
+  default  = 4
 
   validation {
     condition     = contains([0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24], var.LOCAL_SSDS)
@@ -398,8 +469,9 @@ variable "LOCAL_SSDS" {
 }
 
 variable "CACHEFILESD_PERSISTENT_DISK_SIZE_GB" {
-  type    = number
-  default = 1500
+  type     = number
+  nullable = false
+  default  = 1500
 
   validation {
     condition     = var.CACHEFILESD_PERSISTENT_DISK_SIZE_GB >= 10 && var.CACHEFILESD_PERSISTENT_DISK_SIZE_GB <= 64000
@@ -408,23 +480,24 @@ variable "CACHEFILESD_PERSISTENT_DISK_SIZE_GB" {
 }
 
 variable "NFS_MOUNT_VERSION" {
-  type    = string
-  default = "3"
+  type     = string
+  nullable = false
+  default  = "3"
 
   validation {
     condition     = contains(["3", "4", "4.0", "4.1", "4.2"], var.NFS_MOUNT_VERSION)
     error_message = "Valid values for NFS_MOUNT_VERSION are '3', '4', '4.0', '4.1', '4.2'."
   }
-
-
 }
 
 variable "ENABLE_HIGH_BANDWIDTH_CONFIGURATION" {
-  type    = bool
-  default = false
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "ENABLE_GVNIC" {
-  type    = bool
-  default = false
+  type     = bool
+  nullable = false
+  default  = false
 }

@@ -17,7 +17,7 @@
 output "dns_name" {
   # Even when setting var.dns_name explicitly this is still useful as it
   # allows other resources to depend upon the A records having been created.
-  value      = google_dns_managed_zone.proxy.dns_name
+  value = google_dns_managed_zone.proxy.dns_name
 
   # Wait until the A records have been created in the zone so that the DNS is
   # fully initialized before Terraform updates dependent resources.

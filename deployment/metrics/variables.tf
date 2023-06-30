@@ -15,6 +15,7 @@
  */
 
 variable "project" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }

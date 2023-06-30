@@ -15,23 +15,27 @@
  */
 
 variable "project" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "region" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "zone" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "availability_type" {
-  type    = string
-  default = "ZONAL"
+  type     = string
+  nullable = false
+  default  = "ZONAL"
   validation {
     condition     = contains(["REGIONAL", "ZONAL"], var.availability_type)
     error_message = "Valid values for availability_type are REGIONAL or ZONAL."
@@ -39,8 +43,9 @@ variable "availability_type" {
 }
 
 variable "name_prefix" {
-  type    = string
-  default = "fsids"
+  type     = string
+  nullable = false
+  default  = "fsids"
 }
 
 variable "name" {
@@ -49,19 +54,22 @@ variable "name" {
 }
 
 variable "tier" {
-  type    = string
-  default = "db-custom-1-3840"
+  type     = string
+  nullable = false
+  default  = "db-custom-1-3840"
 }
 
 variable "deletion_protection" {
-  type    = bool
-  default = true
+  type     = bool
+  nullable = false
+  default  = true
 }
 
 variable "proxy_service_account" {
-  type = string
+  type     = string
+  nullable = false
   validation {
     condition     = var.proxy_service_account != ""
-    error_message = "proxy_service_account is required"
+    error_message = "proxy_service_account is required."
   }
 }

@@ -14,6 +14,10 @@
  limitations under the License.
  */
 
+terraform {
+  required_version = ">=1.2.0"
+}
+
 locals {
   mount_labels = {
     "server" : "Source NFS server of the mount",

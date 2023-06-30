@@ -16,7 +16,7 @@ NOTE: This module is deployed automatically by `terraform-module-knfsd` when `RE
 
 * `name_prefix` - (Optional) Prefix to use when generating a Cloud SQL instance name. The name will be suffixed with a hyphen and 4 random letters/digits (similar to MIG compute instances). Defaults to `fsids`.
 
-* `name` - (Optional, Computed) The name of the Cloud SQL instance. If the name is left blank a random name will be generated based on `name_prefix`. This is done because after a name is used, it cannot be reused for up to [one week](https://cloud.google.com/sql/docs/delete-instance).
+* `name` - (Optional) The name of the Cloud SQL instance. If the name is left blank a random name will be generated based on `name_prefix`. This is done because after a name is used, it cannot be reused for up to [one week](https://cloud.google.com/sql/docs/delete-instance).
 
 * `tier` - (Optional) The machine type to use. Must be a supported [PostgreSQL machine type](https://cloud.google.com/sql/docs/postgres/instance-settings#machine-type-2ndgen). Defaults to `db-custom-1-3840`.
 

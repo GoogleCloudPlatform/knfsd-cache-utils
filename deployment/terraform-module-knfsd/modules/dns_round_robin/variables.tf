@@ -15,27 +15,46 @@
  */
 
 variable "project" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "networks" {
-  type    = set(string)
-  default = null
+  type     = set(string)
+  nullable = true
+  default  = null
 }
 
 variable "instance_group" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.instance_group != ""
+    error_message = "instance_group is required."
+  }
 }
 
 variable "proxy_basename" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.proxy_basename != ""
+    error_message = "proxy_basename is required."
+  }
 }
 
 variable "dns_name" {
-  type = string
+  type     = string
+  nullable = false
+  default  = ""
+  validation {
+    condition     = var.dns_name == "" || endswith(var.dns_name, ".")
+    error_message = "dns_name must end with tailing dot, for example \"knfsd.example.\" (note the tailing dot)."
+  }
 }
 
 variable "knfsd_nodes" {
-  type = number
+  type     = number
+  nullable = false
 }

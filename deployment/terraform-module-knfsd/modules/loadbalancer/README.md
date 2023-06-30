@@ -22,25 +22,25 @@ This module does not create any firewall rules. Any firewall rules required by t
 
 ## Inputs
 
-* PROJECT - (optional) The Google Cloud Project that the load balancer is being deployed to. If it is not provided, the provider project is used.
+* PROJECT - (Optional) The Google Cloud Project that the load balancer is being deployed to. If it is not provided, the provider project is used.
 
-* REGION - (optional) The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of the load balancer. If it is not provided, the provider region is used.
+* REGION - (Optional) The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of the load balancer. If it is not provided, the provider region is used.
 
-* PROXY_BASENAME - A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).
+* PROXY_BASENAME - (Required) A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).
 
-* NETWORK - The network name (VPC) to use for the deployment of the Internal Load Balancer.
+* NETWORK - (Required) The network name (VPC) to use for the deployment of the Internal Load Balancer.
 
-* SUBNETWORK - The subnetwork name (subnet) to use for the deployment of the Internal Load Balancer.
+* SUBNETWORK - (Required) The subnetwork name (subnet) to use for the deployment of the Internal Load Balancer.
 
-* SERVICE_LABEL - (optional) The Service Label to use for the Forwarding Rule. The default is `"dns"`.
+* SERVICE_LABEL - (Optional) The Service Label to use for the Forwarding Rule. The default is `"dns"`.
 
-* IP_ADDRESS - The IP address to use for the Internal Load Balancer.
+* IP_ADDRESS - (Required) The IP address to use for the Internal Load Balancer.
 
-* ENABLE_UDP - (optional) Create a load balancer to support UDP traffic to the NFS proxy instances. UDP is not recommended for the main NFS traffic as it can cause data corruption. However, this maybe useful for older clients that default to using UDP for the mount protocol. The default is `false`.
+* ENABLE_UDP - (Optional) Create a load balancer to support UDP traffic to the NFS proxy instances. UDP is not recommended for the main NFS traffic as it can cause data corruption. However, this maybe useful for older clients that default to using UDP for the mount protocol. The default is `false`.
 
-* HEALTH_CHECK - The URL (self link) to the health check to use for the load balancer.
+* HEALTH_CHECK - (Required) The URL (self link) to the health check to use for the load balancer.
 
-* INSTANCE_GROUP - The URL (self link) to the managed instance group of the KNFSD proxy cluster.
+* INSTANCE_GROUP - (Required) The URL (self link) to the managed instance group of the KNFSD proxy cluster.
 
 ## Outputs
 

@@ -13,17 +13,17 @@ To use DNS Round Robin the KNFSD proxy cluster must be configured with:
 
 ## Inputs
 
-* `project` - (optional) The ID of the project in which the resource belongs. If it is not provided, the provider project is used.
+* `project` - (Optional) The ID of the project in which the resource belongs. If it is not provided, the provider project is used.
 
-* `networks` - (optional) Set of networks to attach Cloud DNS to. These should be formatted like `projects/{project}/global/networks/{network}` or `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`. This defaults to the same network as the KNFSD proxy cluster.
+* `networks` - (Optional) Set of networks to attach Cloud DNS to. These should be formatted like `projects/{project}/global/networks/{network}` or `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`. This defaults to the same network as the KNFSD proxy cluster.
 
-* `instance_group` - The full URL (self link) of the KNFSD proxy instance group.
+* `instance_group` - (Required) The full URL (self link) of the KNFSD proxy instance group.
 
-* `proxy_basename` - The proxy basename of the KNFSD proxy cluster.
+* `proxy_basename` - (Required) The proxy basename of the KNFSD proxy cluster.
 
-* `dns_name` - (optional) The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. This defaults to `{proxy_basename}.knfsd.internal.`.
+* `dns_name` - (Optional) The fully qualified domain name (FQDN) to assign the KNFSD proxy cluster. This defaults to `{proxy_basename}.knfsd.internal.`.
 
-* `knfsd_nodes` - The number of instances (size) of the KNFSD instance group.
+* `knfsd_nodes` - (Required) The number of instances (size) of the KNFSD instance group.
 
 ## Outputs
 

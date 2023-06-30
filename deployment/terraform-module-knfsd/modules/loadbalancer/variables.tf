@@ -15,17 +15,24 @@
  */
 
 variable "PROJECT" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "REGION" {
-  type    = string
-  default = ""
+  type     = string
+  nullable = false
+  default  = ""
 }
 
 variable "PROXY_BASENAME" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.PROXY_BASENAME != ""
+    error_message = "PROXY_BASENAME is required."
+  }
 }
 
 variable "NETWORK" {
@@ -46,14 +53,25 @@ variable "IP_ADDRESS" {
 }
 
 variable "ENABLE_UDP" {
-  type    = bool
-  default = false
+  type     = bool
+  nullable = false
+  default  = false
 }
 
 variable "HEALTH_CHECK" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.HEALTH_CHECK != ""
+    error_message = "HEALTH_CHECK is required."
+  }
 }
 
 variable "INSTANCE_GROUP" {
-  type = string
+  type     = string
+  nullable = false
+  validation {
+    condition     = var.INSTANCE_GROUP != ""
+    error_message = "INSTANCE_GROUP is required."
+  }
 }

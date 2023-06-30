@@ -126,12 +126,12 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     FSID_DATABASE_CONFIG = local.FSID_DATABASE_CONFIG
 
     # system
-    NUM_NFS_THREADS        = var.NUM_NFS_THREADS
-    VFS_CACHE_PRESSURE     = var.VFS_CACHE_PRESSURE
-    DISABLED_NFS_VERSIONS  = var.DISABLED_NFS_VERSIONS
-    READ_AHEAD_KB          = floor(var.READ_AHEAD / 1024)
-    LOADBALANCER_IP        = one(google_compute_address.nfsproxy_static.*.address)
-    serial-port-enable     = "TRUE"
+    NUM_NFS_THREADS       = var.NUM_NFS_THREADS
+    VFS_CACHE_PRESSURE    = var.VFS_CACHE_PRESSURE
+    DISABLED_NFS_VERSIONS = var.DISABLED_NFS_VERSIONS
+    READ_AHEAD_KB         = floor(var.READ_AHEAD / 1024)
+    LOADBALANCER_IP       = one(google_compute_address.nfsproxy_static.*.address)
+    serial-port-enable    = "TRUE"
 
     # metrics
     ENABLE_STACKDRIVER_METRICS       = var.ENABLE_STACKDRIVER_METRICS
