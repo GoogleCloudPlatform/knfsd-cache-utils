@@ -1,6 +1,11 @@
 # next
 
+* Update kernel to Ubuntu mainline 6.4.0
 * Fix scaling to zero when using round robin DNS
+
+## Update kernel to Ubuntu mainline 6.4.0
+
+Update the kernel from 6.4-rc5 to the final 6.4.0 release. Still need to build our own kernel for now to include an additional patch to enable use of FS-Cache.
 
 ## Fix scaling to zero when using round robin DNS
 

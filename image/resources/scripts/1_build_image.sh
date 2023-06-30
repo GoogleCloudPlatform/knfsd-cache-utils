@@ -236,14 +236,14 @@ install_netapp_exports() (
 download_kernel() (
     begin_command "Downloading kernel"
     cd kernel
-    git clone --depth 1 --branch cod/mainline/v6.4-rc5 git://kernel.ubuntu.com/virgin/testing/crack.git ubuntu-6.4-rc5
+    git clone --depth 1 --branch cod/mainline/v6.4 git://kernel.ubuntu.com/virgin/testing/crack.git ubuntu-6.4
     complete_command
 )
 
 build_kernel() (
     begin_command "Building kernel"
 
-    cd kernel/ubuntu-6.4-rc5
+    cd kernel/ubuntu-6.4
 
     quilt import "$patches"/kernel/*.patch
     quilt push -a
@@ -271,7 +271,7 @@ build_kernel() (
     dpkg-buildpackage -uc -ui -b -d
 
     cd ..
-    rm -rf ubuntu-6.4-rc5
+    rm -rf ubuntu-6.4
 
     complete_command
 )
@@ -280,10 +280,10 @@ install_kernel() (
     begin_command "Installing kernel"
     cd kernel
     apt-get install -y \
-        ./linux-headers-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb \
-        ./linux-headers-6.4.0-060400rc5_6.4.0-060400rc5.202306041930_all.deb \
-        ./linux-image-unsigned-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb \
-        ./linux-modules-6.4.0-060400rc5-knfsd_6.4.0-060400rc5.202306041930_amd64.deb
+        ./linux-headers-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb \
+        ./linux-headers-6.4.0-060400_6.4.0-060400.202306271339_all.deb \
+        ./linux-image-unsigned-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb \
+        ./linux-modules-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb
     complete_command
 )
 
