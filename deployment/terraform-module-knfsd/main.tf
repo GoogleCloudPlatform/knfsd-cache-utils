@@ -39,6 +39,11 @@ resource "null_resource" "validate_fsid_database" {
       condition     = var.SERVICE_ACCOUNT != ""
       error_message = "SERVICE_ACCOUNT is required when deploying an external fsid database. See FSID_MODE and FSID_DATABASE_DEPLOY."
     }
+
+    precondition {
+      condition     = var.FSID_DATABASE_PRIVATE_IP != null
+      error_message = "FSID_DATABASE_PRIVATE_IP is required when deploying an external fsid database. See FSID_MODE and FSID_DATABASE_PRIVATE_IP."
+    }
   }
 }
 
@@ -50,6 +55,10 @@ module "fsid_database" {
   zone                  = var.ZONE
   name_prefix           = "${var.PROXY_BASENAME}-fsids"
   proxy_service_account = var.SERVICE_ACCOUNT
+
+  # For simplicity, deploy with either a public IP or private IP but not both.
+  enable_public_ip = !var.FSID_DATABASE_PRIVATE_IP
+  private_network  = var.FSID_DATABASE_PRIVATE_IP ? var.NETWORK : ""
 
   # Simplify creating and destroying proxy cluster instances.
   deletion_protection = false

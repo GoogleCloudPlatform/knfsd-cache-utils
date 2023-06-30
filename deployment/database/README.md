@@ -14,7 +14,7 @@ NOTE: This module is deployed automatically by `terraform-module-knfsd` when `RE
 
 * `availability_type` - (Optional) This can be either high availability (`REGIONAL`) or single zone (`ZONAL`). Defaults to `ZONAL`.
 
-* `name_prefix` - (Optional) Prefix to use when generating a Cloud SQL instance name. The name will be suffixed with a hyphen and 4 random letters/digits (similar to MIG compute instances). Defaults to `fsids`.
+* `name_prefix` - (Optional) Prefix to use when generating a Cloud SQL instance name. The name will be suffixed with a hyphen and 8 random letters/digits (similar to MIG compute instances). Defaults to `fsids`.
 
 * `name` - (Optional) The name of the Cloud SQL instance. If the name is left blank a random name will be generated based on `name_prefix`. This is done because after a name is used, it cannot be reused for up to [one week](https://cloud.google.com/sql/docs/delete-instance).
 
@@ -22,7 +22,13 @@ NOTE: This module is deployed automatically by `terraform-module-knfsd` when `RE
 
 * `deletion_protection` - (Optional) Whether or not to allow Terraform to destroy the instance. Unless this field is set to false in Terraform state, a `terraform destroy` or `terraform apply` command that deletes the instance will fail. Defaults to true.
 
-* `proxy_service_account` - The Service Account used by the knfsd proxy Compute Instances. This Service Account will be granted access to the PostgreSQL database.
+* `proxy_service_account` - (Required) The Service Account used by the knfsd proxy Compute Instances. This Service Account will be granted access to the PostgreSQL database.
+
+* `enable_public_ip` - (Optional) Whether to deploy the database with a public IP address. At least one of `enable_public_ip` or `private_network` must be configured. Defaults to false.
+
+* `private_network` - (Optional) The VPC network from which the Cloud SQL instance is accessible for private IP. At least one of `enable_public_ip` or `private_network` must be configured.
+
+* `allocated_ip_range` - (Optional) The name of the allocated IP range for the private IP. If set the instance IP will be created in the allocated range.
 
 ## Outputs
 

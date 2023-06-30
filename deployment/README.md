@@ -225,12 +225,16 @@ Use of `AUTO_REEXPORT` requires that `FSID_MODE` is `local` or `external`. `exte
 
 ### FSID database options
 
-| Variable             | Description | Required | Default |
-| FSID_MODE            | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. | False | `"external"` |
-| FSID_DATABASE_DEPLOY | Set to `false` to prevent automatically creating a Cloud SQL instance when `FSID_MODE` is set to `external`.    | False | `true`       |
-| FSID_DATABASE_CONFIG | Allows Overriding the default FSID database configuration when `FSID_MODE` is set to `external`.                | False | `""`         |
+| Variable                 | Description                                                                                                     | Required | Default      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
+| FSID_MODE                | How to assign FSIDs (File System Identifiers) to each export. The options are `static`, `local`, or `external`. | False    | `"external"` |
+| FSID_DATABASE_DEPLOY     | Set to `false` to prevent automatically creating a Cloud SQL instance when `FSID_MODE` is set to `external`.    | False    | `true`       |
+| FSID_DATABASE_PRIVATE_IP | Whether to use a public or private IP address for Cloud SQL.                                                    | False*   |              |
+| FSID_DATABASE_CONFIG     | Allows Overriding the default FSID database configuration when `FSID_MODE` is set to `external`.                | False    | `""`         |
 
 The recommended `FSID_MODE` is to always use `external`. For more details on `FSID_MODE` and `FSID_DATABASE_CONFIG` see [Filesystem Identifiers](./fsids.md).
+
+`FSID_DATABASE_PRIVATE_IP` is required when `FSID_MODE="external"`, and `FSID_DATABASE_DEPLOY=true`.
 
 Older knfsd versions that do not support `FSID_MODE` always used `static` to assign FSIDs. If you're upgrading from an earlier knfsd version it's advised you switch to `external` when possible, though you can use `static` to keep the existing behaviour.
 

@@ -240,6 +240,12 @@ variable "FSID_DATABASE_DEPLOY" {
   default  = true
 }
 
+variable "FSID_DATABASE_PRIVATE_IP" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
 variable "FSID_DATABASE_CONFIG" {
   type     = string
   nullable = false

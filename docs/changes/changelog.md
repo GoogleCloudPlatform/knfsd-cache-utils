@@ -2,6 +2,7 @@
 
 * Update kernel to Ubuntu mainline 6.4.0
 * Fix scaling to zero when using round robin DNS
+* Support deploying Cloud SQL instance with a private IP
 
 ## Update kernel to Ubuntu mainline 6.4.0
 
@@ -10,6 +11,10 @@ Update the kernel from 6.4-rc5 to the final 6.4.0 release. Still need to build o
 ## Fix scaling to zero when using round robin DNS
 
 The A record always requires at least one entry. Remove the A record from the DNS zone when scaling the proxy cluster to zero. Scaling can be useful if you only want to temporarily shutdown (or restart) the cluster without having to destroy all the other resources (such as Cloud SQL) that can take several minutes to re-create.
+
+## Support deploying Cloud SQL instance with a private IP
+
+Add a new configuration option `FSID_DATABASE_PRIVATE_IP` to support deploying the Cloud SQL instance with either a public or private IP.
 
 # v1.0.0-beta5
 

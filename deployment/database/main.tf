@@ -67,11 +67,20 @@ resource "google_sql_database_instance" "fsids" {
     }
 
     ip_configuration {
-      ipv4_enabled = true
+      ipv4_enabled       = var.enable_public_ip
+      private_network    = var.private_network
+      allocated_ip_range = var.allocated_ip_range
     }
 
     location_preference {
       zone = var.zone
+    }
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.enable_public_ip || var.private_network != ""
+      error_message = "At least one of enable_public_ip or private_network must be enabled."
     }
   }
 }

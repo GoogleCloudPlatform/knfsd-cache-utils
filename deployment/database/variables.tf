@@ -73,3 +73,21 @@ variable "proxy_service_account" {
     error_message = "proxy_service_account is required."
   }
 }
+
+variable "enable_public_ip" {
+  type     = bool
+  nullable = false
+  default  = false
+}
+
+variable "private_network" {
+  type     = string
+  nullable = false
+  default  = ""
+}
+
+variable "allocated_ip_range" {
+  type     = string
+  nullable = false
+  default  = ""
+}
