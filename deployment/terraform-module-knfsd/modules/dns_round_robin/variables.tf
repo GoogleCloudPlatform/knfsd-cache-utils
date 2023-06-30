@@ -17,7 +17,10 @@
 variable "project" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.project != ""
+    error_message = "project is required."
+  }
 }
 
 variable "networks" {

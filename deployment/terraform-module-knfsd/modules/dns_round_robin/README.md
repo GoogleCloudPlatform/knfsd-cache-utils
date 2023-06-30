@@ -13,7 +13,7 @@ To use DNS Round Robin the KNFSD proxy cluster must be configured with:
 
 ## Inputs
 
-* `project` - (Optional) The ID of the project in which the resource belongs. If it is not provided, the provider project is used.
+* `project` - (Required) The ID of the project in which the resource belongs.
 
 * `networks` - (Optional) Set of networks to attach Cloud DNS to. These should be formatted like `projects/{project}/global/networks/{network}` or `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`. This defaults to the same network as the KNFSD proxy cluster.
 

@@ -72,11 +72,11 @@ terraform apply
 
 ### Google Cloud Project Configuration
 
-| Variable | Description                                                                                                                                                                     | Required | Default |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
-| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to. If it is not provided, the provider project is used.                                                      | False    | N/A     |
-| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources. If it is not provided, the provider region is used. | False    | N/A     |
-| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources. If it is not provided, the provider zone is used.        | False    | N/A     |
+| Variable | Description                                                                                                                 | Required | Default |
+| -------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| PROJECT  | The Google Cloud Project that the Knfsd Cluster is being deployed to.                                                       | True     |         |
+| REGION   | The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of regional resources. | True     |         |
+| ZONE     | The [Google Cloud Zone](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of zonal resources.      | True     |         |
 
 ### Network Configuration
 

@@ -47,7 +47,10 @@ variable "EXPORT_CIDR" {
 variable "PROJECT" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.PROJECT != ""
+    error_message = "PROJECT is required."
+  }
 }
 
 variable "SUBNETWORK_PROJECT" {
@@ -58,13 +61,19 @@ variable "SUBNETWORK_PROJECT" {
 variable "REGION" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.REGION != ""
+    error_message = "REGION is required."
+  }
 }
 
 variable "ZONE" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.ZONE != ""
+    error_message = "ZONE is required."
+  }
 }
 
 variable "NETWORK" {

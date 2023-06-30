@@ -17,19 +17,28 @@
 variable "project" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.project != ""
+    error_message = "project is required."
+  }
 }
 
 variable "region" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.region != ""
+    error_message = "region is required."
+  }
 }
 
 variable "zone" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.zone != ""
+    error_message = "zone is required."
+  }
 }
 
 variable "availability_type" {

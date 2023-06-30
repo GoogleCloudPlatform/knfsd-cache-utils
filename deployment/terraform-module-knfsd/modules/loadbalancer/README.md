@@ -22,9 +22,9 @@ This module does not create any firewall rules. Any firewall rules required by t
 
 ## Inputs
 
-* PROJECT - (Optional) The Google Cloud Project that the load balancer is being deployed to. If it is not provided, the provider project is used.
+* PROJECT - (Required) The Google Cloud Project that the load balancer is being deployed to.
 
-* REGION - (Optional) The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of the load balancer. If it is not provided, the provider region is used.
+* REGION - (Required) The [Google Cloud Region](https://cloud.google.com/compute/docs/regions-zones) to use for deployment of the load balancer.
 
 * PROXY_BASENAME - (Required) A nickname to use for this Knfsd deployment (used to ensure uniquely named resources for multiple deployments).
 

@@ -3,6 +3,7 @@
 * Update kernel to Ubuntu mainline 6.4.0
 * Fix scaling to zero when using round robin DNS
 * Support deploying Cloud SQL instance with a private IP
+* Make project/region/zone required
 
 ## Update kernel to Ubuntu mainline 6.4.0
 
@@ -15,6 +16,10 @@ The A record always requires at least one entry. Remove the A record from the DN
 ## Support deploying Cloud SQL instance with a private IP
 
 Add a new configuration option `FSID_DATABASE_PRIVATE_IP` to support deploying the Cloud SQL instance with either a public or private IP.
+
+## Make project/region/zone required
+
+Relying on provider defaults for project/region/zone can make the deployments unreliable for some resources such as Cloud SQL. To ensure everything is deployed correctly require that these variables are explicitly set instead of relying on provider default values.
 
 # v1.0.0-beta5
 

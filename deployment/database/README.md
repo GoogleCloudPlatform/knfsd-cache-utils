@@ -6,11 +6,11 @@ NOTE: This module is deployed automatically by `terraform-module-knfsd` when `RE
 
 ## Inputs
 
-* `project` - (Optional) The ID of the project in which the resource belongs. If it is not provided, the provider project is used.
+* `project` - (Required) The ID of the project in which the resource belongs.
 
-* `region` - (Optional) The region the instance will sit in. If a region is not provided, the provider region will be used instead.
+* `region` - (Required) The region the instance will sit in.
 
-* `zone` - (Optional) The preferred compute engine zone that the database instance will be deployed to. If a zone is not provided, a random zone will be chosen.
+* `zone` - (Required) The preferred compute engine zone that the database instance will be deployed to.
 
 * `availability_type` - (Optional) This can be either high availability (`REGIONAL`) or single zone (`ZONAL`). Defaults to `ZONAL`.
 

@@ -17,13 +17,19 @@
 variable "PROJECT" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.PROJECT != ""
+    error_message = "PROJECT is required."
+  }
 }
 
 variable "REGION" {
   type     = string
   nullable = false
-  default  = ""
+  validation {
+    condition     = var.REGION != ""
+    error_message = "REGION is required."
+  }
 }
 
 variable "PROXY_BASENAME" {
