@@ -64,9 +64,18 @@ resource "google_dns_managed_zone" "proxy" {
       }
     }
   }
+
+  lifecycle {
+    precondition {
+      condition     = length(local.ip_addresses) == var.knfsd_nodes
+      error_message = "Incorrect number of IP addresses found, expected ${var.knfsd_nodes} but was ${length(local.ip_addresses)}."
+    }
+  }
 }
 
 resource "google_dns_record_set" "proxy" {
+  count = length(local.ip_addresses) > 0 ? 1 : 0
+
   project      = var.project
   managed_zone = google_dns_managed_zone.proxy.name
 
@@ -85,4 +94,9 @@ resource "google_dns_record_set" "proxy" {
       }
     }
   }
+}
+
+moved {
+  from = google_dns_record_set.proxy
+  to   = google_dns_record_set.proxy[0]
 }

@@ -15,8 +15,15 @@
  */
 
 output "dns_name" {
-  # Even though this effectively just echoes back var.dns_name this is still
-  # useful as it allows other resources to depend upon the A record having been
-  # created.
-  value = google_dns_record_set.proxy.name
+  # Even when setting var.dns_name explicitly this is still useful as it
+  # allows other resources to depend upon the A records having been created.
+  value      = google_dns_managed_zone.proxy.dns_name
+
+  # Wait until the A records have been created in the zone so that the DNS is
+  # fully initialized before Terraform updates dependent resources.
+  # Declaring a dependency instead of using "google_dns_record_set.proxy[0].dns_name"
+  # directly as the value because the record set might not always exist.
+  depends_on = [
+    google_dns_record_set.proxy
+  ]
 }

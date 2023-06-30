@@ -1,5 +1,11 @@
 # next
 
+* Fix scaling to zero when using round robin DNS
+
+## Fix scaling to zero when using round robin DNS
+
+The A record always requires at least one entry. Remove the A record from the DNS zone when scaling the proxy cluster to zero. Scaling can be useful if you only want to temporarily shutdown (or restart) the cluster without having to destroy all the other resources (such as Cloud SQL) that can take several minutes to re-create.
+
 # v1.0.0-beta5
 
 * FSID service to store FSID to export path mappings in an external database
