@@ -1,7 +1,7 @@
-From 9f51a325fbeddf9b232c9260d8318c0fc778dbf3 Mon Sep 17 00:00:00 2001
+From c236def16960c92ac3e3375991cee92c8f51cebc Mon Sep 17 00:00:00 2001
 From: David Howells <dhowells@redhat.com>
 Date: Thu, 16 Feb 2023 15:07:01 +0000
-Subject: [PATCH 2/3] mm, netfs, fscache: Stop read optimisation when folio
+Subject: [PATCH 2/4] mm, netfs, fscache: Stop read optimisation when folio
  removed from pagecache
 
 Fscache has an optimisation by which reads from the cache are skipped until
@@ -76,7 +76,7 @@ cc: linux-mm@kvack.org
  7 files changed, 30 insertions(+), 1 deletion(-)
 
 diff --git a/fs/9p/cache.c b/fs/9p/cache.c
-index cebba4eaa0b5..12c0ae29f185 100644
+index cebba4eaa0b57..12c0ae29f1857 100644
 --- a/fs/9p/cache.c
 +++ b/fs/9p/cache.c
 @@ -68,6 +68,8 @@ void v9fs_cache_inode_get_cookie(struct inode *inode)
@@ -89,7 +89,7 @@ index cebba4eaa0b5..12c0ae29f185 100644
  	p9_debug(P9_DEBUG_FSC, "inode %p get cookie %p\n",
  		 inode, v9fs_inode_cookie(v9inode));
 diff --git a/fs/afs/internal.h b/fs/afs/internal.h
-index 9d3d64921106..da73b97e19a9 100644
+index 9d3d64921106d..da73b97e19a9a 100644
 --- a/fs/afs/internal.h
 +++ b/fs/afs/internal.h
 @@ -681,6 +681,8 @@ static inline void afs_vnode_set_cache(struct afs_vnode *vnode,
@@ -102,7 +102,7 @@ index 9d3d64921106..da73b97e19a9 100644
  }
  
 diff --git a/fs/cachefiles/namei.c b/fs/cachefiles/namei.c
-index 82219a8f6084..88ef07180b32 100644
+index 82219a8f60842..88ef07180b326 100644
 --- a/fs/cachefiles/namei.c
 +++ b/fs/cachefiles/namei.c
 @@ -584,6 +584,8 @@ static bool cachefiles_open_file(struct cachefiles_object *object,
@@ -115,7 +115,7 @@ index 82219a8f6084..88ef07180b32 100644
  
  	/* Always update the atime on an object we've just looked up (this is
 diff --git a/fs/ceph/cache.c b/fs/ceph/cache.c
-index 177d8e8d73fe..de1dee46d3df 100644
+index 177d8e8d73fe4..de1dee46d3df7 100644
 --- a/fs/ceph/cache.c
 +++ b/fs/ceph/cache.c
 @@ -36,6 +36,8 @@ void ceph_fscache_register_inode_cookie(struct inode *inode)
@@ -128,7 +128,7 @@ index 177d8e8d73fe..de1dee46d3df 100644
  
  void ceph_fscache_unregister_inode_cookie(struct ceph_inode_info *ci)
 diff --git a/fs/smb/client/fscache.c b/fs/smb/client/fscache.c
-index 8f6909d633da..3677525ee993 100644
+index 8f6909d633da8..3677525ee9931 100644
 --- a/fs/smb/client/fscache.c
 +++ b/fs/smb/client/fscache.c
 @@ -108,6 +108,8 @@ void cifs_fscache_get_inode_cookie(struct inode *inode)
@@ -141,7 +141,7 @@ index 8f6909d633da..3677525ee993 100644
  
  void cifs_fscache_unuse_inode_cookie(struct inode *inode, bool update)
 diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index a56308a9d1a4..a1176ceb4a0c 100644
+index a56308a9d1a45..a1176ceb4a0c3 100644
 --- a/include/linux/pagemap.h
 +++ b/include/linux/pagemap.h
 @@ -199,6 +199,7 @@ enum mapping_flags {
@@ -175,7 +175,7 @@ index a56308a9d1a4..a1176ceb4a0c 100644
  {
  	return mapping->gfp_mask;
 diff --git a/mm/internal.h b/mm/internal.h
-index 8c836fd45c64..62fa427b94aa 100644
+index 8c836fd45c644..62fa427b94aa1 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
 @@ -175,7 +175,10 @@ static inline void set_page_refcounted(struct page *page)
