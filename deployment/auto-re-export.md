@@ -58,7 +58,7 @@ Use of an FSID service to automatically allocate FSIDs for exports is required w
 ```terraform
 module "nfs_proxy" {
 
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta5"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta6"
 
     # Include your standard KNFSD configuration, this example only shows the
     # configuration values specific to the auto re-export feature.

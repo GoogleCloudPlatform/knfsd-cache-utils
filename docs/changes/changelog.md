@@ -1,5 +1,7 @@
 # next
 
+# v1.0.0-beta6
+
 * Update kernel to Ubuntu mainline 6.4.0
 * Fix scaling to zero when using round robin DNS
 * Support deploying Cloud SQL instance with a private IP
