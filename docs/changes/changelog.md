@@ -4,6 +4,7 @@
 * Fix scaling to zero when using round robin DNS
 * Support deploying Cloud SQL instance with a private IP
 * Make project/region/zone required
+* Add new `RESERVE_KNFSD_CAPACITY` configuration option to reserve cluster capacity
 
 ## Update kernel to Ubuntu mainline 6.4.0
 
@@ -20,6 +21,12 @@ Add a new configuration option `FSID_DATABASE_PRIVATE_IP` to support deploying t
 ## Make project/region/zone required
 
 Relying on provider defaults for project/region/zone can make the deployments unreliable for some resources such as Cloud SQL. To ensure everything is deployed correctly require that these variables are explicitly set instead of relying on provider default values.
+
+## Add new `RESERVE_KNFSD_CAPACITY` configuration option to reserve cluster capacity
+
+Optionally create a Compute Engine Reservation for the cluster. The Knfsd nodes are often large instances with lots of Local SSDs. This means they can sometimes be difficult to schedule which can cause delays when replacing unhealthy instances, or performing rolling replacements.
+
+A reservation ensures that the capacity for the Knfsd Cluster is always available in Google Cloud, regardless of the state of the instances. A reservation is not a commitment, and can be deleted at any time.
 
 # v1.0.0-beta5
 

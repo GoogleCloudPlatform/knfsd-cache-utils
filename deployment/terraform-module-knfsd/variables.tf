@@ -516,3 +516,8 @@ variable "ENABLE_GVNIC" {
   nullable = false
   default  = false
 }
+
+variable "RESERVE_KNFSD_CAPACITY" {
+  type    = bool
+  default = false
+}

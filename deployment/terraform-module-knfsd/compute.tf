@@ -30,6 +30,52 @@ locals {
   )
 }
 
+# Optionally create a Compute Engine Reservation for the cluster
+# The Knfsd nodes are often large instances, with lots of Local SSD's. This means they can sometimes be difficult to schedule
+# which can cause delays when replacing unhealthy instances, or performing rolling replacements.
+#
+# A reservation ensures that the capacity for the Knfsd Cluster is always available in Google Cloud, regardless of the state of
+# the instances. A reservation is not a commitment, and can be deleted at any time.
+resource "google_compute_reservation" "knfsd_reservation" {
+
+  # Only create the reservation if RESERVE_KNFSD_CAPACITY is true
+  count = var.RESERVE_KNFSD_CAPACITY ? 1 : 0
+
+  name = "${var.PROXY_BASENAME}-group"
+  zone = var.ZONE
+
+  // We want this reservation to only be used by this specific Knfsd Cluster
+  specific_reservation_required = true
+
+  description = "Compute reservation for Knfsd Cluster ${var.PROXY_BASENAME}-group"
+
+  specific_reservation {
+    count = var.KNFSD_NODES
+    instance_properties {
+      min_cpu_platform = lower(split(var.MACHINE_TYPE, "-")[0]) == "n1" ? "Intel Skylake" : null // Set Skylake only if N1
+      machine_type     = var.MACHINE_TYPE
+      dynamic "local_ssds" {
+        for_each = var.CACHEFILESD_DISK_TYPE == "local-ssd" ? range(1, var.LOCAL_SSDS + 1) : []
+        content {
+          interface    = "NVME"
+          disk_size_gb = 375
+        }
+      }
+    }
+
+  }
+
+  lifecycle {
+    precondition {
+      # RESERVE_KNFSD_CAPACITY requires ENABLE_KNFSD_AUTOSCALING to be false
+      condition     = var.ENABLE_KNFSD_AUTOSCALING == false
+      error_message = "ENABLE_KNFSD_AUTOSCALING must be disabled when RESERVE_KNFSD_CAPACITY is enabled."
+    }
+  }
+
+}
+
+
 # Instance Template for the KNFSD nodes
 resource "google_compute_instance_template" "nfsproxy-template" {
 
@@ -151,6 +197,17 @@ resource "google_compute_instance_template" "nfsproxy-template" {
     preemptible         = false
   }
 
+  dynamic "reservation_affinity" {
+    for_each = var.RESERVE_KNFSD_CAPACITY ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key    = "compute.googleapis.com/reservation-name"
+        values = [google_compute_reservation.knfsd_reservation[0].name]
+      }
+    }
+  }
+
   # We use a dynamic block for service_account here as we only want to assign an SA if we have metrics enabled.
   # If we do not have metrics enabled there is no need for an SA
   dynamic "service_account" {
@@ -250,6 +307,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
       error_message = "BUG: deployed Cloud SQL database, but that database is not in use."
     }
   }
+
 }
 
 # Healthcheck on port 2049, used for monitoring the NFS Health Status
