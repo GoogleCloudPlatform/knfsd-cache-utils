@@ -74,7 +74,7 @@ resource "google_dns_managed_zone" "proxy" {
 }
 
 resource "google_dns_record_set" "proxy" {
-  count = length(local.ip_addresses) > 0 ? 1 : 0
+  count = var.knfsd_nodes > 0 ? 1 : 0
 
   project      = var.project
   managed_zone = google_dns_managed_zone.proxy.name
