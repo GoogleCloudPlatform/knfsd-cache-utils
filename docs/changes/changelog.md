@@ -1,5 +1,13 @@
 # next
 
+# v1.0.0-beta7
+
+* Fix error applying Terraform when nodes greater than 1
+
+## Fix error applying Terraform when nodes greater than 1
+
+When the nodes are greater than 1 and using DNS round robin, Terraform cannot create a plan due to the IP addresses having an indeterminate count. Change this to use the input variable that specifies the number of knfsd nodes.
+
 # v1.0.0-beta6
 
 * Update kernel to Ubuntu mainline 6.4.0
