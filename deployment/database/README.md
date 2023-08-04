@@ -83,6 +83,6 @@ This is because there are database tables in the fsids database that are owned b
 
 > Error: Error, failed to deleteuser nfs-proxy@ab-knfsd.iam in instance fsids-1cef303d: googleapi: Error 400: Invalid request: failed to delete user nfs-proxy@ab-knfsd.iam: . role "nfs-proxy@ab-knfsd.iam" cannot be dropped because some objects depend on it Details: 1 object in database fsids., invalid
 
-This is because there are database tables in the fisds database that are owned by the old `proxy_service_account`. Before the old `proxy_service_account` can be removed the ownership of these tables must be changed to a different user.
+This is because there are database tables in the fsids database that are owned by the old `proxy_service_account`. Before the old `proxy_service_account` can be removed the ownership of these tables must be changed to a different user.
 
 Once the new `proxy_service_account` database user has been created change the ownership of the tables to the new `proxy_service_account` database user.

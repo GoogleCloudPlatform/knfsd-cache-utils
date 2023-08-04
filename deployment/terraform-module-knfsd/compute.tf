@@ -276,7 +276,7 @@ resource "google_compute_instance_template" "nfsproxy-template" {
         ? var.FSID_DATABASE_CONFIG != ""
         : true
       )
-      error_message = "Must specify a database configuration (FSID_DATABASE_CONFIG) when using a custom external database (FSID_MODE = \"external\" and FISD_DATABASE_DEPLOY = false)."
+      error_message = "Must specify a database configuration (FSID_DATABASE_CONFIG) when using a custom external database (FSID_MODE = \"external\" and FSID_DATABASE_DEPLOY = false)."
     }
 
     # Bug check: This should not occur and indicates a bug in the Terraform script.

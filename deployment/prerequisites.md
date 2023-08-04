@@ -6,6 +6,14 @@ Before deploying Knfsd to Google Cloud there are a number of prerequisites that 
 
 Before you can deploy Knfsd in your Google Cloud Project you first need to build a disk image. The process for building this image is documented [here](../image).
 
+## Networking
+
+### External FSID database
+
+If using the recommended `FSID_MODE="external"` the knfsd proxy instances will need to be able to access the external FSID database.
+
+The Cloud SQL instance can be accessed using either a public or private IP address. See [Network - Cloud SQL (FSID database)](./network.md#cloud-sql-fsid-database) for more information.
+
 ## Firewall Rules
 
 This Terraform module will automatically create the required firewall rules to allow healthchecking the Knfsd instances (this can be disabled). However it **will not** create any other firewall rules.
@@ -27,9 +35,9 @@ Knfsd supports a range of metrics which can be automatically exported into Googl
 You must have [Private Google Access](https://cloud.google.com/vpc/docs/configure-private-google-access) enabled on the subnet that you will be using for the Knfsd Nodes. This is required to allow connectivity to the Monitoring API for VM's without a Public IP address.
 
 ### Service Account Permissions
-A Service Account needs to be configured for the Knfsd Nodes with the `logging-write` and `monitoring-write` scopes. This is performed automatically by the Terraform Module when you have metrics enabled. 
+A Service Account needs to be configured for the Knfsd Nodes with the `logging-write` and `monitoring-write` scopes. This is performed automatically by the Terraform Module when you have metrics enabled.
 
-By default, the [Compute Engine Default Service Account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) will be used. 
+By default, the [Compute Engine Default Service Account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) will be used.
 
 You need to make sure the identity used for Terraform has the `roles/iam.serviceAccountUser` role on the Compute Engine Default Service Account so that it can assign it to the Knfsd Nodes.
 
@@ -38,7 +46,7 @@ By default Knfsd Metrics are disabled, to enable you need to set the `ENABLE_STA
 
 ## gcloud
 
-You should ensure that you have [gcloud](https://cloud.google.com/sdk/install) instaled and configured on your machine. 
+You should ensure that you have [gcloud](https://cloud.google.com/sdk/install) instaled and configured on your machine.
 
 ## Terraform
 

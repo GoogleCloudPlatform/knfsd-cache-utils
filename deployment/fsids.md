@@ -51,7 +51,7 @@ With a knfsd proxy cluster there are two main ways this issue with FSIDs can occ
 
 These issues can be avoided by storing the mappings between FSID and export path in an external database by using `FSID_MODE="external"`.
 
-## FISD Mode
+## FSID Mode
 
 The `FSID_MODE` variable controls how FSID numbers are allocated to exports. There are two main options; `static` or using an FSID service. For the FSID service there are two options available. The standard NFS `fsidd` service, or the `knfsd-fsidd` service.
 
@@ -82,6 +82,8 @@ Even with a single instance, there's still a risk if the instance is replaced du
 Each export is automatically allocated an FSID number by the `mountd` service using using the `knfsd-fsidd` service. This uses a Cloud SQL PostgreSQL instance to store the mappings between FSID and export path. This ensures that all the instances in cluster use the same FSID for each export path.
 
 This is the recommended deployment option for all knfsd proxy configurations as its the easiest to configure and ensures the consistency of FSIDs across the cluster.
+
+**NOTE**: The knfsd proxy instance will need to be able to access the Cloud SQL instance. See [Network - Cloud SQL (FSID database)](./network.md#cloud-sql-fsid-database) for more information.
 
 ## Providing a custom database
 
@@ -169,11 +171,11 @@ Once the database instance has been created, [assign the knfsd proxy Service Acc
 
 ### IAM roles
 
-The standard FSID configuration uses the Compute Instance's Service Account to authenticate with the Cloud SQL database using IAM.
+The standard FSID configuration uses the Service Account assigned to the knfsd proxy instance to authenticate with the Cloud SQL database using IAM.
 
 For best practice you should use a dedicated Service Account for your knfsd proxy clusters (not the default Compute Engine Service Account).
 
-The knfsd proxy Service Account requires roles:
+The knfsd proxy Service Account requires these roles:
 
 * GCP Project roles (grant the Service Account these roles on the GCP project)
 
@@ -185,7 +187,7 @@ The knfsd proxy Service Account requires roles:
 
 * Cloud SQL instance roles (grant the Service Account these roles on the Cloud SQL FSID database instance)
 
-  If you're using the Database Terraform module these roles will be assigned to the service account by the Database Terraform module.
+  **NOTE:** If you're using the Database Terraform module these roles will be assigned to the Service Account by the Database Terraform module.
 
   * Cloud SQL Client (`roles/cloudsql.client`) - Allows connecting to the Cloud SQL instance.
 
@@ -193,7 +195,11 @@ The knfsd proxy Service Account requires roles:
 
 ### FSID Database Configuration
 
-The when using `FSID_MODE="external"` the `knfsd-fsidd` service can be configured by setting `FSID_DATABASE_CONFIG`. This is required
+The when using `FSID_MODE="external"` the `knfsd-fsidd` service can be configured by setting `FSID_DATABASE_CONFIG`.
+
+**NOTE:** When `FSID_DATABASE_DEPLOY = true` the configuration will be generated for you. However, if you set `FSID_DATABASE_DEPLOY = false` you will need to provide the database configuration.
+
+The configuration supports the following options:
 
 * `socket` (Optional) - The unix socket to listen on for incoming FSID requests from `mountd`. This *must* match the value configured in `/etc/nfs.conf`. Default `/run/fsidd.sock`.
 
