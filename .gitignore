@@ -27,3 +27,6 @@ service-account-key.json
 
 # Build files
 image/resources.tgz
+
+go.work
+go.work.sum
