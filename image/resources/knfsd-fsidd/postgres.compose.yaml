@@ -11,10 +11,9 @@ services:
       retries: 6
       start_period: 5m
     ports:
-      # bind the container port 5432 to a random local port
-      # only expose this port to localhost
       - target: 5432
         host_ip: 127.0.0.1
+        published: ${POSTGRES_PORT:-0}
     environment:
       POSTGRES_PASSWORD: fsid-test
       POSTGRES_USER: fsidd

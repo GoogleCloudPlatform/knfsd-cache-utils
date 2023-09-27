@@ -1,0 +1,76 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+options:
+  env:
+    - CI=cloudbuild
+
+steps:
+  - name: golang:1.20
+    id: filter-exports:test
+    dir: image/resources/filter-exports
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-agent:test
+    dir: image/resources/knfsd-agent/src
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-metrics-agent:test
+    dir: image/resources/knfsd-metrics-agent
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: netapp-exports:test
+    dir: image/resources/netapp-exports
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: mig-scaler:test
+    dir: tools/mig-scaler
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+
+  - name: gcr.io/cloud-builders/docker
+    id: knfsd-fsidd:database-up
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh up
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-fsidd:test
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh run
+    waitFor: ['knfsd-fsidd:database-up']
+    timeout: 1200s # 20m
+
+  - name: gcr.io/cloud-builders/docker
+    id: knfsd-fsidd:database-down
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh down
+    waitFor: ['knfsd-fsidd:test']
+    timeout: 1200s # 20m
