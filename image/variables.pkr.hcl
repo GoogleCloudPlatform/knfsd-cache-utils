@@ -27,6 +27,11 @@ variable "machine_type" {
   default = "c2-standard-16"
 }
 
+variable "build_instance_name" {
+  type    = string
+  default = "packer-nfs-proxy-{{uuid}}"
+}
+
 variable "network_project" {
   type    = string
   default = ""
@@ -35,6 +40,11 @@ variable "network_project" {
 variable "subnetwork" {
   type    = string
   default = "default"
+}
+
+variable "network_tags" {
+  type    = set(string)
+  default = ["packer"]
 }
 
 variable "omit_external_ip" {

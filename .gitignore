@@ -20,13 +20,16 @@
 *.auto.pkrvars.json
 
 # Exclude Specific Packer Variables File
-!image/internal-build/image.pkrvars.hcl
+!/image/cloudbuild.pkrvars.hcl
+!/image/internal-build/image.pkrvars.hcl
 
 # Service Account
 service-account-key.json
 
 # Build files
-image/resources.tgz
+image.manifest.json
+/image/resources.tgz
 
+# Development files
 go.work
 go.work.sum

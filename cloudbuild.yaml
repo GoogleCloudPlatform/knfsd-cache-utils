@@ -13,9 +13,32 @@
 # limitations under the License.
 
 
+# timeout needs to be longer than the total run time, with some padding to allow
+# enough time to gracefully tear down resources. Otherwise if Cloud Build aborts
+# a build in the middle of Packer or Terraform GCP resources will be left behind.
+timeout: 18000s # 5h
+
+substitutions:
+  _SUBNETWORK: default
+  _WORKER_POOL: ""
+
+  # This is to support running the various tests (e.g. smoke tests) with an
+  # existing image. Useful when developing the tests themselves.
+  # At the moment the image build step is unconditional, so you'll need to
+  # comment out the image build step while developing tests.
+  _IMAGE_NAME: nfs-test-${BUILD_ID}
+
 options:
+  dynamicSubstitutions: true
+  pool:
+    name: ${_WORKER_POOL}
   env:
     - CI=cloudbuild
+    - PROJECT_ID=${PROJECT_ID}
+    - LOCATION=${LOCATION}
+    - SUBNETWORK=${_SUBNETWORK}
+    - BUILD_ID=${BUILD_ID}
+    - IMAGE_NAME=${_IMAGE_NAME}
 
 steps:
   - name: golang:1.20
@@ -74,3 +97,31 @@ steps:
     script: ./test.sh down
     waitFor: ['knfsd-fsidd:test']
     timeout: 1200s # 20m
+
+  # For a production build you would want to set an image_family, and use a more
+  # readable image_name (if you leave image_name blank packer will default it to
+  # "{image_family}-{timestamp}").
+  # Using BUILD_ID for test images to easily associate a test image with a
+  # specific build. Though this isn't very useful in normal use as BUILD_ID is
+  # just a random UUID.
+  # Not using an image_family for the test builds, as you wouldn't want to
+  # deploy the latest test build. It might be the latest main or the latest pull
+  # request, who knows?
+  # If you wanted to run these tests yourself as part of CI/CD before releasing
+  # an image for general use, to avoid building the image twice, once the tests
+  # are complete you could copy the image to a proper image_family and more
+  # usable name (such as using a timestamp or version tag).
+  - name: hashicorp/packer:1.9
+    id: knfsd-image:build
+    script: |
+      packer init image &&
+      packer build \
+        -var-file=image/cloudbuild.pkrvars.hcl \
+        -var project=${PROJECT_ID} \
+        -var zone=${LOCATION}-a \
+        -var build_instance_name=nfs-build-${BUILD_ID} \
+        -var image_family="" \
+        -var image_name=${IMAGE_NAME} \
+        -var subnetwork=${SUBNETWORK} \
+        image
+    timeout: 7200s # 2h
