@@ -14,10 +14,26 @@
  limitations under the License.
  */
 
-output "source_ip" {
-  value = local.source_ip
+output "project" {
+  value = var.project
 }
 
-output "proxy_ip" {
-  value = local.proxy_ip
+output "zone" {
+  value = var.zone
+}
+
+output "source_host" {
+  value = local.source_host
+}
+
+output "proxy_host" {
+  value = local.proxy_host
+}
+
+output "proxy_mig" {
+  value = module.proxy.instance_group_name
+}
+
+output "client_instance" {
+  value = google_compute_instance.client.name
 }

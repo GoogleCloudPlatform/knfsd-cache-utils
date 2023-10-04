@@ -34,6 +34,12 @@ variable "proxy_image" {
   type        = string
 }
 
+variable "client_image" {
+  description = "Compute image for test NFS client"
+  type        = string
+  default     = "family/test-nfs-client"
+}
+
 variable "prefix" {
   description = "Prefix used for deployment. Used as the name or prefix for resources such as network, router, etc."
   type        = string

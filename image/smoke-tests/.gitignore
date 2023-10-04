@@ -1,3 +1,5 @@
+/remote.test
+/terraform/.test-data
 terraform.tfvars
 run.sh
 .*.ssh
