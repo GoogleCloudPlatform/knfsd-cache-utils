@@ -50,7 +50,7 @@ steps:
 
   - name: golang:1.20
     id: knfsd-agent:test
-    dir: image/resources/knfsd-agent/src
+    dir: image/resources/knfsd-agent
     script: make test
     waitFor: ['-']
     timeout: 1200s # 20m

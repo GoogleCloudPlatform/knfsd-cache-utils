@@ -13,7 +13,7 @@ filter-exports-test:
 .PHONY: knfsd-agent-test
 test: knfsd-agent-test
 knfsd-agent-test:
-	$(MAKE) -C image/resources/knfsd-agent/src test
+	$(MAKE) -C image/resources/knfsd-agent test
 
 .PHONY: knfsd-fsidd-test
 test: knfsd-fsidd-test
