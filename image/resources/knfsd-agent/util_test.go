@@ -17,14 +17,31 @@
 package main
 
 import (
-	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// lastAfterDelimiter returns the string after the last occurrence of a delimiter
-func lastAfterDelimiter(path string, seperator string) string {
-	if i := strings.LastIndex(path, seperator); i >= 0 {
-		return path[i+1:]
-	} else {
-		return path
+func TestLastAfterDelimiter(t *testing.T) {
+	tests := [][2]string{
+		{"", ""},
+		{"/", ""},
+		{"foo/", ""},
+		{"/foo/", ""},
+
+		{"foo", "foo"},
+		{"foo/bar", "bar"},
+		{"foo/bar/baz", "baz"},
+
+		{"/foo", "foo"},
+		{"/foo/bar", "bar"},
+		{"/foo/bar/baz", "baz"},
+	}
+
+	for _, x := range tests {
+		x := x
+		t.Run(x[0], func(t *testing.T) {
+			assert.Equal(t, x[1], lastAfterDelimiter(x[0], "/"))
+		})
 	}
 }

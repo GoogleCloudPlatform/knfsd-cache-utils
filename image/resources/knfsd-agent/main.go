@@ -30,18 +30,9 @@ var (
 	nodeInfo nodeData
 )
 
-// Fetch information on the Knfsd node
-func init() {
-
-	// Populate Node Info
-	nodeInfo = nodeData{}
-	err := nodeInfo.fetch()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func configureLogging() {
 	// Create Logging Directory if it does not exist
-	err = os.MkdirAll("/var/log/knfsd-agent", os.ModePerm)
+	err := os.MkdirAll("/var/log/knfsd-agent", os.ModePerm)
 	if err != nil {
 		log.Fatalf("Error creating logging directory: %s", err.Error())
 	}
@@ -55,22 +46,18 @@ func init() {
 
 }
 
-// Define a server type
-type server struct{}
-
 func main() {
+	configureLogging()
 
-	// Create a HTTP Mux
+	// Populate Node Info
+	nodeInfo = nodeData{}
+	err := nodeInfo.fetchNodeInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mux := http.NewServeMux()
-
-	// Create Server
-	s := server{}
-
-	// Register all API Routes
-	s.routes(mux)
-
-	// Listen and Serve
+	registerRoutes(mux)
 	log.Println("Knfsd Agent is listening on web server port 80...")
 	http.ListenAndServe(":80", mux)
-
 }

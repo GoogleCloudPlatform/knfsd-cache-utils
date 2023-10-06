@@ -17,7 +17,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
@@ -35,8 +34,8 @@ type nodeData struct {
 	Image       string `json:"image"`
 }
 
-// fetch populates the nodeData type from the GCE Metadata Server
-func (n *nodeData) fetch() error {
+// fetchNodeInfo populates the nodeData type from the GCE Metadata Server
+func (n *nodeData) fetchNodeInfo() error {
 
 	var err error
 
@@ -65,10 +64,7 @@ func (n *nodeData) fetch() error {
 	}
 
 	// Populate the Network Name
-	n.InterfaceConfig.NetworkName, err = lastAfterDelimiter(n.InterfaceConfig.NetworkURI, "/")
-	if err != nil {
-		return err
-	}
+	n.InterfaceConfig.NetworkName = lastAfterDelimiter(n.InterfaceConfig.NetworkURI, "/")
 
 	// Populate the Instance Zone
 	n.Zone, err = getMetadataValue("computeMetadata/v1/instance/zone", true)
@@ -92,21 +88,7 @@ func (n *nodeData) fetch() error {
 
 }
 
-// handleProcess handles requests sent to the /api/vx.x/nodeinfo endpoint
-func handleProcess(w http.ResponseWriter, r *http.Request) (int, error) {
-
-	// Encode JSON
-	resp, err := json.MarshalIndent(&nodeInfo, "", "  ")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return http.StatusInternalServerError, err
-	}
-
-	// Write response
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
-
-	// Return status code and error
-	return http.StatusOK, nil
-
+// handleNodeInfo handles requests sent to the /api/vx.x/nodeinfo endpoint
+func handleNodeInfo(*http.Request) (*nodeData, error) {
+	return &nodeInfo, nil
 }
