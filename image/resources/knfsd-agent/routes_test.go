@@ -17,6 +17,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"errors"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestJSONHandler(t *testing.T) {
@@ -31,20 +33,34 @@ func TestJSONHandler(t *testing.T) {
 		Message string `json:"msg"`
 	}
 
-	execute := func(handler http.Handler, method string) (string, *http.Response) {
+	execute := func(handler http.Handler, method string) *http.Response {
 		req := httptest.NewRequest(method, "/foo", nil)
 		w := httptest.NewRecorder()
 		handler.ServeHTTP(w, req)
-		res := w.Result()
-		body, _ := io.ReadAll(res.Body)
-		return string(body), res
+		return w.Result()
+	}
+
+	decode := func(res *http.Response) (string, error) {
+		r, err := gzip.NewReader(res.Body)
+		if err != nil {
+			return "", err
+		}
+
+		body, err := io.ReadAll(r)
+		if err != nil {
+			return "", err
+		}
+
+		return string(body), nil
 	}
 
 	t.Run("response", func(t *testing.T) {
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return &Body{"Hello World"}, nil
 		})
-		body, res := execute(handler, http.MethodGet)
+		res := execute(handler, http.MethodGet)
+		body, err := decode(res)
+		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		assert.Equal(t, "{\n  \"msg\": \"Hello World\"\n}", body)
 	})
@@ -53,7 +69,9 @@ func TestJSONHandler(t *testing.T) {
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return nil, nil
 		})
-		body, res := execute(handler, http.MethodGet)
+		res := execute(handler, http.MethodGet)
+		body, err := decode(res)
+		require.NoError(t, err)
 		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 		assert.Equal(t, `{"message": "An unknown error occurred"}`, body)
 	})
@@ -62,7 +80,9 @@ func TestJSONHandler(t *testing.T) {
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return nil, errors.New("handler generated error")
 		})
-		body, res := execute(handler, http.MethodGet)
+		res := execute(handler, http.MethodGet)
+		body, err := decode(res)
+		require.NoError(t, err)
 		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
 		assert.Equal(t, `{"message": "An unknown error occurred"}`, body)
 	})
@@ -72,7 +92,9 @@ func TestJSONHandler(t *testing.T) {
 		handler := JSONHandler(func(*http.Request) (*Body, error) {
 			return &Body{"Hello World"}, nil
 		})
-		body, res := execute(handler, http.MethodPost)
+		res := execute(handler, http.MethodPost)
+		body, err := decode(res)
+		require.NoError(t, err)
 		assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
 		assert.Equal(t, `{"message": "method not allowed"}`, body)
 	})
@@ -82,7 +104,9 @@ func TestJSONHandler(t *testing.T) {
 		handler := JSONHandler(func(r *http.Request) (*Body, error) {
 			return &Body{Message: "Hello World"}, nil
 		})
-		body, res := execute(handler, http.MethodHead)
+		res := execute(handler, http.MethodHead)
+		body, err := decode(res)
+		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		assert.Empty(t, body)
 	})

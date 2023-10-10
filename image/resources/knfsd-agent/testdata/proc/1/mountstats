@@ -1,0 +1,82 @@
+device /dev/root mounted on / with fstype ext4
+device devtmpfs mounted on /dev with fstype devtmpfs
+device proc mounted on /proc with fstype proc
+device sysfs mounted on /sys with fstype sysfs
+device securityfs mounted on /sys/kernel/security with fstype securityfs
+device tmpfs mounted on /dev/shm with fstype tmpfs
+device devpts mounted on /dev/pts with fstype devpts
+device tmpfs mounted on /run with fstype tmpfs
+device tmpfs mounted on /run/lock with fstype tmpfs
+device cgroup2 mounted on /sys/fs/cgroup with fstype cgroup2
+device pstore mounted on /sys/fs/pstore with fstype pstore
+device efivarfs mounted on /sys/firmware/efi/efivars with fstype efivarfs
+device bpf mounted on /sys/fs/bpf with fstype bpf
+device systemd-1 mounted on /proc/sys/fs/binfmt_misc with fstype autofs
+device hugetlbfs mounted on /dev/hugepages with fstype hugetlbfs
+device mqueue mounted on /dev/mqueue with fstype mqueue
+device debugfs mounted on /sys/kernel/debug with fstype debugfs
+device tracefs mounted on /sys/kernel/tracing with fstype tracefs
+device fusectl mounted on /sys/fs/fuse/connections with fstype fusectl
+device configfs mounted on /sys/kernel/config with fstype configfs
+device ramfs mounted on /run/credentials/systemd-sysusers.service with fstype ramfs
+device /dev/loop1 mounted on /snap/core20/1623 with fstype squashfs
+device /dev/loop2 mounted on /snap/google-cloud-cli/83 with fstype squashfs
+device /dev/loop3 mounted on /snap/lxd/23541 with fstype squashfs
+device /dev/loop0 mounted on /snap/core18/2566 with fstype squashfs
+device /dev/loop4 mounted on /snap/snapd/17336 with fstype squashfs
+device /dev/sda15 mounted on /boot/efi with fstype vfat
+device binfmt_misc mounted on /proc/sys/fs/binfmt_misc with fstype binfmt_misc
+device sunrpc mounted on /var/lib/nfs/rpc_pipefs with fstype rpc_pipefs
+device tmpfs mounted on /run/snapd/ns with fstype tmpfs
+device nsfs mounted on /run/snapd/ns/lxd.mnt with fstype nsfs
+device /dev/md127 mounted on /var/cache/fscache with fstype ext4
+device 10.0.0.2:/files mounted on /srv/nfs/files with fstype nfs statvers=1.1
+	opts:	rw,vers=3,rsize=1048576,wsize=1048576,namlen=255,acregmin=600,acregmax=600,acdirmin=600,acdirmax=600,hard,nocto,proto=tcp,nconnect=16,timeo=600,retrans=2,sec=sys,mountaddr=10.0.0.2,mountvers=3,mountport=20048,mountproto=tcp,fsc,local_lock=none
+	age:	4666
+	caps:	caps=0xf,wtmult=4096,dtsize=1048576,bsize=0,namlen=255
+	sec:	flavor=1,pseudoflavor=1
+	events:	2660 108546 11 23 2619 3482 212467 133984512 3 85485 0 523491 534 701 2576 522837 0 2576 0 658 133984512 0 0 125 0 0 0 
+	bytes:	645920194560 548800561152 0 0 294205259776 548336463872 71827456 133996753 
+	RPC iostats version: 1.1  p/v: 100003/3 (nfs)
+	xprt:	tcp 896 1 6 0 26 50831 50831 0 166586 0 39 82 115714
+	xprt:	tcp 993 1 8 0 25 52551 52551 0 168195 0 39 59 115614
+	xprt:	tcp 698 1 6 0 25 50722 50722 0 166386 0 39 46 115641
+	xprt:	tcp 911 1 6 0 25 50935 50935 0 166659 0 39 66 115691
+	xprt:	tcp 807 1 6 0 25 52461 52461 0 168099 0 39 70 115603
+	xprt:	tcp 711 1 8 0 50 52167 52167 0 167860 0 39 77 115655
+	xprt:	tcp 904 1 8 0 50 51226 51226 0 166989 0 39 56 115735
+	xprt:	tcp 672 1 8 0 50 51374 51374 0 167085 0 39 74 115674
+	xprt:	tcp 738 1 8 0 50 50984 50984 0 166600 0 39 64 115584
+	xprt:	tcp 976 1 8 0 50 52213 52213 0 167775 0 39 86 115519
+	xprt:	tcp 920 1 8 0 50 52313 52313 0 167790 0 39 78 115439
+	xprt:	tcp 798 1 8 0 50 51920 51920 0 167421 0 39 92 115455
+	xprt:	tcp 1001 1 8 0 49 51046 51046 0 166644 0 39 102 115547
+	xprt:	tcp 885 1 8 0 29 51488 51488 0 167247 0 39 94 115712
+	xprt:	tcp 877 1 8 0 29 50958 50958 0 166674 0 39 107 115663
+	xprt:	tcp 972 1 6 0 29 50507 50507 0 166306 0 39 70 115765
+	per-op statistics
+	        NULL: 1 1 0 44 24 0 0 0 0
+	     GETATTR: 2671 2671 0 404568 299152 10 10695 10749 0
+	     SETATTR: 1874 1874 0 333552 269856 7 109102 109152 0
+	      LOOKUP: 3482 3482 0 610456 493912 17 578 649 2732
+	      ACCESS: 3118 3118 0 501736 374160 15 20195 20264 0
+	    READLINK: 0 0 0 0 0 0 0 0 0
+	        READ: 280855 280855 0 34826020 294241209216 5012 25958473 25976197 0
+	       WRITE: 523595 523595 0 548978357708 71200280 18054 7317521 7343831 540
+	      CREATE: 1173 1173 0 228524 314364 4 1636 1660 0
+	       MKDIR: 1571 1571 0 331784 420904 4 2186 2216 1
+	     SYMLINK: 0 0 0 0 0 0 0 0 0
+	       MKNOD: 1 1 0 204 268 0 2 2 0
+	      REMOVE: 3177 3177 0 466812 457488 14 24572 24664 0
+	       RMDIR: 1569 1569 0 287416 225936 5 2160 2191 0
+	      RENAME: 3 3 0 636 780 0 5 5 0
+	        LINK: 2 2 0 408 464 0 3 3 0
+	     READDIR: 32 32 0 4800 358960 3 22 26 0
+	 READDIRPLUS: 35 35 0 5752 636592 2 42 45 0
+	      FSSTAT: 14 14 0 2016 1176 1 7 9 0
+	      FSINFO: 2 2 0 208 160 0 1 2 0
+	    PATHCONF: 1 1 0 104 56 0 0 0 0
+	      COMMIT: 100 100 0 12400 12800 1 2585 2587 0
+
+device nfsd mounted on /proc/fs/nfsd with fstype nfsd
+device tmpfs mounted on /run/user/1001 with fstype tmpfs

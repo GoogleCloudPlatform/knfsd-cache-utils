@@ -17,6 +17,7 @@
 package main
 
 import (
+	"os/exec"
 	"strings"
 )
 
@@ -27,4 +28,21 @@ func lastAfterDelimiter(path string, seperator string) string {
 	} else {
 		return path
 	}
+}
+
+func getNFSRootDir() (string, error) {
+	out, err := exec.Command("nfsconf", "--get", "exports", "rootdir").Output()
+	if err != nil {
+		return "", err
+	}
+
+	nfsRoot := strings.TrimSpace(string(out))
+	if !strings.HasSuffix(nfsRoot, "/") {
+		nfsRoot += "/"
+	}
+	return nfsRoot, nil
+}
+
+func isNFS(t string) bool {
+	return t == "nfs" || t == "nfs4"
 }

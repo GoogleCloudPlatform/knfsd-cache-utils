@@ -22,10 +22,6 @@ import (
 	"os"
 )
 
-const (
-	apiVersion = "1.0"
-)
-
 var (
 	nodeInfo nodeData
 )

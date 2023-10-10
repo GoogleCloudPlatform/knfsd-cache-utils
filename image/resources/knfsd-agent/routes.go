@@ -17,9 +17,9 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -46,9 +46,22 @@ func JSONHandler[T any](handler JSONHandlerFunc[T]) http.Handler {
 
 func (handler JSONHandlerFunc[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	statusCode, body, err := handler.Execute(r)
+
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Encoding", "gzip")
+
 	w.WriteHeader(statusCode)
-	w.Write(body)
+
+	// Compress the response using gzip. Metric responses such as mounts can are
+	// quite large when there are many mounts, but compress well as most of the
+	// body is the same JSON keys and whitespace repeated.
+	// Not implementing content negotiation using the Accept-Encoding header as
+	// it's not trivial and most HTTP clients support gzip.
+	gz := gzip.NewWriter(w)
+	defer gz.Close()
+	gz.Write(body)
+	gz.Flush()
+
 	logRequest(r, statusCode, err)
 }
 
@@ -106,5 +119,13 @@ func logRequest(r *http.Request, statusCode int, err error) {
 
 func registerRoutes(mux *http.ServeMux) {
 	mux.Handle("/", JSONHandler(handleNodeInfo))
-	mux.Handle(fmt.Sprintf("/api/v%s/nodeInfo", apiVersion), JSONHandler(handleNodeInfo))
+
+	// Keeping this route for historical versioning
+	mux.Handle("/api/v1.0/nodeInfo", JSONHandler(handleNodeInfo))
+
+	mux.Handle("/api/v1/nodeInfo", JSONHandler(handleNodeInfo))
+	mux.Handle("/api/v1/mounts", JSONHandler(handleMounts))
+	mux.Handle("/api/v1/mountStats", JSONHandler(handleMountStats))
+	mux.Handle("/api/v1/nfs/client", JSONHandler(handleNFSClientStats))
+	mux.Handle("/api/v1/nfs/server", JSONHandler(handleNFSServerStats))
 }
