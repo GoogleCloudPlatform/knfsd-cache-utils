@@ -1,0 +1,36 @@
+substitutions:
+  _WORKER_POOL: ""
+
+options:
+  pool:
+    name: ${_WORKER_POOL}
+  env:
+    - PROJECT_ID=${PROJECT_ID}
+    - LOCATION=${LOCATION}
+    - SUBNETWORK=${_SUBNETWORK}
+    - BUILD_ID=${BUILD_ID}
+
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    id: "Terratest build image creation"
+    args:
+      - "build"
+      - "-t"
+      - "${_DOCKER_REPOSITORY}/knfsd-terratest:1.0"
+      - "-f"
+      - "./terratest/Dockerfile"
+      - "./terratest"
+
+  - name: "hashicorp/packer:1.9"
+    id: "Packer client image creation"
+    script: |
+      packer init client &&
+      packer build \
+        -var use_iap=false \
+        -var project=${PROJECT_ID} \
+        -var zone=${LOCATION}-a \
+        -var subnetwork=${SUBNETWORK} \
+        client
+
+images:
+  - "${_DOCKER_REPOSITORY}/knfsd-terratest:1.0"
