@@ -123,9 +123,12 @@ func registerRoutes(mux *http.ServeMux) {
 	// Keeping this route for historical versioning
 	mux.Handle("/api/v1.0/nodeInfo", JSONHandler(handleNodeInfo))
 
+	mux.Handle("/api/v1/cache/usage", JSONHandler(handleCacheUsage))
 	mux.Handle("/api/v1/nodeInfo", JSONHandler(handleNodeInfo))
 	mux.Handle("/api/v1/mounts", JSONHandler(handleMounts))
 	mux.Handle("/api/v1/mountStats", JSONHandler(handleMountStats))
 	mux.Handle("/api/v1/nfs/client", JSONHandler(handleNFSClientStats))
 	mux.Handle("/api/v1/nfs/server", JSONHandler(handleNFSServerStats))
+	mux.Handle("/api/v1/os", JSONHandler(handleOS))
+	mux.Handle("/api/v1/status", JSONHandler(handleStatus))
 }

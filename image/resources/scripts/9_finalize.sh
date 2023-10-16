@@ -17,7 +17,11 @@
 set -o errexit
 set -o pipefail
 
+lsb_release -a
+echo "Kernel:         $(uname -r)"
+
 # Remove temporary files owned by build user
+echo "Removing temp files created by build user"
 find /tmp -user build -delete
 
 echo "Verifying file ownership"

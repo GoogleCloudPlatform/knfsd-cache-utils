@@ -11,6 +11,42 @@ The Knfsd Agent listens on port `80` and can be disabled by setting `ENABLE_KNFS
 
 ## Methods
 
+### GET /api/v1/cache/usage
+
+Reports the disk usage of FS-Cache.
+
+```json
+{
+  "bytesTotal": 395055603712,
+  "bytesUsed": 322126090240,
+  "bytesFree": 72929513472,
+  "bytesAvailable": 72912736256,
+  "blockSize": 4096,
+  "blocksTotal": 96449122,
+  "BlocksUsed": 78644065,
+  "blocksFree": 17805057,
+  "blocksAvailable": 17800961,
+  "filesTotal": 24567808,
+  "filesUsed": 570,
+  "filesFree": 24567238
+}
+```
+
+* `bytesTotal` - (uint64) Total number of bytes in the FS-Cache filesystem.
+* `bytesUsed` - (uint64) Bytes used in the FS-Cache filesystem.
+* `bytesFree` - (uint64) Bytes free in the FS-Cache filesystem.
+* `bytesAvailable` - (uint64) Bytes available to FS-Cache.
+
+* `blockSize` - (int64) Size of a block (in bytes) for the FS-Cache filesystem.
+* `blocksTotal` - (uint64) Total number of blocks in the FS-Cache filesystem.
+* `blocksUsed` - (uint64) Blocks used in the FS-Cache filesystem.
+* `blocksFree` - (uint64) Blocks free in the FS-Cache filesystem.
+* `blocksAvailable` - (uint64) Blocks available to FS-Cache.
+
+* `filesTotal` - (uint64) Total number of files (inodes) in the FS-Cache filesystem.
+* `filesUsed` - (uint64) Number of files (inodes) used in the FS-Cache filesystem.
+* `filesFree` - (uint64) Number of files (inodes) free in the FS-Cache filesystem.
+
 ### GET /api/v1.0/nodeInfo
 
 Deprecated; use `GET /api/v1/nodeInfo` instead.
@@ -73,7 +109,7 @@ Lists the NFS mounts on the knfsd proxy node.
     For example, the option `acregmax=60` is not included in the output as this is the default value.
     To see options with their default values use the `/api/v1/mountstats` instead.
 
-### GET /api/v1/mountstats
+### GET /api/v1/mountStats
 
 Lists NFS per-mount metrics on the knfsd proxy node.
 
@@ -448,6 +484,96 @@ For the NFS client this means NFS v4 callbacks. These are normally zero for the 
   For NFS v4 there are only two procedures, `NULL` and `COMPOUND`. The `COMPOUND` procedure can contain one or more NFS v4 operations. This allows NFS v4 clients to send multiple operations in a single RPC call.
 
 * `proc4ops` - (map[string]uint64) Total number of each NFS v4 operation received.
+
+### GET /api/v1/os
+
+Gets the OS and kernel versions.
+
+```json
+{
+  "kernel": "6.4.0-060400-knfsd",
+  "os": {
+    "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+    "HOME_URL": "https://www.ubuntu.com/",
+    "ID": "ubuntu",
+    "ID_LIKE": "debian",
+    "NAME": "Ubuntu",
+    "PRETTY_NAME": "Ubuntu 22.04.1 LTS",
+    "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+    "SUPPORT_URL": "https://help.ubuntu.com/",
+    "UBUNTU_CODENAME": "jammy",
+    "VERSION": "22.04.1 LTS (Jammy Jellyfish)",
+    "VERSION_CODENAME": "jammy",
+    "VERSION_ID": "22.04"
+  }
+}
+```
+
+* `kernel` - (string) Kernel version.
+* `os` - (map[string]string) [os-release](https://www.freedesktop.org/software/systemd/man/os-release.html) information.
+
+  See the [os-release documentation](https://www.freedesktop.org/software/systemd/man/os-release.html) for the full documentation.
+
+  * `NAME` - Identifies the operating system, without a version component, suitable for presentation to the user (e.g. "Ubuntu").
+
+  * `PRETTY_NAME` - Display name of the operating system (e.g. "Ubuntu 22.04.3 LTS").
+
+  * `ID` - Lower-case string identifying the operating system, excluding an version information and suitable for processing by scripts or usage in filenames (e.g. "ubuntu").
+
+  * `VERSION` - Operating System version, excluding any OS name information, suitable for presentation to the user (e.g. "22.04.3 (Jammy Jellyfish)"). This field is optional.
+
+  * `VERSION_ID` - Lower-case string identifying the operating system version (e.g. "22.04"). This field is optional.
+
+### GET /api/v1/status
+
+Reports status checks for critical components. This reports detailed information about the system state and is not intended to be used as a general health check.
+
+The endpoint will always return `200 Ok` with a response, even if one or more services fail their checks. This makes it easy to read the response from a client.
+
+```json
+{
+  "services": [
+    {
+      "name": "cachefilesd",
+      "health": "PASS",
+      "checks": [
+        {
+          "name": "enabled",
+          "result": "PASS",
+          "error": ""
+        },
+        {
+          "name": "running",
+          "result": "PASS",
+          "error": ""
+        },
+        {
+          "name": "fscache mounted",
+          "result": "PASS",
+          "error": ""
+        }
+      ],
+      "log": "Oct 16 14:20:15 knfsd-proxy-4r97 systemd[1]: Starting LSB: CacheFiles daemon...\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2144]:  * Starting FilesCache daemon  cachefilesd\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2152]: About to bind cache\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2152]: Bound cache\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2153]: Daemon Started\nOct 16 14:20:15 knfsd-proxy-4r97 cachefilesd[2144]:    ...done.\nOct 16 14:20:15 knfsd-proxy-4r97 systemd[1]: Started LSB: CacheFiles daemon.\n"
+    }
+  ]
+}
+```
+
+* `services` - List of services that were checked
+
+  * `name` - (string) Name of the service.
+
+  * `health` - (string) Health of the service (`PASS`, `WARN`, or `FAIL`).
+
+  * `checks` - List of checks that were performed.
+
+    * `name` - (string) Name of check.
+
+    * `result` - (string) Result of check (`PASS`, `WARN`, or `FAIL`)
+
+    * `error` - (string) Error message explaining why the check failed.
+
+  * `log` - (string) Recent log entries.
 
 ## References
 

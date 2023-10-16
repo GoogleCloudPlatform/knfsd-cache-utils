@@ -190,7 +190,7 @@ install_knfsd_agent() (
 
     begin_command "Installing Knfsd agent"
     cd knfsd-agent
-    go build -o /usr/local/bin/knfsd-agent *.go
+    go build -o /usr/local/bin/knfsd-agent
     cp knfsd-logrotate.conf /etc/logrotate.d/
     cp knfsd-agent.service /etc/systemd/system/
     complete_command
