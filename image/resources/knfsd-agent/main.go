@@ -22,10 +22,6 @@ import (
 	"os"
 )
 
-var (
-	nodeInfo nodeData
-)
-
 func configureLogging() {
 	// Create Logging Directory if it does not exist
 	err := os.MkdirAll("/var/log/knfsd-agent", os.ModePerm)
@@ -46,8 +42,7 @@ func main() {
 	configureLogging()
 
 	// Populate Node Info
-	nodeInfo = nodeData{}
-	err := nodeInfo.fetchNodeInfo()
+	err := fetchNodeInfo()
 	if err != nil {
 		log.Fatal(err)
 	}

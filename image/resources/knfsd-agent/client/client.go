@@ -14,38 +14,34 @@
  limitations under the License.
 */
 
-package main
+package client
 
 import (
+	"encoding/json"
 	"net/http"
-
-	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-agent/client"
-	"github.com/acobaugh/osrelease"
-	"golang.org/x/sys/unix"
+	"net/url"
 )
 
-func handleOS(*http.Request) (*client.OSResponse, error) {
-	kernel, err := kernelVersion()
-	if err != nil {
-		return nil, err
-	}
-
-	os, err := osrelease.Read()
-	if err != nil {
-		return nil, err
-	}
-
-	return &client.OSResponse{
-		Kernel: kernel,
-		OS:     os,
-	}, nil
+type KnfsdAgentClient struct {
+	c       *http.Client
+	baseURL string
 }
 
-func kernelVersion() (string, error) {
-	var uts unix.Utsname
-	err := unix.Uname(&uts)
+func NewKnfsdAgentClient(c *http.Client, baseURL string) *KnfsdAgentClient {
+	return &KnfsdAgentClient{c, baseURL}
+}
+
+func (c *KnfsdAgentClient) get(path string, v any) error {
+	url, err := url.JoinPath(c.baseURL, path)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return unix.ByteSliceToString(uts.Release[:]), nil
+
+	res, err := c.c.Get(url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return json.NewDecoder(res.Body).Decode(v)
 }

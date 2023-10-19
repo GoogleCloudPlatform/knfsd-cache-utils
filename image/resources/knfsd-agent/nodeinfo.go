@@ -18,26 +18,16 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-agent/client"
 )
 
-// nodeData is returned as a response to /api/v1.0/nodeinfo
-type nodeData struct {
-	Name            string `json:"name"`
-	Hostname        string `json:"hostname"`
-	InterfaceConfig struct {
-		IPAddress   string `json:"ipAddress"`
-		NetworkName string `json:"networkName"`
-		NetworkURI  string `json:"networkURI"`
-	} `json:"interfaceConfig"`
-	Zone        string `json:"zone"`
-	MachineType string `json:"machineType"`
-	Image       string `json:"image"`
-}
+var nodeInfo client.NodeInfo
 
 // fetchNodeInfo populates the nodeData type from the GCE Metadata Server
-func (n *nodeData) fetchNodeInfo() error {
-
+func fetchNodeInfo() error {
 	var err error
+	n := &nodeInfo
 
 	// Populate Name
 	n.Name, err = getMetadataValue("computeMetadata/v1/instance/name", false)
@@ -85,10 +75,8 @@ func (n *nodeData) fetchNodeInfo() error {
 	}
 
 	return nil
-
 }
 
-// handleNodeInfo handles requests sent to the /api/vx.x/nodeinfo endpoint
-func handleNodeInfo(*http.Request) (*nodeData, error) {
+func handleNodeInfo(*http.Request) (*client.NodeInfo, error) {
 	return &nodeInfo, nil
 }

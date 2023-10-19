@@ -1,9 +1,24 @@
+/*
+ Copyright 2022 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 package main
 
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,42 +26,11 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-agent/client"
 )
 
-type Check int
-
-var _ json.Marshaler = (*Check)(nil)
-
-const (
-	CHECK_PASS Check = 0
-	CHECK_WARN Check = -1
-	CHECK_FAIL Check = -2
-)
-
-func (h Check) MarshalJSON() ([]byte, error) {
-	var str string
-	switch h {
-	case CHECK_PASS:
-		str = `"PASS"`
-	case CHECK_WARN:
-		str = `"WARN"`
-	case CHECK_FAIL:
-		str = `"FAIL"`
-	default:
-		// Shouldn't happen, though if we return an error it will prevent
-		// marshalling the status response, and then the client won't receive
-		// any details other than a generic 500 Internal Server Error.
-		str = "UNKNOWN"
-	}
-	return []byte(str), nil
-}
-
-type ServiceHealth struct {
-	Name   string         `json:"name"`
-	Health Check          `json:"health"`
-	Checks []ServiceCheck `json:"checks"`
-	Log    string         `json:"log"`
-}
+type ServiceHealth client.ServiceHealth
 
 func (sh *ServiceHealth) ReadLog(unit string) {
 	log, err := readServiceLog(unit)
@@ -57,34 +41,34 @@ func (sh *ServiceHealth) ReadLog(unit string) {
 }
 
 func (sh *ServiceHealth) Pass(name string) {
-	sh.Add(name, CHECK_PASS, nil)
+	sh.Add(name, client.CHECK_PASS, nil)
 }
 
 func (sh *ServiceHealth) Warn(name string, err error) {
-	sh.Add(name, CHECK_WARN, err)
+	sh.Add(name, client.CHECK_WARN, err)
 }
 
 func (sh *ServiceHealth) Fail(name string, err error) {
-	sh.Add(name, CHECK_FAIL, err)
+	sh.Add(name, client.CHECK_FAIL, err)
 }
 
 func (sh *ServiceHealth) Ok(name string, ok bool) {
-	health := CHECK_FAIL
+	health := client.CHECK_FAIL
 	if ok {
-		health = CHECK_PASS
+		health = client.CHECK_PASS
 	}
 	sh.Add(name, health, nil)
 }
 
 func (sh *ServiceHealth) Check(name string, err error) {
-	health := CHECK_PASS
+	health := client.CHECK_PASS
 	if err != nil {
-		health = CHECK_FAIL
+		health = client.CHECK_FAIL
 	}
 	sh.Add(name, health, err)
 }
 
-func (sh *ServiceHealth) Add(name string, health Check, err error) {
+func (sh *ServiceHealth) Add(name string, health client.Check, err error) {
 	if health < sh.Health {
 		sh.Health = health
 	}
@@ -94,38 +78,28 @@ func (sh *ServiceHealth) Add(name string, health Check, err error) {
 		msg = err.Error()
 	}
 
-	sh.Checks = append(sh.Checks, ServiceCheck{
+	sh.Checks = append(sh.Checks, client.ServiceCheck{
 		Name:   name,
 		Result: health,
 		Error:  msg,
 	})
 }
 
-type ServiceCheck struct {
-	Name   string `json:"name"`
-	Result Check  `json:"result"`
-	Error  string `json:"error"`
-}
-
-type StatusResponse struct {
-	Services []ServiceHealth `json:"services"`
-}
-
-func handleStatus(*http.Request) (*StatusResponse, error) {
-	return &StatusResponse{
-		Services: []ServiceHealth{
+func handleStatus(*http.Request) (*client.StatusResponse, error) {
+	return &client.StatusResponse{
+		Services: []client.ServiceHealth{
 			cachefilesdStatus(),
 		},
 	}, nil
 }
 
-func cachefilesdStatus() ServiceHealth {
-	health := ServiceHealth{Name: "cachefilesd"}
+func cachefilesdStatus() client.ServiceHealth {
+	health := ServiceHealth{Name: "cachefilesd", Health: client.CHECK_PASS}
 	health.ReadLog("cachefilesd.service")
 	health.Check("enabled", checkCachefilesdEnabled())
 	health.Check("running", checkCachefilesdRunning())
 	health.Check("fscache mounted", checkFSCacheMount())
-	return health
+	return client.ServiceHealth(health)
 }
 
 func checkCachefilesdEnabled() error {
