@@ -19,7 +19,8 @@
 timeout: 18000s # 5h
 
 substitutions:
-  _SUBNETWORK: default
+  _NETWORK: projects/${PROJECT_ID}/global/networks/default
+  _SUBNETWORK: projects/${PROJECT_ID}/regions/${LOCATION}/subnetworks/default
   _WORKER_POOL: ""
 
   # This is to support running the various tests (e.g. smoke tests) with an
@@ -125,3 +126,15 @@ steps:
         -var subnetwork=${SUBNETWORK} \
         image
     timeout: 7200s # 2h
+
+  - name: europe-west4-docker.pkg.dev/ab-knfsd/knfsd-docker/knfsd-terratest:1.0
+    id: knfsd-image:test
+    dir: image/smoke-tests
+    script: make test
+    env:
+      - TF_VAR_project=${PROJECT_ID}
+      - TF_VAR_region=${LOCATION}
+      - TF_VAR_zone=${LOCATION}-a
+      - TF_VAR_proxy_image=${_IMAGE_NAME}
+      - TF_VAR_network=${_NETWORK}
+      - TF_VAR_subnetwork=${_SUBNETWORK}

@@ -42,6 +42,25 @@ You will need a GCP project with the following resources:
   * [Knfsd Proxy Image](../)
   * [NFS Client Image](../../testing/images/client/)
 
+### Cloud Build
+
+* GCP Services:
+  * Artifact Registry API (`artifactregistry.googleapis.com`)
+
+* [Private Worker Pool](https://cloud.google.com/build/docs/private-pools/private-pools-overview).
+
+  **NOTE**: This needs to be on the same VPC network as above so that the test runner can access the NFS clients over SSH using their private IP addresses.
+
+* Firewall Rules:
+
+  * SSH from Cloud Build to NFS client
+    * **TCP Port**: `22`
+    * **Targets**: *All instances in the network*
+    * **Source IPv4 Ranges**: *Cloud Build worker pool IP range*
+
+* Docker Images:
+  * [Terratest](../../testing/images/terratest/)
+
 ## Local Development
 
 ### Development Prerequisites
@@ -68,6 +87,8 @@ Create a `terraform.tfvars` file in `smoke-tests/terraform`.
 project     = "my-project"
 region      = "us-central1"
 zone        = "us-central1-a"
+network     = "projects/my-project/global/networks/build"
+subnetwork  = "projects/my-project/regions/us-central1/subnetworks/build"
 proxy_image = "knfsd-image"
 ```
 

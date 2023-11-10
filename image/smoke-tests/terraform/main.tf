@@ -32,7 +32,7 @@ resource "google_filestore_instance" "source" {
   location = var.zone
 
   networks {
-    network = google_compute_network.this.name
+    network = var.network
     modes   = ["MODE_IPV4"]
   }
 
@@ -49,9 +49,10 @@ module "proxy" {
   REGION  = var.region
   ZONE    = var.zone
 
-  NETWORK            = google_compute_network.this.name
-  SUBNETWORK         = google_compute_subnetwork.this.name
-  SUBNETWORK_PROJECT = google_compute_subnetwork.this.project
+  NETWORK            = var.network
+  SUBNETWORK         = var.subnetwork
+
+  # SUBNETWORK_PROJECT = google_compute_subnetwork.this.project
 
   AUTO_CREATE_FIREWALL_RULES = false
   TRAFFIC_DISTRIBUTION_MODE  = "dns_round_robin"
@@ -77,6 +78,7 @@ resource "google_compute_instance" "client" {
 
   name         = "${var.prefix}-client"
   machine_type = "n1-standard-1"
+  tags         = ["nfs-client"]
 
   boot_disk {
     initialize_params {
@@ -85,8 +87,8 @@ resource "google_compute_instance" "client" {
   }
 
   network_interface {
-    network    = google_compute_network.this.id
-    subnetwork = google_compute_subnetwork.this.id
+    network    = var.network
+    subnetwork = var.subnetwork
   }
 
   metadata = {

@@ -29,6 +29,16 @@ variable "zone" {
   type        = string
 }
 
+variable "network" {
+  description = "GCP network to use for smoke tests"
+  type        = string
+}
+
+variable "subnetwork" {
+  description = "GCP subnetwork to use for smoke tests"
+  type        = string
+}
+
 variable "proxy_image" {
   description = "Compute image for the NFS proxy"
   type        = string
