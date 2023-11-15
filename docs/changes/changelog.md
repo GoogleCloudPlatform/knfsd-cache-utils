@@ -1,5 +1,11 @@
 # next
 
+* Fetch Ubuntu Kernel source from launchpad
+
+## Fetch Ubuntu Kernel source from launchpad
+
+The kernel.ubuntu.com URLs have been removed in favour of using launchpad URLs directly.
+
 # v1.0.0-beta7
 
 * Fix error applying Terraform when nodes greater than 1
