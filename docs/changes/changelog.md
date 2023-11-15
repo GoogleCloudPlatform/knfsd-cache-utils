@@ -2,6 +2,7 @@
 
 * Fetch Ubuntu Kernel source from launchpad
 * Display Kernel and OS version information at end of packer build
+* Fix proxy startup script always prints "Error starting proxy"
 
 ## Fetch Ubuntu Kernel source from launchpad
 
@@ -11,6 +12,10 @@ The kernel.ubuntu.com URLs have been removed in favour of using launchpad URLs d
 
 This helps verify that the correct Kernel version is in use and is
 useful when looking at past build logs.
+
+## Fix proxy startup script always prints "Error starting proxy"
+
+The proxy startup script would always print the error message "Error starting proxy", even after the "Reached Proxy Startup Exit. Happy caching!" message. This was due to a typo when checking the startup_complete variable.
 
 # v1.0.0-beta7
 
