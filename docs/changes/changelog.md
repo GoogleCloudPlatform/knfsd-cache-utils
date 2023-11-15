@@ -1,10 +1,16 @@
 # next
 
 * Fetch Ubuntu Kernel source from launchpad
+* Display Kernel and OS version information at end of packer build
 
 ## Fetch Ubuntu Kernel source from launchpad
 
 The kernel.ubuntu.com URLs have been removed in favour of using launchpad URLs directly.
+
+## Display Kernel and OS version information at end of packer build
+
+This helps verify that the correct Kernel version is in use and is
+useful when looking at past build logs.
 
 # v1.0.0-beta7
 
