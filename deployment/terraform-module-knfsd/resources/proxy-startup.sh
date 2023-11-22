@@ -545,7 +545,7 @@ function cleanup() {
 	# If the script exits unexpectedly print an error message. This makes it
 	# easier when searching the logs to know if the start up script has
 	# terminated.
-	if [[ startup_complete != yes ]]; then
+	if [[ $startup_complete != yes ]]; then
 		echo "Error starting proxy"
 	fi
 

@@ -235,7 +235,7 @@ install_netapp_exports() (
 download_kernel() (
     begin_command "Downloading kernel"
     cd kernel
-    git clone --depth 1 --branch cod/mainline/v6.4 git://kernel.ubuntu.com/virgin/testing/crack.git ubuntu-6.4
+    git clone --depth 1 --branch cod/mainline/v6.4 git://git.launchpad.net/~ubuntu-kernel-test/ubuntu/+source/linux/+git/mainline-crack ubuntu-6.4
     complete_command
 )
 
