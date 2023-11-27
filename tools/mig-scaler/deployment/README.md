@@ -27,7 +27,7 @@ Sub-modules are provided for more control over deployment for scenarios such as:
 
 ```terraform
 module "mig_scaler" {
-  source          = "github.com/GoogleCloudPlatform/knfsd-cache-utils//tools/mig-scaler/deployment?ref=v0.9.0"
+  source          = "github.com/GoogleCloudPlatform/knfsd-cache-utils//tools/mig-scaler/deployment?ref=v1.0.0-beta7"
   project         = "my-gcp-project"
   region          = "us-central1"
   service_account = google_service_account.mig_scaler.email

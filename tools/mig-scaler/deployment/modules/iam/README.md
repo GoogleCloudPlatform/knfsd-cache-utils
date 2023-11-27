@@ -16,7 +16,7 @@ resource "google_service_account" "mig_scaler" {
 
 # Grant permissions for the service account to scale MIGs
 module "iam" {
-  source          = "github.com/GoogleCloudPlatform/knfsd-cache-utils//tools/mig-scaler/deployment/modules/iam?ref=v0.9.0"
+  source          = "github.com/GoogleCloudPlatform/knfsd-cache-utils//tools/mig-scaler/deployment/modules/iam?ref=v1.0.0-beta7"
   project         = "my-gcp-project"
   service_account = google_service_account.mig_scaler.email
 }
