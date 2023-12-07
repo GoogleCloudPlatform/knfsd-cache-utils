@@ -50,7 +50,7 @@ Create a packer variables file (e.g. `image.pkrvars.hcl`).
 * machine_type (string) - The machine type used to build the image. This can be increased to improve build speeds. Defaults to `"c2-standard-16"`.
 * network_project (string) - Project hosting the network when using shared VPC. Defaults to `project`.
 * subnetwork (string) - The subnetwork the compute instance will use. Defaults to `"default"`.
-* omit_external_ip (bool) - Use a private (internal) IP only. Defaults to `true`.
+* omit_external_ip (bool) - Use a private (internal) IP only. Defaults to `false`.
   * The subnetwork will require a NAT router in the region.
   * IAP tunnelling (default) or a VPN connection to the VPC network is required.
 * image_name (string) - The unique name of the resulting image. Defaults to `"{image_family}-{timestamp}"`.

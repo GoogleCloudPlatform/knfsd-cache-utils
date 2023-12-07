@@ -39,7 +39,7 @@ variable "subnetwork" {
 
 variable "omit_external_ip" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "image_name" {
