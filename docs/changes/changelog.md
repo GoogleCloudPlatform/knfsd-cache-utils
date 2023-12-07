@@ -3,6 +3,7 @@
 * Fetch Ubuntu Kernel source from launchpad
 * Display Kernel and OS version information at end of packer build
 * Fix proxy startup script always prints "Error starting proxy"
+* Fix auto-reexporting the root of an NFS v4 server
 
 ## Fetch Ubuntu Kernel source from launchpad
 
@@ -16,6 +17,12 @@ useful when looking at past build logs.
 ## Fix proxy startup script always prints "Error starting proxy"
 
 The proxy startup script would always print the error message "Error starting proxy", even after the "Reached Proxy Startup Exit. Happy caching!" message. This was due to a typo when checking the startup_complete variable.
+
+## Fix auto-reexporting the root of an NFS v4 server
+
+When exporting the root "/" of an NFS v4 server with AUTO_REEXPORT enabled; attempting to navigate to nested volumes would result in an error such as "/mnt/files is not a directory".
+
+This is because the logic that ensures the root export always has `fsid=0` was overriding the re-export logic. The updated logic correctly applies both conditions to the export.
 
 # v1.0.0-beta7
 

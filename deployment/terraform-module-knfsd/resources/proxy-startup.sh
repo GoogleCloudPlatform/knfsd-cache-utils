@@ -135,24 +135,34 @@ NEXT_FSID=1
 function add_nfs_export() {
   local FSID
 
-  if [[ $1 == / ]]; then
-    # Special handling when re-exporting root exports.
-    # For NFS v4 the FSID of the root should be set to 0.
-    FSID="fsid=0"
-  elif [[ $FSID_MODE == "static" ]]; then
+  if [[ $FSID_MODE == "static" ]]; then
     # Statically assign fsid numbers to exports without using the fsidd service.
     # This doesn't really have any advantage over FSID_MODE=local, but can be
     # useful for testing, debugging or troubleshooting.
-    FSID="fsid=${NEXT_FSID}"
-    NEXT_FSID=$((NEXT_FSID+1))
+
+    if [[ $1 == / ]]; then
+      # Special handling when re-exporting root exports.
+      # For NFS v4 the FSID of the root should be set to 0.
+      FSID="fsid=0"
+    else
+      FSID="fsid=${NEXT_FSID}"
+      NEXT_FSID=$((NEXT_FSID+1))
+    fi
   else
     # For FSID_MODE local or external use reexport=auto-fsidnum to automatically
-	# assign fsid numbers using the fsidd service.
+    # assign fsid numbers using the fsidd service.
     # When FSID_MODE is set to external this will ensure that all the knfsd
-	# instances in a cluster have the same fsid for each export.
+    # instances in a cluster have the same fsid for each export.
     # This is less useful when FSID_MODE is set to local, but it will still
     # ensure the knfsd instance uses the same fsids after a reboot.
-    FSID="reexport=auto-fsidnum"
+
+    if [[ $1 == / ]]; then
+      # Special handling when re-exporting root exports.
+      # For NFS v4 the FSID of the root should be set to 0.
+      FSID="fsid=0,reexport=auto-fsidnum"
+    else
+      FSID="reexport=auto-fsidnum"
+    fi
   fi
 
   echo "Creating NFS share export for $1..."
