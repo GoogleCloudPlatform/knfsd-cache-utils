@@ -127,7 +127,7 @@ steps:
         image
     timeout: 7200s # 2h
 
-  - name: europe-west4-docker.pkg.dev/ab-knfsd/knfsd-docker/knfsd-terratest:1.0
+  - name: ${_DOCKER_REPOSITORY}/knfsd-terratest:1.0
     id: knfsd-image:test
     dir: image/smoke-tests
     script: make test
