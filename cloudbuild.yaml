@@ -19,8 +19,10 @@
 timeout: 18000s # 5h
 
 substitutions:
+  _REGION: ${LOCATION}
+  _ZONE: ${LOCATION}-a
   _NETWORK: projects/${PROJECT_ID}/global/networks/default
-  _SUBNETWORK: projects/${PROJECT_ID}/regions/${LOCATION}/subnetworks/default
+  _SUBNETWORK: projects/${PROJECT_ID}/regions/${_REGION}/subnetworks/default
   _WORKER_POOL: ""
 
   # This is to support running the various tests (e.g. smoke tests) with an
@@ -36,7 +38,9 @@ options:
   env:
     - CI=cloudbuild
     - PROJECT_ID=${PROJECT_ID}
-    - LOCATION=${LOCATION}
+    - REGION=${_REGION}
+    - ZONE=${_ZONE}
+    - NETWORK=${_NETWORK}
     - SUBNETWORK=${_SUBNETWORK}
     - BUILD_ID=${BUILD_ID}
     - IMAGE_NAME=${_IMAGE_NAME}
@@ -119,7 +123,7 @@ steps:
       packer build \
         -var-file=image/cloudbuild.pkrvars.hcl \
         -var project=${PROJECT_ID} \
-        -var zone=${LOCATION}-a \
+        -var zone=${ZONE} \
         -var build_instance_name=nfs-build-${BUILD_ID} \
         -var image_family="" \
         -var image_name=${IMAGE_NAME} \
@@ -133,8 +137,23 @@ steps:
     script: make test
     env:
       - TF_VAR_project=${PROJECT_ID}
-      - TF_VAR_region=${LOCATION}
-      - TF_VAR_zone=${LOCATION}-a
-      - TF_VAR_proxy_image=${_IMAGE_NAME}
+      - TF_VAR_region=${_REGION}
+      - TF_VAR_zone=${_ZONE}
       - TF_VAR_network=${_NETWORK}
       - TF_VAR_subnetwork=${_SUBNETWORK}
+      - TF_VAR_proxy_image=${_IMAGE_NAME}
+    timeout: 3600s # 1h
+
+  - name: ${_DOCKER_REPOSITORY}/knfsd-terratest:1.0
+    id: examples:tests
+    dir: testing/examples
+    script: make test
+    env:
+      - TF_VAR_project=${PROJECT_ID}
+      - TF_VAR_region=${_REGION}
+      - TF_VAR_zone=${_ZONE}
+      - TF_VAR_network=${_NETWORK}
+      - TF_VAR_subnetwork=${_SUBNETWORK}
+      - TF_VAR_proxy_image=${_IMAGE_NAME}
+      - TF_VAR_proxy_service_account=${_PROXY_SERVICE_ACCOUNT}
+    timeout: 3600s # 1h

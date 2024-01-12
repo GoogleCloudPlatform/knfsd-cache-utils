@@ -1,4 +1,13 @@
-# Mac .DS_Store
+# Linux
+*~
+._*
+.directory
+
+# Windows
+Thumbs.db
+[Dd]esktop.ini
+
+# OSX
 .DS_Store
 
 # Terraform Binaries
@@ -12,6 +21,10 @@
 
 # Terraform local .tfvars
 *.tfvars
+
+# Terratest files
+TerraformOptions.json
+.test-data
 
 # Packer variables
 *.pkrvars.hcl
@@ -27,7 +40,7 @@
 service-account-key.json
 
 # Build files
-image.manifest.json
+/image.manifest.json
 /image/resources.tgz
 
 # Development files

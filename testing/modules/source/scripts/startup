@@ -1,0 +1,164 @@
+#!/bin/bash
+#
+# Copyright 2024 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+set +o errexit
+set -o pipefail
+
+export NEEDRESTART_MODE=a
+export NEEDRESTART_SUSPEND=1
+export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_PRIORITY=critical
+
+function get-meta() {
+  curl -sS "http://metadata.google.internal/computeMetadata/v1/$1" -H "Metadata-Flavor: Google"
+}
+
+function get-attribute() {
+  get-meta "instance/attributes/$1"
+}
+
+create-layout() {
+	echo "label: gpt"
+	echo "type=0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+}
+
+format-disk() {
+	local layout="$1"
+
+	# skip if the volume already exists and is formated as ext4
+	if [[ -b "${volume}" ]] && [[ "$(lsblk -no FSTYPE "${volume}")" == "ext4" ]]; then
+		echo "skipping '${volume}': already formatted as ext4"
+		return 0
+	fi
+
+	echo "Partitioning ${disk}"
+	if ! sfdisk -q "$disk" <"$layout"; then
+		fatal "partitioning '${disk}' failed"
+	fi
+
+	echo "Formatting ${volume}"
+	if ! mkfs.ext4 -q -N "${inodes}" "${volume}"; then
+		fatal "formatting '${volume}' failed"
+	fi
+}
+
+export-volume() {
+	local export_path="/files"
+	local mount_path="/srv/nfs/files"
+	local export_options
+
+	export_options=(
+		rw
+		sync
+		wdelay
+		no_root_squash
+		no_all_squash
+		no_subtree_check
+		sec=sys
+		secure
+		nohide
+	)
+	export_options="$(join , ${export_options[@]})"
+	echo "export_options=${export_options}"
+
+	echo "Mounting ${volume} as ${mount_path}"
+	if ! mkdir -p "${mount_path}"; then
+		fatal "could not create directory "${mount_path}""
+	fi
+
+	if ! mount "${volume}" "${mount_path}"; then
+		fatal "could not mount '${volume}'"
+	fi
+
+	echo "Exporting ${mount_path} as ${export_path}"
+	if ! : >/etc/exports; then
+		fatal "could not truncate /etc/exports"
+	fi
+
+	if ! echo "${export_path} 10.0.0.0/8(${export_options})" >>/etc/exports; then
+		fatal "could not add export '${export_path}'"
+	fi
+}
+
+source-disk() {
+	local disk="/dev/disk/by-id/google-nfs"
+	if ! realpath "$disk"; then
+		fatal "could not resolve '${disk}'"
+	fi
+}
+
+join() {
+	local IFS="$1"
+	shift
+	echo "$*"
+}
+
+fatal() {
+	# Get the function name and line number of the callee.
+	# The top level script will be named main.
+	# The FUNCNAME array is offset by 1 from the line numbers.
+	local func="${FUNCNAME[1]}"
+	local line="${BASH_LINENO[0]}"
+	echo "ERROR : ${func}:${line} : $@" >&2
+	exit 1
+}
+
+disk="$(source-disk)"
+volume="${disk}1" # e.g. /dev/sda1
+delay="$(get-attribute delay)"
+rate="$(get-attribute rate)"
+
+tc_opts=()
+if [[ -n $delay ]]; then
+	tc_opts+=(delay "${delay}")
+fi
+if [[ -n $rate ]]; then
+	tc_opts+=(rate "${rate}")
+fi
+
+if ! layout="$(mktemp)"; then
+	fatal "could not create temp file for layout"
+fi
+if ! create-layout >"${layout}"; then
+	fatal "could not create layout file"
+fi
+
+echo "Formatting disks..."
+if ! format-disk "${layout}"; then
+	fatal "could not format disk"
+fi
+echo "Formatting disks complete"
+
+echo "Exporting volumes..."
+export-volume
+echo "Exporting volumes complete"
+
+if (( ${#tc_opts[@]} )); then
+	echo "Applying traffic shaping..."
+	if ! tc qdisc add dev ens4 root netem "${tc_opts[@]}"; then
+		fatal "could not apply traffic shaping"
+	fi
+	echo "Traffic shaping complete"
+fi
+
+echo "Starting nfs-server"
+if ! systemctl start nfs-server; then
+	systemctl status nfs-server
+	fatal "could not start nfs-server"
+fi
+exportfs -a
+echo "Starting nfs-server complete"
