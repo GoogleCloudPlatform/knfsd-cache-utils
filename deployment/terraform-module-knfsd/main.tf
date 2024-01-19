@@ -27,6 +27,11 @@ locals {
   )
   MIG_REPLACEMENT_METHOD_DEFAULT = var.ASSIGN_STATIC_IPS ? "RECREATE" : "SUBSTITUTE"
   deploy_fsid_database           = var.FSID_MODE == "external" && var.FSID_DATABASE_DEPLOY
+
+  # Check if network/subnetwork are using simple names. If so, convert them to
+  # IDs so that they can be used with resources such as Cloud SQL.
+  network    = strcontains(var.NETWORK, "/") ? var.NETWORK : "projects/${var.PROJECT}/global/networks/${var.NETWORK}"
+  subnetwork = strcontains(var.SUBNETWORK, "/") ? var.SUBNETWORK : "projects/${var.PROJECT}/regions/${var.REGION}/subnetworks/${var.SUBNETWORK}"
 }
 
 # Validate that SERVICE_ACCOUNT is set when deploying an external database.

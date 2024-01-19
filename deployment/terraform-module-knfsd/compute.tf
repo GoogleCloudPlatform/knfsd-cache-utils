@@ -128,9 +128,8 @@ resource "google_compute_instance_template" "nfsproxy-template" {
   }
 
   network_interface {
-    network            = var.NETWORK
-    subnetwork         = var.SUBNETWORK
-    subnetwork_project = var.SUBNETWORK_PROJECT != "" ? var.SUBNETWORK_PROJECT : null
+    network            = local.network
+    subnetwork         = local.subnetwork
     nic_type           = (var.ENABLE_HIGH_BANDWIDTH_CONFIGURATION || var.ENABLE_GVNIC) ? "GVNIC" : "VIRTIO_NET"
   }
 
@@ -388,7 +387,7 @@ resource "google_compute_firewall" "allow-tcp-healthcheck" {
 
   project  = var.PROJECT
   name     = "allow-nfs-tcp-healthcheck"
-  network  = var.NETWORK
+  network  = local.network
   priority = 1000
 
   allow {

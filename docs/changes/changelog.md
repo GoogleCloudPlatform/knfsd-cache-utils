@@ -5,6 +5,7 @@
 * Fix proxy startup script always prints "Error starting proxy"
 * Fix auto-reexporting the root of an NFS v4 server
 * Assign a public IP to the build machine by default
+* Removed `SUBNETWORK_PROJECT` (using self links instead)
 
 ## Fetch Ubuntu Kernel source from launchpad
 
@@ -30,6 +31,15 @@ This is because the logic that ensures the root export always has `fsid=0` was o
 When building using packer, assign a public IP (`omit_external_ip = false`) to the build machine by default. This matches the manual build process and makes building the image simpler when getting started.
 
 When `omit_external_ip = true` the GCP network will require that Cloud NAT is configured so that the build instance can fetch packages and source code from the public internet.
+
+## Removed `SUBNETWORK_PROJECT` (using self links instead)
+
+Changed the format for shared VPC to use ID or self link instead. This is because some resources such as Cloud SQL always require self links, and other resources require self links when using shared VPC.
+
+* Network ID format: `projects/{{project}}/global/networks/{{name}}`
+* Subnetwork ID format: `projects/{{project}}/regions/{{region}}/subnetworks/{{name}}`
+
+Simple names such as "default" are still supported. They will be converted automatically to a network/subnetwork ID. The project will be assumed to be the same project as the knfsd proxy cluster.
 
 # v1.0.0-beta7
 

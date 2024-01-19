@@ -53,11 +53,6 @@ variable "PROJECT" {
   }
 }
 
-variable "SUBNETWORK_PROJECT" {
-  type    = string
-  default = ""
-}
-
 variable "REGION" {
   type     = string
   nullable = false

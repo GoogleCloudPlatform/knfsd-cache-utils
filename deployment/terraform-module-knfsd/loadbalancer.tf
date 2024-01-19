@@ -29,7 +29,7 @@ resource "google_compute_address" "nfsproxy_static" {
   region       = var.REGION
   name         = "${var.PROXY_BASENAME}-static-ip"
   address_type = "INTERNAL"
-  subnetwork   = var.SUBNETWORK
+  subnetwork   = local.subnetwork
   address      = var.LOADBALANCER_IP
   purpose      = "SHARED_LOADBALANCER_VIP"
 
@@ -50,8 +50,8 @@ module "loadbalancer" {
   PROJECT        = var.PROJECT
   REGION         = var.REGION
   PROXY_BASENAME = var.PROXY_BASENAME
-  NETWORK        = var.NETWORK
-  SUBNETWORK     = var.SUBNETWORK
+  NETWORK        = local.network
+  SUBNETWORK     = local.subnetwork
   SERVICE_LABEL  = var.SERVICE_LABEL
   IP_ADDRESS     = google_compute_address.nfsproxy_static[0].address
   ENABLE_UDP     = var.ENABLE_UDP
