@@ -1,0 +1,91 @@
+# Metrics that come from external sources such as the knfsd-fsidd service.
+# These are pushed to the metrics agent using the OLTP receiver so that the
+# metrics agent can apply the standard processes and send them to the same
+# exporter as all the other metrics.
+
+name: external
+
+attributes:
+  command:
+    description: The command that was requested, such as \"get_fsid\".
+
+  query:
+    description: The query that was executed, such as \"get_fsid\".
+
+  result:
+    description: The result of the request, such as \"ok\".
+
+  retry:
+    description: The retry count for this operation.
+
+metrics:
+  fsid.operation.count:
+    enabled: true
+    description: Number of operations performed by the KNFSD FSID daemon. Each attempt to handle a request is one operation.
+    unit: '{operations}'
+    attributes: ['command', 'result', 'retry']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+
+  fsid.operation.duration:
+    enabled: true
+    description: Duration of each operation performed by the KNFSD FSID daemon. Each attempt to handle a request is one operation.
+    unit: 'ms'
+    attributes: ['command', 'result', 'retry']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  fsid.request.count:
+    enabled: true
+    description: Number of requests received by the KNFSD FSID daemon.
+    unit: '{operations}'
+    attributes: ['command', 'result']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  fsid.request.duration:
+    enabled: true
+    description: Total duration of requests received (including retries) by the KNFSD FSID daemon.
+    unit: 'ms'
+    attributes: ['command', 'result']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  fsid.request.retries:
+    enabled: true
+    description: Number of times each request was retried.
+    unit: '1'
+    attributes: ['command', 'result']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  fsid.sql.query.count:
+    enabled: true
+    description: Number of SQL queries executed by the KNFSD FSID daemon.
+    unit: '{queries}'
+    attributes: ['query', 'result']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative
+
+  fsid.sql.query.duration:
+    enabled: true
+    description: Duration of SQL queries executed by the KNFSD FSID daemon.
+    unit: 'ms'
+    attributes: ['query', 'result']
+    sum:
+      value_type: int
+      monotonic: true
+      aggregation: cumulative

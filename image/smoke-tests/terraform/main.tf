@@ -21,18 +21,18 @@ provider "google" {
 }
 
 locals {
-  source_ip = google_filestore_instance.source.networks[0].ip_addresses[0]
-  proxy_ip  = module.proxy.dns_name
+  source_host = google_filestore_instance.source.networks[0].ip_addresses[0]
+  proxy_host  = module.proxy.dns_name
 }
 
 resource "google_filestore_instance" "source" {
-  project = var.project
-  name    = "${var.prefix}-source"
-  tier    = "BASIC_HDD"
-  zone    = var.zone
+  project  = var.project
+  name     = "${var.prefix}-source"
+  tier     = "BASIC_HDD"
+  location = var.zone
 
   networks {
-    network = google_compute_network.this.name
+    network = var.network
     modes   = ["MODE_IPV4"]
   }
 
@@ -49,8 +49,8 @@ module "proxy" {
   REGION  = var.region
   ZONE    = var.zone
 
-  NETWORK            = google_compute_network.this.id
-  SUBNETWORK         = google_compute_subnetwork.this.id
+  NETWORK            = var.network
+  SUBNETWORK         = var.subnetwork
 
   AUTO_CREATE_FIREWALL_RULES = false
   TRAFFIC_DISTRIBUTION_MODE  = "dns_round_robin"
@@ -59,10 +59,15 @@ module "proxy" {
   PROXY_BASENAME  = "${var.prefix}-proxy"
   PROXY_IMAGENAME = var.proxy_image
 
-  # The smoke tests rely on using a single node so that
+  # The smoke tests rely on using a single node so that the test client reliably
+  # connects to a specific instance. Also, the smoke tests only create a single
+  # client so they'd only ever connect to one instance.
   KNFSD_NODES = 1
 
-  EXPORT_MAP = "${local.source_ip};/files;/files"
+  # Smoke tests only need a single SSD as we're not reading that much data.
+  LOCAL_SSDS = 1
+
+  EXPORT_MAP = "${local.source_host};/files;/files"
 }
 
 resource "google_compute_instance" "client" {
@@ -71,15 +76,21 @@ resource "google_compute_instance" "client" {
 
   name         = "${var.prefix}-client"
   machine_type = "n1-standard-1"
+  tags         = ["nfs-client"]
 
   boot_disk {
     initialize_params {
-      image = "family/ubuntu-2004-lts"
+      image = var.client_image
     }
   }
 
   network_interface {
-    network    = google_compute_network.this.id
-    subnetwork = google_compute_subnetwork.this.id
+    network    = var.network
+    subnetwork = var.subnetwork
+  }
+
+  metadata = {
+    "source_host" = local.source_host,
+    "proxy_host" = local.proxy_host,
   }
 }

@@ -1,19 +1,42 @@
 #!/usr/bin/env bash
 
+# Bind the container port 5432 to a random local port to
+# avoid conflicting with any existing PostgreSQL instances.
+export POSTGRES_PORT=0
+compose_opts=(-f postgres.compose.yaml)
+
+if [[ $CI == "cloudbuild" ]]; then
+	# When running on Cloud Build bind to the standard 5432 port
+	export POSTGRES_PORT=5432
+	compose_opts+=(-f cloudbuild.compose.yaml)
+fi
+
+function compose() {
+	docker compose "${compose_opts[@]}" "$@"
+}
+
 function start-postgres() {
-	docker compose -f postgres.yaml up --wait
+	compose up --wait
 }
 
 function stop-postgres() {
-	docker compose -f postgres.yaml down
+	compose down
 }
 
 function url() {
-	# the container port 5432 will be bound to a random local port
-	local port="$(docker compose -f postgres.yaml port postgres 5432)"
-	# docker compose port outputs in the format ip:port, separate out the port
-	port="${port##*:}"
-	printf 'host=127.0.0.1 port=%d user=fsidd password=fsid-test database=fsids' "$port"
+	if [[ $CI == "cloudbuild" ]]; then
+		# The docker compose command is not available from the container running
+		# the go tests on Cloud Build.
+		# When running on Cloud Build assume the PostgreSQL is accessable by
+		# host name, and is bound to port 5432 as Cloud Build uses a different
+		# networking setup.
+		printf 'host=postgres port=5432 user=fsidd password=fsid-test database=fsids'
+	else
+		local port="$(compose port postgres 5432)"
+		# docker compose port outputs in the format ip:port, separate out the port
+		port="${port##*:}"
+		printf 'host=127.0.0.1 port=%d user=fsidd password=fsid-test database=fsids' "$port"
+	fi
 }
 
 function run-tests() {
@@ -33,7 +56,6 @@ case "$1" in
 	# Shortcut for:
 	#   ./test.sh up && ./test.sh run; ./test.sh down
 	"")
-		shift
 		go vet ./... || exit 1
 
 		trap cleanup EXIT
@@ -42,7 +64,7 @@ case "$1" in
 			exit 1
 		fi
 
-		run-tests "$@"
+		run-tests
 		;;
 
 	up) start-postgres;;

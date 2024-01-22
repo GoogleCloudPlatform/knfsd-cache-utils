@@ -42,7 +42,7 @@ source "googlecompute" "nfs-proxy" {
   zone       = var.zone
 
   # Build machine
-  instance_name                   = "packer-nfs-proxy-{{uuid}}"
+  instance_name                   = var.build_instance_name
   machine_type                    = var.machine_type
   disk_size                       = 50
   disk_type                       = "pd-ssd"
@@ -52,6 +52,7 @@ source "googlecompute" "nfs-proxy" {
   network_project_id = var.network_project
   subnetwork         = var.subnetwork
   omit_external_ip   = var.omit_external_ip
+  tags               = var.network_tags
 
   # Output image
   image_family            = var.image_family
@@ -78,6 +79,7 @@ build {
   provisioner "file" {
     source      = "${path.root}/resources/"
     destination = "./"
+    timeout     = "10m"
   }
 
   provisioner "shell" {
@@ -89,6 +91,7 @@ build {
     ]
     expect_disconnect = true
     pause_after       = "30s"
+    timeout           = "1h"
   }
 
   provisioner "shell" {
@@ -104,5 +107,13 @@ build {
     ]
     expect_disconnect = true
     skip_clean        = true
+    timeout           = "5m"
+  }
+
+  # Output the last build to a manifest file in the current directory.
+  # This can be useful for automated tooling, especially if packer generated
+  # the image name with a timestamp.
+  post-processor "manifest" {
+    output = "image.manifest.json"
   }
 }

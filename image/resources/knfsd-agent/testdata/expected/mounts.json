@@ -1,0 +1,35 @@
+{
+  "mounts": [
+    {
+      "device": "10.0.0.2:/files",
+      "mount": "/srv/nfs/files",
+      "export": "/files",
+      "options": {
+        "rw": "",
+        "noatime": "",
+        "vers": "3",
+        "rsize": "1048576",
+        "wsize": "1048576",
+        "namlen": "255",
+        "acregmin": "600",
+        "acregmax": "600",
+        "acdirmin": "600",
+        "acdirmax": "600",
+        "hard": "",
+        "nocto": "",
+        "proto": "tcp",
+        "nconnect": "16",
+        "timeo": "600",
+        "retrans": "2",
+        "sec": "sys",
+        "mountaddr": "10.0.0.2",
+        "mountvers": "3",
+        "mountport": "20048",
+        "mountproto": "tcp",
+        "fsc": "",
+        "local_lock": "none",
+        "addr": "10.0.0.2"
+      }
+    }
+  ]
+}

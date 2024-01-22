@@ -1,0 +1,159 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# timeout needs to be longer than the total run time, with some padding to allow
+# enough time to gracefully tear down resources. Otherwise if Cloud Build aborts
+# a build in the middle of Packer or Terraform GCP resources will be left behind.
+timeout: 18000s # 5h
+
+substitutions:
+  _REGION: ${LOCATION}
+  _ZONE: ${LOCATION}-a
+  _NETWORK: projects/${PROJECT_ID}/global/networks/default
+  _SUBNETWORK: projects/${PROJECT_ID}/regions/${_REGION}/subnetworks/default
+  _WORKER_POOL: ""
+
+  # This is to support running the various tests (e.g. smoke tests) with an
+  # existing image. Useful when developing the tests themselves.
+  # At the moment the image build step is unconditional, so you'll need to
+  # comment out the image build step while developing tests.
+  _IMAGE_NAME: nfs-test-${BUILD_ID}
+
+options:
+  dynamicSubstitutions: true
+  pool:
+    name: ${_WORKER_POOL}
+  env:
+    - CI=cloudbuild
+    - PROJECT_ID=${PROJECT_ID}
+    - REGION=${_REGION}
+    - ZONE=${_ZONE}
+    - NETWORK=${_NETWORK}
+    - SUBNETWORK=${_SUBNETWORK}
+    - BUILD_ID=${BUILD_ID}
+    - IMAGE_NAME=${_IMAGE_NAME}
+
+steps:
+  - name: golang:1.20
+    id: filter-exports:test
+    dir: image/resources/filter-exports
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-agent:test
+    dir: image/resources/knfsd-agent
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-metrics-agent:test
+    dir: image/resources/knfsd-metrics-agent
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: netapp-exports:test
+    dir: image/resources/netapp-exports
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: mig-scaler:test
+    dir: tools/mig-scaler
+    script: make test
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+
+  - name: gcr.io/cloud-builders/docker
+    id: knfsd-fsidd:database-up
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh up
+    waitFor: ['-']
+    timeout: 1200s # 20m
+
+  - name: golang:1.20
+    id: knfsd-fsidd:test
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh run
+    waitFor: ['knfsd-fsidd:database-up']
+    timeout: 1200s # 20m
+
+  - name: gcr.io/cloud-builders/docker
+    id: knfsd-fsidd:database-down
+    dir: image/resources/knfsd-fsidd
+    script: ./test.sh down
+    waitFor: ['knfsd-fsidd:test']
+    timeout: 1200s # 20m
+
+  # For a production build you would want to set an image_family, and use a more
+  # readable image_name (if you leave image_name blank packer will default it to
+  # "{image_family}-{timestamp}").
+  # Using BUILD_ID for test images to easily associate a test image with a
+  # specific build. Though this isn't very useful in normal use as BUILD_ID is
+  # just a random UUID.
+  # Not using an image_family for the test builds, as you wouldn't want to
+  # deploy the latest test build. It might be the latest main or the latest pull
+  # request, who knows?
+  # If you wanted to run these tests yourself as part of CI/CD before releasing
+  # an image for general use, to avoid building the image twice, once the tests
+  # are complete you could copy the image to a proper image_family and more
+  # usable name (such as using a timestamp or version tag).
+  - name: hashicorp/packer:1.9
+    id: knfsd-image:build
+    script: |
+      packer init image &&
+      packer build \
+        -var-file=image/cloudbuild.pkrvars.hcl \
+        -var project=${PROJECT_ID} \
+        -var zone=${ZONE} \
+        -var build_instance_name=nfs-build-${BUILD_ID} \
+        -var image_family="" \
+        -var image_name=${IMAGE_NAME} \
+        -var subnetwork=${SUBNETWORK} \
+        image
+    timeout: 7200s # 2h
+
+  - name: ${_DOCKER_REPOSITORY}/knfsd-terratest:1.0
+    id: knfsd-image:test
+    dir: image/smoke-tests
+    script: make test
+    env:
+      - TF_VAR_project=${PROJECT_ID}
+      - TF_VAR_region=${_REGION}
+      - TF_VAR_zone=${_ZONE}
+      - TF_VAR_network=${_NETWORK}
+      - TF_VAR_subnetwork=${_SUBNETWORK}
+      - TF_VAR_proxy_image=${_IMAGE_NAME}
+    timeout: 3600s # 1h
+
+  - name: ${_DOCKER_REPOSITORY}/knfsd-terratest:1.0
+    id: examples:tests
+    dir: testing/examples
+    script: make test
+    env:
+      - TF_VAR_project=${PROJECT_ID}
+      - TF_VAR_region=${_REGION}
+      - TF_VAR_zone=${_ZONE}
+      - TF_VAR_network=${_NETWORK}
+      - TF_VAR_subnetwork=${_SUBNETWORK}
+      - TF_VAR_proxy_image=${_IMAGE_NAME}
+      - TF_VAR_proxy_service_account=${_PROXY_SERVICE_ACCOUNT}
+    timeout: 3600s # 1h

@@ -1,0 +1,5 @@
+# When running on cloudbuild change the default network used by docker-compose.
+networks:
+  default:
+    name: cloudbuild
+    external: true
