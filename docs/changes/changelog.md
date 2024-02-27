@@ -1,4 +1,4 @@
-# next
+# v1.0.0-beta8
 
 * Fetch Ubuntu Kernel source from launchpad
 * Display Kernel and OS version information at end of packer build
