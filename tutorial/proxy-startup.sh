@@ -31,8 +31,8 @@ NFS_MOUNT_POINT="/data"
 function create-fs-cache() {
 	# List attatched NVME local SSDs
 	echo "Detecting local SSDs drives..."
-	DRIVESLIST=$(/bin/find /dev/disk/by-id/google-local-* | grep -v -E '\-part[0-9]+$')
-	NUMDRIVES=$(/bin/find /dev/disk/by-id/google-local-* | grep -v -E '\-part[0-9]+$' | wc -w)
+	DRIVESLIST=$(/bin/find /dev/disk/by-id/ -regex '/dev/disk/by-id/google-local-ssd-[0-9]+$\|/dev/disk/by-id/google-local-nvme-ssd-[0-9]+$')
+	NUMDRIVES=$(/bin/find /dev/disk/by-id/ -regex '/dev/disk/by-id/google-local-ssd-[0-9]+$\|/dev/disk/by-id/google-local-nvme-ssd-[0-9]+$' | wc -w)
 	echo "Detected $NUMDRIVES drives. Names: $DRIVESLIST."
 
 	# If there are local NVMe drives attached, start the process of formatting and mounting
