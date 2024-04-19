@@ -69,7 +69,7 @@ install_build_dependencies() {
         build-essential libevent-dev libsqlite3-dev libblkid-dev \
         libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
         libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
-        gawk llvm pkg-config
+        gawk llvm pkg-config gcc-12
     complete_command
 }
 
