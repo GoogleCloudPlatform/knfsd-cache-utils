@@ -17,7 +17,7 @@ FROM gcr.io/cloud-builders/gcloud
 # the build requires the following tools:
 #  - gcloud (from the base image, latest version is fine).
 #  - go v1.20.
-#  - terraform 1.3.0
+#  - terraform 1.5.0
 
 # install golang (and unzip which we need later for terraform)
 RUN apt-get update \
@@ -28,6 +28,6 @@ RUN apt-get update \
 ENV PATH="$PATH:/usr/lib/go-1.20/bin"
 
 # grab terraform from hashicorp and upack
-RUN curl https://releases.hashicorp.com/terraform/1.3.0/terraform_1.3.0_linux_amd64.zip --output terraform.zip \
+RUN curl https://releases.hashicorp.com/terraform/1.5.0/terraform_1.5.0_linux_amd64.zip --output terraform.zip \
 	&& unzip terraform.zip -d /usr/local/bin \
 	&& rm terraform.zip

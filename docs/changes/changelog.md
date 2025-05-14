@@ -1,6 +1,11 @@
 # Next
 
+* Update minimum Terraform version to 1.5
 * Update knfsd metrics agent to support v6.6+ kernel versions
+
+## Update minimum Terraform version to 1.5
+
+When changing the network variables to use self links the Terraform code was  changed to use the `strcontains` function to aid with backwards compatibility so that existing configurations could continue to use simple names. This function was not added until Terraform 1.5.
 
 ## Update knfsd metrics agent to support v6.6+ kernel versions
 
