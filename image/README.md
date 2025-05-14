@@ -89,7 +89,7 @@ cd image
 
 ```bash
 export BUILD_MACHINE_NAME=knfsd-build-machine
-export BUILD_MACHINE_TYPE=c2-standard-16
+export BUILD_MACHINE_TYPE=e2-standard-4
 export BUILD_MACHINE_ZONE=<europe-west2-a>
 export GOOGLE_CLOUD_PROJECT=<knfsd-deployment-test>
 export BUILD_MACHINE_NETWORK=<knfsd-test>
@@ -100,9 +100,7 @@ export IMAGE_NAME="${IMAGE_FAMILY}-$(date -u +%F-%H%M%S)"
 
 ### Create Build Machine
 
-The default machine type is a c2-standard-16, if this is unavailable try changing the `BUILD_MACHINE_TYPE` to `c2-standard-8` or `e2-standard-16`.
-
-**IMPORTANT:** It is recommended not to change the disk boot-disk-size. The performance can increase but the image size will be larger and this will force any VMs to use the larger size drive.
+**IMPORTANT:** It is not recommended to change the disk boot-disk-size. The performance can increase but the image size will be larger and this will force any VMs to use the larger size drive.
 
 ```bash
 gcloud compute instances create $BUILD_MACHINE_NAME \

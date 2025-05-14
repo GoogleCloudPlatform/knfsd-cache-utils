@@ -2,6 +2,7 @@
 
 * Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
 * Disable unattended-upgrade.service
+* Change default build machine type to e2-standard-4
 * Update minimum Terraform version to 1.5
 * Update knfsd metrics agent to support v6.6+ kernel versions
 
@@ -16,6 +17,10 @@ There is a known issue in the 6.11.0 kernel that can cause a kernel panic when t
 In normal operation the NFS server will not be restarted while the proxy is running. The `unattended-upgrade.service` can trigger a restart of the NFS server if it updates any of the NFS server packages, or libraries the NFS server relies on.
 
 Disabling the `unattended-upgrade.service` to prevent restarting the NFS server. Security and OS updates can be managed by building new images using the latest GCP Ubuntu 24.04 image (update the `source_image` in `image/nfs-proxy.pkr.hcl`).
+
+## Change default build machine type to e2-standard-4
+
+The more powerful machine type is no longer required when building an image as we're not compiling a custom kernel.
 
 ## Update minimum Terraform version to 1.5
 
