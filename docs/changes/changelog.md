@@ -1,12 +1,21 @@
 # Next
 
 * Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
+* Disable unattended-upgrade.service
 * Update minimum Terraform version to 1.5
 * Update knfsd metrics agent to support v6.6+ kernel versions
 
 ## Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
 
 Update the image to use Ubuntu 24.04 LTS (Noble Numbat). The GCP image we're using comes with the 6.11.0 HWE (Hardware Enablement) Ubuntu 24.04 kernel installed. This fixes some issues with CacheFiles that were present in the original 6.8 kernel.
+
+## Disable unattended-upgrade.service
+
+There is a known issue in the 6.11.0 kernel that can cause a kernel panic when the NFS server is restarted due to a race condition. This issue is fixed in later kernels (tested with 6.14.6 mainline), but these kernels are not yet available for Ubuntu 24.04.
+
+In normal operation the NFS server will not be restarted while the proxy is running. The `unattended-upgrade.service` can trigger a restart of the NFS server if it updates any of the NFS server packages, or libraries the NFS server relies on.
+
+Disabling the `unattended-upgrade.service` to prevent restarting the NFS server. Security and OS updates can be managed by building new images using the latest GCP Ubuntu 24.04 image (update the `source_image` in `image/nfs-proxy.pkr.hcl`).
 
 ## Update minimum Terraform version to 1.5
 

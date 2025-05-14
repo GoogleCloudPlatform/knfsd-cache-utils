@@ -45,6 +45,20 @@ complete_command() {
 
 }
 
+disable_unattended_upgrades() {
+    # Stop unattended-upgrades while building the image, otherwise apt-get might
+    # fail because the apt cache is locked by the unattended-upgrade service.
+    #
+    # Bug in current (6.11.0) HWE kernel can cause a kernel panic when the
+    # nfs-server.service is restarted. Unattended upgrades can restart this
+    # service if upgrading the NFS packages (or libraries NFS depends on).
+    #
+    # To avoid this issue, disabling unattended-upgrades.service.
+    begin_command "Disabling unattended-upgrades.service"
+    systemctl disable unattended-upgrades.service
+    complete_command
+}
+
 # install_nfs_packages() installs NFS Packages
 install_nfs_packages() {
 
@@ -176,6 +190,7 @@ copy_config() {
 }
 
 # Run Build
+disable_unattended_upgrades
 install_nfs_packages
 install_build_dependencies
 install_cachefilesd

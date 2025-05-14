@@ -1,0 +1,4 @@
+# Bug in current (6.11.0) HWE kernel can cause a kernel panic when the
+# nfs-server.service is restarted. Unattended upgrades can restart this
+# service if upgrading the NFS packages (or libraries NFS depends on).
+APT::Periodic::Unattended-Upgrade "0";
