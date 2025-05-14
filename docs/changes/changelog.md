@@ -1,7 +1,12 @@
 # Next
 
+* Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
 * Update minimum Terraform version to 1.5
 * Update knfsd metrics agent to support v6.6+ kernel versions
+
+## Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
+
+Update the image to use Ubuntu 24.04 LTS (Noble Numbat). The GCP image we're using comes with the 6.11.0 HWE (Hardware Enablement) Ubuntu 24.04 kernel installed. This fixes some issues with CacheFiles that were present in the original 6.8 kernel.
 
 ## Update minimum Terraform version to 1.5
 

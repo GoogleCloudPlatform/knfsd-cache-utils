@@ -126,7 +126,7 @@ gcloud compute instances create "$VM_NAME" \
     --network="$NETWORK_NAME" \
     --subnet="$SUBNET_NAME" \
     --image-project="ubuntu-os-cloud" \
-    --image-family="ubuntu-2004-lts"
+    --image-family="ubuntu-2404-lts-amd64"
 ```
 
 Once you have finished testing the KNFSD Metrics Agent, delete the VM:

@@ -1,7 +1,0 @@
-# Menu: HEADER
-# FORMAT: 4
-# ARCH: amd64
-# FLAVOUR: amd64-knfsd
-
-include "generic"
-include "gcp"

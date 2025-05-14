@@ -109,7 +109,7 @@ gcloud compute instances create $BUILD_MACHINE_NAME \
     --zone=$BUILD_MACHINE_ZONE \
     --machine-type=$BUILD_MACHINE_TYPE \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --image=ubuntu-2204-jammy-v20221101a \
+    --image=ubuntu-2404-noble-amd64-v20250502a \
     --image-project=ubuntu-os-cloud \
     --network=$BUILD_MACHINE_NETWORK \
     --subnet=$BUILD_MACHINE_SUBNET \

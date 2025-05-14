@@ -29,7 +29,6 @@ export QUILT_PATCHES=debian/patches
 export NAME=build EMAIL=build
 
 patches="$(pwd)/patches/"
-nproc="$(nproc)"
 
 # begin_command() formats the terminal for a command output
 begin_command() {
@@ -63,13 +62,7 @@ install_nfs_packages() {
 install_build_dependencies() {
     begin_command "Installing build dependencies"
     apt-get update
-    apt-get install -y \
-        libtirpc-dev libncurses-dev flex bison openssl libssl-dev dkms \
-        libelf-dev libudev-dev libpci-dev libiberty-dev autoconf dwarves \
-        build-essential libevent-dev libsqlite3-dev libblkid-dev \
-        libmount-dev libwrap0-dev libkrb5-dev libldap2-dev libcap-dev \
-        libkeyutils-dev libdevmapper-dev cdbs debhelper ubuntu-dev-tools \
-        gawk llvm pkg-config
+    apt-get install -y ubuntu-dev-tools cdbs debhelper
     complete_command
 }
 
@@ -95,70 +88,13 @@ install_cachefilesd() (
     echo "RUN=yes" >> /etc/default/cachefilesd
 )
 
-# download_nfs-utils() downloads version 2.6.3 of nfs-utils
-download_nfs-utils() (
-
-    begin_command "Downloading nfs-utils"
-    echo -e "------${SHELL_DEFAULT}"
-    # Need nfs-utils 2.6.3 to support the new reexport features and fsidd
-    # service. Install this using apt-get once nfs-common 2.6.3 or greater is
-    # avaliable as an Ubuntu package.
-    curl -o nfs-utils-2.6.3.tar.gz https://mirrors.edge.kernel.org/pub/linux/utils/nfs-utils/2.6.3/nfs-utils-2.6.3.tar.gz
-    tar xvf nfs-utils-2.6.3.tar.gz
-    complete_command
-
-)
-
-# build_install_nfs-utils() builds and installs nfs-utils
-build_install_nfs-utils() (
-
-    begin_command "Building and installing nfs-utils"
-    cd nfs-utils-2.6.3
-    # Based on Ubuntu's build options for nfs-utils 1:2.6.2-4ubuntu1 amd64.
-    # https://launchpad.net/ubuntu/+source/nfs-utils
-    # https://launchpad.net/ubuntu/+source/nfs-utils/1:2.6.2-4ubuntu1/+build/25611701
-    ./configure \
-        --build=x86_64-linux-gnu \
-        --prefix=/usr \
-        --includedir=\${prefix}/include \
-        --mandir=\${prefix}/share/man \
-        --infodir=\${prefix}/share/info \
-        --sysconfdir=/etc \
-        --localstatedir=/var \
-        --disable-silent-rules \
-        --libdir=\${prefix}/lib/x86_64-linux-gnu \
-        --runstatedir=/run \
-        --disable-maintainer-mode \
-        --disable-dependency-tracking \
-        --mandir=\${prefix}/share/man \
-        --enable-libmount-mount \
-        --enable-svcgss \
-        --with-pluginpath=/usr/lib/x86_64-linux-gnu/libnfsidmap \
-        --with-tcp-wrappers \
-        --with-systemd=/lib/systemd/system
-
-    make -j$((`nproc`+1))
-
-    # Install directly using make, cannot use Ubuntu (Debian) packaging yet as
-    # it hasn't been updated to include the new fsidd service.
-    # Normally this isn't recommended as it will likely conflict with apt-get
-    # but in this case it doesn't matter. When updating packages we'll just
-    # build a new image from scratch.
-    make install -j$((`nproc`+1))
-
-    chmod u+w,go+r /sbin/mount.nfs
-    chown nobody:nogroup /var/lib/nfs
-    complete_command
-
-)
-
 # install_stackdriver_agent() installs the Cloud Ops Agent for metrics
 install_stackdriver_agent() {
 
     begin_command "Installing Cloud Ops Agent dependencies"
     cd ops-agent
     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-    bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.22.0
+    bash add-google-cloud-ops-agent-repo.sh --also-install --version=2.49.0
     systemctl disable google-cloud-ops-agent
     cp google-cloud-ops-agent.conf /etc/logrotate.d/
     cd ..
@@ -228,61 +164,6 @@ install_netapp_exports() (
     cd netapp-exports
     go test ./...
     go build -o /usr/local/bin/netapp-exports
-    echo -e -n "${SHELL_YELLOW}------ "
-    complete_command
-)
-
-download_kernel() (
-    begin_command "Downloading kernel"
-    cd kernel
-    git clone --depth 1 --branch cod/mainline/v6.4 git://git.launchpad.net/~ubuntu-kernel-test/ubuntu/+source/linux/+git/mainline-crack ubuntu-6.4
-    complete_command
-)
-
-build_kernel() (
-    begin_command "Building kernel"
-
-    cd kernel/ubuntu-6.4
-
-    quilt import "$patches"/kernel/*.patch
-    quilt push -a
-
-    # Replace generic kernel config with amd64-gcp.
-    # The Ubuntu build process generates the config using these annotation
-    # files to provide a consistent config. Include the annotation overrides
-    # used by the GCP flavour of the Ubuntu kernel.
-    mv debian.master/config/annotations debian.master/config/generic
-    cp ../annotations ../gcp debian.master/config/
-
-    # Rename the flavour from generic to knfsd to make it easier to check that
-    # the custom kernel is in use.
-    mv debian.master/abi/amd64/generic debian.master/abi/amd64/knfsd
-    mv debian.master/abi/amd64/generic.compiler debian.master/abi/amd64/knfsd.compiler
-    mv debian.master/abi/amd64/generic.modules debian.master/abi/amd64/knfsd.modules
-    mv debian.master/abi/amd64/generic.retpoline debian.master/abi/amd64/knfsd.retpoline
-    mv debian.master/control.d/generic.inclusion-list debian.master/control.d/knfsd.inclusion-list
-    mv debian.master/control.d/vars.generic debian.master/control.d/vars.knfsd
-    cp ../amd64.mk debian.master/rules.d/
-
-    fakeroot debian/rules clean
-    # Need to ignore build dependency checks (-d) as this version of Ubuntu is
-    # missing bindgen-0.56.
-    dpkg-buildpackage -uc -ui -b -d
-
-    cd ..
-    rm -rf ubuntu-6.4
-
-    complete_command
-)
-
-install_kernel() (
-    begin_command "Installing kernel"
-    cd kernel
-    apt-get install -y \
-        ./linux-headers-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb \
-        ./linux-headers-6.4.0-060400_6.4.0-060400.202306271339_all.deb \
-        ./linux-image-unsigned-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb \
-        ./linux-modules-6.4.0-060400-knfsd_6.4.0-060400.202306271339_amd64.deb
     complete_command
 )
 
@@ -298,8 +179,6 @@ copy_config() {
 install_nfs_packages
 install_build_dependencies
 install_cachefilesd
-download_nfs-utils
-build_install_nfs-utils
 install_stackdriver_agent
 install_golang
 install_fsidd_service
@@ -307,12 +186,10 @@ install_knfsd_agent
 install_knfsd_metrics_agent
 install_filter_exports
 install_netapp_exports
-download_kernel
-build_kernel
-install_kernel
 copy_config
 
 echo
 echo
+echo -e -n "${SHELL_YELLOW}"
 echo "SUCCESS: Please reboot for new kernel to take effect"
 echo -e "${SHELL_DEFAULT}"

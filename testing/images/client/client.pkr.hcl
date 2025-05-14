@@ -61,7 +61,7 @@ source "googlecompute" "client" {
   tags                = var.network_tags
 
   # source image
-  source_image            = "ubuntu-2204-jammy-v20221101a"
+  source_image            = "ubuntu-2404-noble-amd64-v20250502a"
   source_image_project_id = ["ubuntu-os-cloud"]
 
   # target image
@@ -88,7 +88,14 @@ build {
   }
 
   provisioner "shell" {
-    inline = ["sudo apt-get update && sudo apt-get install -y nfs-common"]
+    execute_command = "chmod +x {{.Path}}; {{.Vars}} sudo -E '{{.Path}}'"
+    env = {
+      DEBIAN_FRONTEND="noninteractive",
+    }
+    inline = [
+      "apt-get update",
+      "apt-get install -y nfs-common"
+    ]
   }
 
   # Output the last build to a manifest file in the current directory.

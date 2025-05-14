@@ -61,7 +61,7 @@ source "googlecompute" "nfs-proxy" {
   image_storage_locations = var.image_storage_location == "" ? null : [var.image_storage_location]
 
   # Source image
-  source_image            = "ubuntu-2204-jammy-v20221101a"
+  source_image            = "ubuntu-2404-noble-amd64-v20250502a"
   source_image_project_id = ["ubuntu-os-cloud"]
 
   # Communicator
@@ -76,6 +76,10 @@ source "googlecompute" "nfs-proxy" {
 build {
   sources = ["googlecompute.nfs-proxy"]
 
+  provisioner "shell" {
+    inline = ["uname -a"]
+  }
+
   provisioner "file" {
     source      = "${path.root}/resources/"
     destination = "./"
@@ -87,11 +91,17 @@ build {
     inline = [
       "chmod +x ./scripts/*.sh",
       "./scripts/1_build_image.sh",
-      "reboot",
     ]
+    timeout = "1h"
+  }
+
+  # Need to reboot if the 1_build_image.sh script updates the kernel
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline = ["reboot"]
     expect_disconnect = true
     pause_after       = "30s"
-    timeout           = "1h"
+    timeout           = "5m"
   }
 
   provisioner "shell" {
@@ -100,11 +110,8 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
-    inline = [
-      "printf 'Kernel Version: %s\n' \"$(uname -r)\"",
-      "./scripts/9_finalize.sh",
-    ]
+    execute_command   = "chmod +x {{ .Path }}; {{ .Vars }} sudo {{ .Path }}"
+    inline            = ["./scripts/9_finalize.sh"]
     expect_disconnect = true
     skip_clean        = true
     timeout           = "5m"
