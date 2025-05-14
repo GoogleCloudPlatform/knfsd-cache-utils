@@ -1,3 +1,11 @@
+# Next
+
+* Update knfsd metrics agent to support v6.6+ kernel versions
+
+## Update knfsd metrics agent to support v6.6+ kernel versions
+
+The 6.6 kernel introduced a new `wdeleg_getattr` metric to the `/proc/net/rpc/nfsd` file. This was not supported by the 0.10.1 Prometheus ProcFS parser. Updated the parser to 0.15.1 to support the new attribute.
+
 # v1.0.0-beta8
 
 * Fetch Ubuntu Kernel source from launchpad

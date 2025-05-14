@@ -32,15 +32,21 @@ type summary struct {
 }
 
 func newSummary(new *procfs.MountStatsNFS) summary {
+	var transport procfs.NFSTransportStats
+	for _, t := range new.Transport {
+		transport = addTransport(transport, t)
+	}
+
 	operations := make(map[string]procfs.NFSOperationStats, len(new.Operations))
 	for _, op := range new.Operations {
 		operations[op.Operation] = op
 	}
+
 	return summary{
 		age:        new.Age,
 		bytes:      new.Bytes,
 		events:     new.Events,
-		transport:  new.Transport,
+		transport:  transport,
 		operations: operations,
 	}
 }
