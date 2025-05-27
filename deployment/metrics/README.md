@@ -8,7 +8,7 @@ This modules configures Google Cloud Monitoring [Metric Descriptors](https://clo
 
 ```terraform
 module "metrics" {
-    source  = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v1.0.0-beta8"
+    source  = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v1.0.0"
     project = "my-gcp-project"
 }
 ```
@@ -27,7 +27,7 @@ provider "google" {
 }
 
 module "metrics" {
-    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v1.0.0-beta8"
+    source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/metrics?ref=v1.0.0"
 }
 ```
 
