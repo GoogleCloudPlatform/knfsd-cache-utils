@@ -1,4 +1,4 @@
-# Next
+# v1.0.0
 
 * Update to Ubuntu 24.04 LTS (Noble Numbat) with kernel 6.11.0
 * Disable unattended-upgrade.service

@@ -59,7 +59,7 @@ Providing the metrics config from a file:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta8"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0"
 
   METRICS_AGENT_CONFIG = file("metrics-config.yaml")
 }
@@ -69,7 +69,7 @@ Providing the metrics config inline using heredoc syntax:
 
 ```terraform
 module "nfs_proxy" {
-  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0-beta8"
+  source = "github.com/GoogleCloudPlatform/knfsd-cache-utils//deployment/terraform-module-knfsd?ref=v1.0.0"
 
   METRICS_AGENT_CONFIG = <<-EOT
     receivers:
