@@ -16,6 +16,7 @@
 
 # Autoscaler that scales up the Knfsd cluster depending on the number of NFS Connections
 resource "google_compute_autoscaler" "knfsd-autoscaler" {
+  project = var.PROJECT
 
   // Count is used here to determine if the autoscaler policy should be created
   // If var.ENABLE_KNFSD_AUTOSCALING is true then we want 1 autoscaler rule, else 0
