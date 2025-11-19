@@ -1,6 +1,6 @@
 module github.com/GoogleCloudPlatform/knfsd-cache-utils/image/resources/knfsd-metrics-agent
 
-go 1.20
+go 1.24.0
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/cmd/mdatagen v0.44.0
@@ -25,6 +25,11 @@ require (
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.20.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	golang.org/x/mod v0.30.0 // indirect
+	golang.org/x/telemetry v0.0.0-20251112162317-03ef243c208a // indirect
 )
 
 require (
@@ -141,13 +146,13 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.3.0 // indirect; indirect	google.golang.org/api v0.66.0 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
